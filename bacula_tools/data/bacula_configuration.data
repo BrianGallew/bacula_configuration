@@ -1,0 +1,121 @@
+-- -*- sql -*-
+use baculacfg;
+
+insert into templates (name, template) values ('Director', 'Director {
+  Name = %(hostname)s
+    DIRport = 9101
+    QueryFile = "/etc/bacula/scripts/query.sql"
+    WorkingDirectory = "/var/lib/bacula"
+    PidDirectory = "/var/run/bacula"
+    Maximum Concurrent Jobs = 100
+    Password = "%(password)s"
+    Messages = Standard
+    Scripts Directory = /etc/bacula/scripts
+}
+'),
+('Catalog','Catalog {
+  Name = MyCatalog
+  DB Name = %(dbname)s
+  user = %(dbuser)s
+  password = "%(dbpassword)s"
+  DB Address = %(dbaddress)s
+}
+'),
+('Messages','Messages {
+  Name = Standard
+  mailcommand = "/usr/local/bacula/zabbix.bacula %%c bacula@llnw.com %%t %%e %%l"
+  operatorcommand = "/usr/lib/bacula/bsmtp -h localhost -f \"\(Bacula\) bacula@llnw.com\" -s \"Bacula: Intervention needed for %%j\" %%r"
+  mail = bacula@llnw.com = all, !skipped
+  operator = hkugler@llnw.com, bacula@llnw.com, bgallew@llnw.com = mount
+  console = all, !skipped, !saved
+  syslog = all, !skipped
+  catalog = all, !skipped, !saved
+}
+'),
+('Pool','Pool {
+  Name = %(hostname)s
+  Pool Type = Backup
+  Recycle = yes
+  AutoPrune = yes
+  Volume Retention = %(timespan)s
+  Maximum Volume Jobs = 1
+  Label Format = %(hostname)s-
+  Action On Purge = Truncate
+}
+'),
+('Storage','Storage {
+  Name = %(hostname)s
+  Address = %(address)s
+  SDPort = 9103
+  Password = %(password)s
+  Device = %(hostname)s
+  Media Type = %(hostname)s
+  Maximum Concurrent Jobs = 1
+}
+'),
+('Client','Client {
+  Name = %(hostname)s
+  Address = %(address)s
+  Catalog = MyCatalog
+  Password = %(password)s
+  File Retention = %(file_retention)s
+  Job Retention = %(job_retention)s
+  AutoPrune = yes
+}
+'),
+('Device','Device {
+  Name = %(hostname)s-%(fileset)s
+  Media Type = %(hostname)s-%(fileset)s
+  Archive Device = /data/bacula
+  LabelMedia = yes;
+  Random Access = yes;
+  AutomaticMount = yes;
+  RemovableMedia = no;
+  AlwaysOpen = no;
+}
+'),
+('Storage','Storage {
+  Name = %(hostname)s-%(fileset)s
+  Address = %(storageserveraddress)s
+  SDPort = 9103
+  Password = %(storagepassword)s
+  Device = %(hostname)s-%(fileset)s
+  Media Type = %(hostname)s-%(fileset)s
+  Maximum Concurrent Jobs = 1
+}
+'),
+('job','Job {
+  Name = %(hostname)s-%(fileset)s
+  Client = %(hostname)s
+  Enabled = %(enabled)s
+  Storage = %(hostname)s-%(fileset)s
+  Write Bootstrap = \"%(bootstrapdir)s/%(hostname)s%(fileset)s.bsr\"
+  Priority = %(priority)s
+  Maximum Concurrent Jobs = 1
+  Type = Backup
+  Level = Incremental
+  FileSet = %(fileset)s
+  Schedule = %(schedule)s
+  Messages = %(message_set)s
+  Pool = %(pool)s
+  Rerun Failed Levels = yes
+  Allow Mixed Priority = yes
+%(script)s
+}
+'),
+('Job','Job {
+  Name = %(hostname)s-%(fileset)s-Verify
+  Client = %(hostname)s
+  Enabled = Yes
+  Storage = %(hostname)s-%(fileset)s
+  Priority = %(priority)s
+  Maximum Concurrent Jobs = 1
+  Type = Verify
+  Level = VolumeToCatalog
+  Verify Job = %(hostname)s-%(fileset)s
+  FileSet = %(fileset)s
+  Messages = %(message_set)s
+  Pool = %(pool)s
+  Allow Mixed Priority = yes
+}
+'),

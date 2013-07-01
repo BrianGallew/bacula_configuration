@@ -1,0 +1,133 @@
+-- -*- sql -*-
+CREATE TABLE `templates` 
+ (
+  `name` varchar(255) NOT NULL,
+  `template` text NOT NULL,
+  PRIMARY KEY `u_tn` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE `messages` 
+ (
+  `name` varchar(255) NOT NULL,
+  `message` text NOT NULL,
+  PRIMARY KEY `u_mn` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE `directors` (
+  `dirid` int(11) NOT NULL auto_increment,
+  `hostname` varchar(255) NOT NULL,
+  `primary_dir` tinyint(1) NOT NULL default '0',
+  `dbname` varchar(255) default NULL,
+  `dbuser` varchar(255) default NULL,
+  `dbpassword` varchar(255) default NULL,
+  `dbaddress` varchar(255) default NULL,
+  `address` varchar(255) default NULL,
+  PRIMARY KEY `dirid` (`dirid`),
+  UNIQUE KEY `address_UNIQUE` (`address`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+CREATE TABLE `schedule_pivot` (
+  `scheduleid` int(11) NOT NULL,
+  `timeid` int(11) NOT NULL,
+  KEY `p_timeid` (`timeid`),
+  KEY `p_scheduleid` (`scheduleid`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE `schedule_time` (
+  `timeid` int(11) NOT NULL auto_increment,
+  `data` varchar(255) NOT NULL,
+  PRIMARY KEY `timeid` (`timeid`),
+  UNIQUE KEY `u_schedule_time` (`data`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+CREATE TABLE `schedules` (
+  `scheduleid` int(11) NOT NULL auto_increment,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY `scheduleid` (`scheduleid`),
+  UNIQUE KEY `u_schedules` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE `files` (
+  `id` int(11) NOT NULL auto_increment,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY  (`id`),
+  UNIQUE KEY `name_UNIQUE` (`name`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+CREATE TABLE `filesets` (
+  `id` int(11) NOT NULL auto_increment,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY  (`id`),
+  UNIQUE KEY `name_UNIQUE` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE `options` (
+  `id` int(11) NOT NULL auto_increment,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY  (`id`),
+  UNIQUE KEY `name_UNIQUE` (`name`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+CREATE TABLE `service_notes` (
+  `service` varchar(255) default NULL,
+  `notes` text NOT NULL COMMENT 'Notes specific to an entire service, rather than an individual host.'
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+CREATE TABLE `fileset_files` (
+  `fileset_id` int(11) NOT NULL,
+  `file_id` int(11) NOT NULL,
+  `exclude` tinyint(4) default '0',
+  PRIMARY KEY  (`fileset_id`,`file_id`),
+  KEY `fk_fileset_idx` (`fileset_id`),
+  KEY `fd_files_idx` (`file_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+CREATE TABLE `fileset_options` (
+  `fileset_id` int(11) NOT NULL,
+  `option_id` int(11) NOT NULL,
+  `exclude` tinyint(4) default '0',
+  PRIMARY KEY  (`fileset_id`,`option_id`),
+  KEY `fk_fileset_idx` (`fileset_id`),
+  KEY `fd_options_idx` (`option_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+CREATE TABLE `hosts` (
+  `hostid` int(11) NOT NULL auto_increment,
+  `hostname` varchar(255) NOT NULL,
+  `address` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `enabled` tinyint(1) NOT NULL default '1',
+  `os` varchar(255) NOT NULL,
+  `notes` text,
+  `director` int(11) default NULL,
+  `owners` varchar(255) default NULL COMMENT 'This should be email addresses for people to be notified/questioned about service issues.',
+  `services` varchar(255) default NULL COMMENT 'These are the services provided by the host in question.',
+  `lastupdated` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+  PRIMARY KEY `hostid` (`hostid`),
+  KEY `hostname` (`hostname`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE `jobs` (
+  `jobid` int(11) NOT NULL auto_increment,
+  `jobname` varchar(255) NOT NULL,
+  `hostid` int(11) NOT NULL,
+  `storageserver` varchar(255) NOT NULL,
+  `fileset` varchar(255) NOT NULL,
+  `enabled` tinyint(1) NOT NULL default '1',
+  `priority` int(3) NOT NULL default '10',
+  `schedule` varchar(255) NOT NULL,
+  `notes` text,
+  `begin` text,
+  `end` text,
+  `failure` text,
+  `file_retention` varchar(24) default '60 days',
+  `job_retention` varchar(24) default '60 days',
+  `lastupdated` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+  PRIMARY KEY `jobid` (`jobid`),
+  KEY `jobname` (`jobname`),
+  KEY `feh_idx` (`fileset`),
+  KEY `fk_schedule_idx` (`schedule`),
+  CONSTRAINT `fk_fileset` FOREIGN KEY (`fileset`) REFERENCES `filesets` (`name`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_schedule` FOREIGN KEY (`schedule`) REFERENCES `schedules` (`name`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_hostid` FOREIGN KEY (`hostid`) REFERENCES `hosts` (`hostid`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;

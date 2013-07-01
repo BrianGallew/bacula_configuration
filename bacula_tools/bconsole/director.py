@@ -1,4 +1,5 @@
 from base import BSock
+from .. import BACULA_DIR_PORT
 # client for interacting with a the Bacula director
 
 class Director(BSock):

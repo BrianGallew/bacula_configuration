@@ -1,4 +1,5 @@
 from base import BSock
+from .. import BACULA_FD_PORT
 # client for interacting with a file daemon
 
 class FileDaemon(BSock):

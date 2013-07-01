@@ -1,7 +1,7 @@
 '''Bacula configuration database stuff: common routines, credentials, etc.
 Configuration is at the *end* of this file.'''
 
-import re
+import re, shlex, sys, os
 
 STATUS = ['Full', 'Used', 'Append', 'Cleaning', 'Error', 'Purged', 'Recycle', 'Available']
 
@@ -94,3 +94,21 @@ _default_rules = [('Daily', 'FullUnixGZIP')]
 
 # Where we keep
 BACULADATADIR = '/data/bacula'
+
+
+# Now that we've set all of the default initial values, we'll load and
+# parse config files, updating the environment from them.
+CUSTOM_LIST = ['/etc/bacula/bacula.conf',
+               '/usr/local/etc/bacula/bacula.conf',
+               '/usr/local/etc/bacula.conf',
+               os.path.join(os.environ['HOME'], '.bacula.conf')
+               ]
+for filename in CUSTOM_LIST:
+    if not os.access(filename, os.R_OK): continue
+    for pair in shlex.split(open(filename), True):
+        parts = pair.split('=',1) # Only two pieces!
+        if len(parts) != 2:
+            print 'Unknown configuration line:', pair
+            continue
+        try: locals()[parts[0]] = int(parts[1])
+        except: locals()[parts[0]] = parts[1]

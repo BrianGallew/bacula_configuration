@@ -4,8 +4,8 @@ from base import BSock
 class Director(BSock):
     '''Client for communicating directly with a file daemon.
     '''
-# {{{ __init__(address, password, port=9101, debug=False, timeout=5):
-    def __init__(self, address, password, port=9101, debug=False, timeout=5):
+# {{{ __init__(address, password, port=BACULA_DIR_PORT, debug=False, timeout=5):
+    def __init__(self, address, password, port=BACULA_DIR_PORT, debug=False, timeout=5):
         BSock.__init__(self, address, password, '*UserAgent*',
                                              port, debug, timeout)
         return

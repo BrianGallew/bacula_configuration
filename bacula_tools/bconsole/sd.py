@@ -4,8 +4,8 @@ from base import BSock
 class StorageDaemon(BSock):
     '''Client for communicating directly with a storage daemon.
     '''
-# {{{ __init__(address, password, myname, port=9103, debug=False, timeout=5):
-    def __init__(self, address, password, myname, port=9103, debug=False, timeout=5):
+# {{{ __init__(address, password, myname, port=BACULA_SD_PORT, debug=False, timeout=5):
+    def __init__(self, address, password, myname, port=BACULA_SD_PORT, debug=False, timeout=5):
         BSock.__init__(self, address, password, 'Director ' + myname,
                                              port, debug, timeout)
         return

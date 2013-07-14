@@ -13,11 +13,12 @@ BACULA_SD_PORT = 9103
 BACULAENABLED = 'bacula_enabled'
 BEGIN = 'begin'
 CATALOG = 'Catalog'
+DATA = 'data'
 DB = 'db'
 DBADDRESS = 'dbaddress'
 DBNAME = 'dbname'
 DBPASSWORD = 'dbpassword'
-DBTABLE = 'bacula_hosts'      # This shouldn't ever change now, but we'll leave it alone anyway.
+DBTABLE = 'hosts'
 DBUSER = 'dbuser'
 DEBUG = None
 DIRECTOR = 'director'
@@ -32,8 +33,10 @@ FILESET = 'fileset'
 HOSTID = 'hostid'
 HOSTNAME = 'hostname'
 HOSTNAMES = 'hostnames'
+ID = 'id'
 JOBRETENTION = 'job_retention'
 LASTUPDATED = 'lastupdated'
+NAME = 'name'
 NO = 'no'
 NOTES = 'notes'
 OS = 'os'
@@ -42,7 +45,11 @@ PASSWORD = 'password'
 POOL = 'pool'
 PRIMARY_DIR = 'primary_dir'
 PRIORITY = 'priority'
+ROWS = 'rows'
+RUN = 'run'
 SCHEDULE = 'schedule'
+SCHEDULES = 'schedules'
+SCHEDULE_TIME = 'schedule_time'
 SERVICE = 'services'
 STORAGEPASSWORD = 'storagepassword'
 STORAGESERVER = 'storageserver'
@@ -112,3 +119,6 @@ for filename in CUSTOM_LIST:
             continue
         try: locals()[parts[0]] = int(parts[1])
         except: locals()[parts[0]] = parts[1]
+
+from bacula_config import *
+from util import *

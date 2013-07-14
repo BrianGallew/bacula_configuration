@@ -42,7 +42,7 @@ class Bacula_Config:
     # }}}
     # {{{ db_connect(database=DBSCHEMA, user=DBUSER, passwd=DBPASSWORD, host=DBHOST):
 
-    def db_connect(self, database, user, passwd, host):
+    def db_connect(self, database=DBSCHEMA, user=DBUSER, passwd=DBPASSWORD, host=DBHOST):
         '''Use the alt flag to get a one-off DB connection'''
         key = database+user+passwd+host
         if not self.CONNECTIONS.has_key(key): 
@@ -82,8 +82,9 @@ class Bacula_Config:
     # }}}
     # {{{ do_sql(sql, args=None):
 
-    def do_sql(self, sql, args=None):
-        cursor = self.get_cursor()
+    def do_sql(self, sql, args=None, asdict=False):
+        if asdict: cursor = self.get_cursor(cursorclass=db.cursors.DictCursor)
+        else: cursor = self.get_cursor()
         cursor.execute(sql, args)
         return cursor.fetchall()
 
@@ -137,11 +138,11 @@ class Bacula_Config:
         return "I was unable to find any close matches to '%(value)s'.  Please try harder.\n" % locals();
 
     # }}}
-    # {{{ value_check(table, field, value, suggest=False):
+    # {{{ value_check(table, field, value, suggest=False, asdict=False):
 
-    def value_check(self, table, field, value, suggest=False):
+    def value_check(self, table, field, value, suggest=False, asdict=False):
         '''check the existence of a value in a column'''
-        result = self.do_sql("SELECT * FROM %(table)s where %(field)s = %%s" % locals(), value);
+        result = self.do_sql("SELECT * FROM %(table)s where %(field)s = %%s" % locals(), value, asdict);
         if result: return result
         if not suggest: return result
         return self.die('No such value (%(value)s) in %(table)s' % locals(),
@@ -155,7 +156,7 @@ class Bacula_Config:
         '''ensure the existence of a value in a column'''
         if not self.value_check(table, field, value):
             self.safe_do_sql("INSERT INTO %(table)s (%(field)s) VALUES (%%s)" % locals(), value);
-        return
+        return self.value_check(table, field, value)
 
     # }}}
     # {{{ dump_schedule(name):
@@ -208,11 +209,10 @@ class Bacula_Config:
     # }}}
     # {{{ get_dict_data(sql, targetclass = None, *args):
 
+    ### FIXME: this function should go away once the other objects become more "real".
     def get_dict_data(self, sql, targetclass, *args):
         dlist = []
-        cursor = self.get_cursor(cursorclass=db.cursors.DictCursor)
-        cursor.execute(sql)     # Sorry, super-limited
-        for row in cursor.fetchall():
+        for row in self.do_sql(sql, args, True):
             if targetclass:
                 dlist.append(targetclass(row, *args))
             else:

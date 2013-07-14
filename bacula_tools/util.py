@@ -1,4 +1,5 @@
 from . import *
+from . import Bacula_Factory
 import re, os, sys, filecmp
 
 # {{{ guess_os():
@@ -83,12 +84,25 @@ class ConfigFile(object):       # easy config file management
 # }}}
     
 class DbDict(dict):             # base class for all of the things derived from database rows
+    comment_re = re.compile(r'#.*', re.MULTILINE)
+    semicolon_re = re.compile(r';', re.MULTILINE)
+
     # {{{ __init__(row): pass in a row (as a dict)
     def __init__(self, row):
         dict.__init__(self, row)
+        self.table = 'override me'
+        self.field = 'override me'
         return
 
     # }}}
+    def _regularize_string(self, string):
+        return self.semicolon_re.sub('\n', self.comment_re.sub('', string))
+    def search(self, string):
+        bc = Bacula_Factory()
+        new_me = bc.value_check(self.table, self.field, string, asdict=True)
+        try: self.update(new_me[0])
+        except Exception, e: pass
+        return self
 
 class Director(DbDict):
     # {{{ __init__(row):

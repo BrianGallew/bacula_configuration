@@ -122,3 +122,4 @@ for filename in CUSTOM_LIST:
 
 from bacula_config import *
 from util import *
+from schedule import Schedule

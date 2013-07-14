@@ -1,0 +1,50 @@
+#! /usr/local/bin/python
+# Add/remove/update/dump schedules
+
+import sys, os
+import optparse
+from bacula_tools import Schedule, DBTABLE, Bacula_Factory, SCHEDULES
+
+# {{{ Parser configuration and sanity checking.  Also, "bacula" is instantiated in here
+
+parser = optparse.OptionParser(description='Manage Bacula schedules.', usage='usage: %prog [options] [schedule]')
+parser.add_option('--create', dest='create', action='store_true',
+                   default=False, help='Create the given schedule')
+parser.add_option('--delete', dest='delete', action='store_true',
+                   default=False, help='Delete the given schedule')
+parser.add_option('--add', dest='add', action='append', default=[],
+                   help='Add argument to the given schedule')
+parser.add_option('--remove', dest='remove', action='append', default=[],
+                   help='Remove argument from the given schedule')
+parser.add_option('--list', dest='list', action='store_true',
+                   default=False, help='List the available schedules')
+
+(args, schedule_arg) = parser.parse_args()
+bacula = Bacula_Factory()        # Instantiate our DB connection thingy
+
+if args.delete and (args.create or args.add or args.remove): bacula.die('','If you delete then there is no sense in doing anything else.',
+                                           "You didn't think this one out very well, did you?.")
+
+# }}}
+
+if args.list:
+    print bacula.formatted_query_result('select name from %s' % SCHEDULES, infix='\n')
+    if not schedule_arg: exit()
+if not schedule_arg:
+    parser.print_help()
+    exit()
+
+s = Schedule()
+s.search(schedule_arg[0])
+
+if args.delete:
+    s.delete()
+    print 'Deleted schedule:', schedule_arg[0]
+    exit()                      # Nothing to print out now
+    
+if args.create: s._set_name(schedule_arg[0])
+for line in args.add: s._add_run(line)
+for line in args.remove: s._delete_run(line)
+
+print s
+exit()

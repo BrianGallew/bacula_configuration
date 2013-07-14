@@ -79,6 +79,19 @@ class Schedule(DbDict):
         return
 
     # }}}
+    # {{{ _delete_run(run): add another run
+
+    def _delete_run(self, run):
+        bc = Bacula_Factory()
+        for row in self[RUN]:
+            if not row[1] == run: continue
+            bc.do_sql('DELETE FROM schedule_link WHERE scheduleid = %s AND timeid = %s', (self[ID], row[0]))
+            self[RUN].remove(row)
+            return
+        print 'I cannot delete Run entries that do not exist!'
+        return
+
+    # }}}
     # {{{ _set_name(name): set my name
 
     def _set_name(self, name):
@@ -92,12 +105,8 @@ class Schedule(DbDict):
     # {{{ __str__(): 
 
     def __str__(self):
-        self[ROWS] = '\n  '.join([x[1] for x in self[RUN]])
-        return '''Schedule {
-  Name = %(name)s
-  %(rows)s
-}
-''' % self
+        self[ROWS] = '\n'.join(['  Run = %s' % x[1] for x in self[RUN]])
+        return '''Schedule {\n  Name = %(name)s\n%(rows)s\n}\n''' % self
 
 # }}}
     def search(self, string):
@@ -106,8 +115,8 @@ class Schedule(DbDict):
 
     def _load_runs(self):
         bc = Bacula_Factory()
-        self[RUN] = bc.do_sql('''SELECT b.id AS id, b.data AS data FROM schedule_link a, schedule_time b
-                                 WHERE a.scheduleid = %s AND a.timeid = b.id''', (self[ID],))
+        self[RUN] = list(bc.do_sql('''SELECT b.id AS id, b.data AS data FROM schedule_link a, schedule_time b
+                                      WHERE a.scheduleid = %s AND a.timeid = b.id''', (self[ID],)))
         return self
 
     def delete(self):

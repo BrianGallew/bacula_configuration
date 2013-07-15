@@ -1,36 +1,9 @@
 from . import *
 from re import compile, MULTILINE, IGNORECASE, DOTALL
 
-# Sample data:
-sample1 = '''
-#
-# When to do the backups, full backup on first sunday of the month,
-#  differential (i.e. incremental since full) every other sunday,
-#  and incremental backups other days
-Schedule {
-  Name = "WeeklyCycle"
-  Run = Full 1st sun at 23:05
-  Run = Differential 2nd-5th sun at 23:05
-  Run = Incremental mon-sat at 23:05
-}
-'''
-sample2 = '''
-Schedule { # This schedule does the catalog. It starts after the WeeklyCycle
-  Name = "WeeklyCycleAfterBackup"
-  Run = Full sun-sat at 23:10
-}
-'''
-sample3 = '''
-Schedule { # This schedule is just plain silly
-  Name = "Silly Schedule";  Run = Full wed at 23:10;Run = Incremental sat at 07:00 }
-'''
-sample4 = '''
-Schedule { # This schedule is just plain silly
-  Name = None
-}
-'''
-
 class Schedule(DbDict):
+    # {{{ __init__(row={}, string=None):
+
     def __init__(self, row={}, string=None):
         # set some default values before updating
         self[ID] = None
@@ -40,8 +13,9 @@ class Schedule(DbDict):
         if string: self.parse_string(string)
         # used to search
         self.table = SCHEDULES
-        self.field = NAME
         return
+
+    # }}}
     # {{{ parse_string(string): update schedule from a string (config file entry)
 
     def parse_string(self, string):
@@ -49,12 +23,11 @@ class Schedule(DbDict):
         
         We're going to make a log of assumption here, not the least of
         which is that what will be passed in is a single Schedule{}
-        resource, possibly with comments.  Anything else will throw an
-        exception.  Saving wil be ... complicated.'''
-        schedule_re = compile(r'^schedule\s*\{(.*)\}', MULTILINE|IGNORECASE|DOTALL)
+        resource, without comments.  Anything else will throw an
+        exception.'''
         name_re = compile(r'^\s*name\s*=\s*(.*)', MULTILINE|IGNORECASE)
         run_re = compile(r'^\s*run\s*=\s*(.*)', MULTILINE|IGNORECASE)
-        data = schedule_re.search(self._regularize_string(string)).groups()[0].strip()
+        data = string.strip()
         g = name_re.search(data).groups()
         self._set_name(g[0].strip())
         data = name_re.sub('', data)
@@ -109,9 +82,14 @@ class Schedule(DbDict):
         return '''Schedule {\n  Name = %(name)s\n%(rows)s\n}\n''' % self
 
 # }}}
+    # {{{ search(string): load information based on a name
+
     def search(self, string):
         DbDict.search(self, string)
         return self._load_runs()
+
+    # }}}
+    # {{{ _load_runs(): helper for loading self from the database
 
     def _load_runs(self):
         bc = Bacula_Factory()
@@ -119,22 +97,6 @@ class Schedule(DbDict):
                                       WHERE a.scheduleid = %s AND a.timeid = b.id''', (self[ID],)))
         return self
 
-    def delete(self):
-        bc = Bacula_Factory()
-        bc.do_sql('DELETE FROM schedules WHERE id = %s', self[ID])
-
-def testme():      # Run the testing bits!
-    for t in [sample1, sample2, sample3, sample4]:
-        s = Schedule(string = t)
-        print(s)
-    print 'testing search'
-    s = Schedule()
-    s.search('"WeeklyCycle"')
-    print s
-    print 'testing delete'
-    s.delete()
-    s = Schedule()
-    s.search('"WeeklyCycle"')
-    print s
+    # }}}
     
 

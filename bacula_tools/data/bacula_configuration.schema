@@ -1,24 +1,44 @@
 -- -*- sql -*-
 -- select 'Creating table templates';
+
+DROP TABLE `service_link` ;
+DROP TABLE `schedule_link` ;
+DROP TABLE `jobs` ;
+DROP TABLE `hosts` ;
+DROP TABLE `messages`;
+DROP TABLE `storage` ;
+DROP TABLE `directors` ;
+DROP TABLE `schedule_time` ;
+DROP TABLE `schedules` ;
+DROP TABLE `services` ;
+DROP TABLE `fileset_link` ;
+DROP TABLE `fileset_files` ;
+DROP TABLE `filesets` ;
+DROP TABLE `templates`;
+
 CREATE TABLE `templates` 
  (
+  `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
   `template` text NOT NULL,
-  PRIMARY KEY `PRIMARY` (`name`)
+  PRIMARY KEY `PRIMARY` (`id`),
+  UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table messages';
 CREATE TABLE `messages` 
  (
+  `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
   `message` text NOT NULL,
-  PRIMARY KEY `PRIMARY` (`name`)
+  PRIMARY KEY `PRIMARY` (`id`),
+  UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table directors';
 CREATE TABLE `directors` (
   `id` int(11) NOT NULL auto_increment,
-  `hostname` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
   `dbname` varchar(255) default NULL,
   `dbuser` varchar(255) default NULL,
   `dbpassword` varchar(255) default NULL,
@@ -31,13 +51,13 @@ CREATE TABLE `directors` (
 
 -- select 'Creating table storage';
 CREATE TABLE `storage` (
-  `storageid` int(11) NOT NULL auto_increment,
-  `hostname` varchar(255) NOT NULL,
+  `id` int(11) NOT NULL auto_increment,
+  `name` varchar(255) NOT NULL,
   `dirid` int(11) NOT NULL,
   `password` varchar(255) default NULL,
   `address` varchar(255) default NULL,
   `port` int(11) NOT NULL DEFAULT 9103,
-  PRIMARY KEY `storageid` (`storageid`),
+  PRIMARY KEY `id` (`id`),
   UNIQUE KEY `address_UNIQUE` (`address`),
   CONSTRAINT `fk_dir` FOREIGN KEY (`dirid`) REFERENCES `directors` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -67,9 +87,10 @@ CREATE TABLE `services` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table files';
-CREATE TABLE `files` (
+CREATE TABLE `fileset_files` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
+  `option` tinyint(1)  NOT NULL DEFAULT 0,
   PRIMARY KEY  (`id`),
   UNIQUE KEY `name_UNIQUE` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -78,25 +99,16 @@ CREATE TABLE `files` (
 CREATE TABLE `filesets` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
-  `option` tinyint(1)  NOT NULL DEFAULT 0,
-  PRIMARY KEY  (`id`),
+  `vssenabled` tinyint(1)  NOT NULL DEFAULT 1,
+  `ignorechanges` tinyint(1)  NOT NULL DEFAULT 0,
+  PRIMARY KEY `id` (`id`),
   UNIQUE KEY `name_UNIQUE` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
--- select 'Creating table fileset_files';
-CREATE TABLE `fileset_files` (
-  `fileset_id` int(11) NOT NULL,
-  `file_id` int(11) NOT NULL,
-  `exclude` tinyint(1) NOT NULL default '0',
-  PRIMARY KEY  (`fileset_id`,`file_id`),
-  KEY `fk_fileset_idx` (`fileset_id`),
-  KEY `fd_files_idx` (`file_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table hosts';
 CREATE TABLE `hosts` (
   `id` int(11) NOT NULL auto_increment,
-  `hostname` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
   `address` varchar(255) NOT NULL,
   `port` int(11) NOT NULL DEFAULT 9102,
   `password` varchar(255) NOT NULL,
@@ -107,13 +119,13 @@ CREATE TABLE `hosts` (
   `owners` varchar(255) default NULL COMMENT 'This should be email addresses for people to be notified/questioned about service issues.',
   `lastupdated` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
   PRIMARY KEY `PRIMARY` (`id`),
-  KEY `hostname` (`hostname`)
+  KEY `hostname` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table jobs';
 CREATE TABLE `jobs` (
   `id` int(11) NOT NULL auto_increment,
-  `jobname` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
   `hostid` int(11) NOT NULL,
   `storageserver` varchar(255) NOT NULL,
   `fileset` varchar(255) NOT NULL,
@@ -133,8 +145,8 @@ CREATE TABLE `jobs` (
   CONSTRAINT `fk_hostid` FOREIGN KEY (`hostid`) REFERENCES `hosts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table service_links';
-CREATE TABLE `service_links` (
+-- select 'Creating table service_link';
+CREATE TABLE `service_link` (
   `id` int(11) NOT NULL auto_increment,
   `serviceid` int(11) NOT NULL,
   `jobid` int(11) NOT NULL,
@@ -151,4 +163,16 @@ CREATE TABLE `schedule_link` (
   PRIMARY KEY `PRIMARY` (`id`),
   CONSTRAINT `fk_schedule_id` FOREIGN KEY (`scheduleid`) REFERENCES `schedules` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_time_id` FOREIGN KEY (`timeid`) REFERENCES `schedule_time` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- select 'Creating table fileset_files';
+CREATE TABLE `fileset_link` (
+  `id` int(11) NOT NULL auto_increment,
+  `fileset_id` int(11) NOT NULL,
+  `file_id` int(11) NOT NULL,
+  `exclude` tinyint(1) NOT NULL default '0',
+  PRIMARY KEY `id` (`id`),
+  UNIQUE KEY  (`fileset_id`,`file_id`),
+  CONSTRAINT `fk_fileset_id` FOREIGN KEY (`fileset_id`) REFERENCES `filesets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_files_id` FOREIGN KEY (`file_id`) REFERENCES `fileset_files` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

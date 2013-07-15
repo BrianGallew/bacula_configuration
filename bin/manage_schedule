@@ -3,7 +3,7 @@
 
 import sys, os
 import optparse
-from bacula_tools import Schedule, DBTABLE, Bacula_Factory, SCHEDULES
+from bacula_tools import Schedule, Bacula_Factory, SCHEDULES
 
 # {{{ Parser configuration and sanity checking.  Also, "bacula" is instantiated in here
 
@@ -14,6 +14,8 @@ parser.add_option('--delete', dest='delete', action='store_true',
                    default=False, help='Delete the given schedule')
 parser.add_option('--add', dest='add', action='append', default=[],
                    help='Add argument to the given schedule')
+parser.add_option('--rename', dest='rename', 
+                   help='Rename the given schedule')
 parser.add_option('--remove', dest='remove', action='append', default=[],
                    help='Remove argument from the given schedule')
 parser.add_option('--list', dest='list', action='store_true',
@@ -22,13 +24,14 @@ parser.add_option('--list', dest='list', action='store_true',
 (args, schedule_arg) = parser.parse_args()
 bacula = Bacula_Factory()        # Instantiate our DB connection thingy
 
-if args.delete and (args.create or args.add or args.remove): bacula.die('','If you delete then there is no sense in doing anything else.',
-                                           "You didn't think this one out very well, did you?.")
+if args.delete and (args.create or args.add or args.remove or args.rename):
+    bacula.die('','If you delete then there is no sense in doing anything else.',
+               "You didn't think this one out very well, did you?.")
 
 # }}}
 
 if args.list:
-    print bacula.formatted_query_result('select name from %s' % SCHEDULES, infix='\n')
+    print bacula.formatted_query_result('select name from %s order by name' % SCHEDULES, infix='\n')
     if not schedule_arg: exit()
 if not schedule_arg:
     parser.print_help()
@@ -43,6 +46,7 @@ if args.delete:
     exit()                      # Nothing to print out now
     
 if args.create: s._set_name(schedule_arg[0])
+if args.rename: s.change_name(args.rename)
 for line in args.add: s._add_run(line)
 for line in args.remove: s._delete_run(line)
 

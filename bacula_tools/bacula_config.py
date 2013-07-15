@@ -68,9 +68,9 @@ class Bacula_Config:
         return self.CURRENT_CONNECTION.cursor(**kwargs)
 
     # }}}
-    # {{{ get_column(column, where_phrase = None, where_args = None, distinct=False, order = None, dbtable = DBTABLE):
+    # {{{ get_column(column, where_phrase = None, where_args = None, distinct=False, order = None, dbtable = HOSTS):
 
-    def get_column(self, column, where_phrase = None, where_args = None, distinct=False, order = None, dbtable = DBTABLE):
+    def get_column(self, column, where_phrase = None, where_args = None, distinct=False, order = None, dbtable = HOSTS):
         cursor = self.get_cursor()
         if not order: order = column
         wp = 'WHERE %s' % where_phrase if where_phrase else ''

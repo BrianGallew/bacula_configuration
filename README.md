@@ -27,3 +27,6 @@ MYSQL_PASS
 You will probably want to customize _guessing_rules, though that's not as
 amenable to configuration (sorry).
 
+pyparsing is required if and only if you want to import an existing
+configuration.  Otherwise, it's unneeded.
+

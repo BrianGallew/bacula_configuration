@@ -10,7 +10,7 @@ _INTERNED = ['address', 'begin', 'Catalog', 'data', 'db', 'dbaddress',  'dbname'
              'includes', 'lastupdated', 'name', 'no', 'notes', 'os', 'owners', 'password', 'pool', 'option',
              'primary_dir', 'priority', 'rows', 'run', 'schedule', 'schedules', 'schedule_time', 'vssenabled',
              'storagepassword', 'storageserver', 'storageserveraddress', 'timespan', 'yes', 'fileset_files',
-             'service', 'services', 'bacula_enabled', 'file_retention', 'job_retention', 'options',
+             'service', 'services', 'bacula_enabled', 'file_retention', 'job_retention', 'options', 'messages',
              'Full', 'Used', 'Append', 'Cleaning', 'Error', 'Purged', 'Recycle', 'Available', 'ignorechanges',
              ]
 
@@ -40,7 +40,7 @@ def parser(string):
     LB = '{'
     comment_re = re.compile(r'#.*', re.MULTILINE)
     semicolon_re = re.compile(r';', re.MULTILINE)
-    string = semicolon_re.sub('\n', comment_re.sub('', string))
+    string = semicolon_re.sub('\n', comment_re.sub('', string)).replace('\\\n','').replace('\n\n', '\n')
     parts = string.split(RB)
     parsed = []
     while parts:
@@ -127,8 +127,10 @@ from bacula_config import *
 from util import *
 from schedule import Schedule
 from fileset import Fileset
+from messages import Messages
 
 _DISPATCHER = {
     FILESET: Fileset,
     SCHEDULE: Schedule,
+    MESSAGES: Messages,
     }

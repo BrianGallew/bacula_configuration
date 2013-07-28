@@ -1,0 +1,10 @@
+#! /usr/bin/env python
+
+import os, sys
+from bacula_tools import parser
+
+if len(sys.argv) < 2:
+    print "Usage: %s configfile.conf [configfile2.conf...]" % sys.argv[0]
+    exit()
+for f in sys.argv[1:]:
+    parser(open(f).read())

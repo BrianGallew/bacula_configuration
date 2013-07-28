@@ -3,7 +3,7 @@
 
 import sys, os
 import optparse
-from bacula_tools import Schedule, Bacula_Factory, SCHEDULES
+from bacula_tools import Schedule, Bacula_Factory, SCHEDULES, ID
 
 # {{{ Parser configuration and sanity checking.  Also, "bacula" is instantiated in here
 
@@ -38,14 +38,17 @@ if not schedule_arg:
     exit()
 
 s = Schedule()
+if args.create: s._set_name(schedule_arg[0])
 s.search(schedule_arg[0])
+if not s[ID]:
+    print 'No such fileset: %s' % schedule_arg[0],
+    exit()
 
 if args.delete:
     s.delete()
     print 'Deleted schedule:', schedule_arg[0]
     exit()                      # Nothing to print out now
     
-if args.create: s._set_name(schedule_arg[0])
 if args.rename: s.change_name(args.rename)
 for line in args.add: s._add_run(line)
 for line in args.remove: s._delete_run(line)

@@ -1,13 +1,13 @@
 -- -*- sql -*-
 -- select 'Creating table templates';
-
+-- Order matters!
 DROP TABLE `service_link` ;
 DROP TABLE `schedule_link` ;
 DROP TABLE `jobs` ;
 DROP TABLE `hosts` ;
-DROP TABLE `messages`;
 DROP TABLE `storage` ;
 DROP TABLE `directors` ;
+DROP TABLE `messages`;
 DROP TABLE `schedule_time` ;
 DROP TABLE `schedules` ;
 DROP TABLE `services` ;
@@ -30,7 +30,7 @@ CREATE TABLE `messages`
  (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
-  `message` text NOT NULL,
+  `data` varchar(32767) NOT NULL default '',
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -39,14 +39,31 @@ CREATE TABLE `messages`
 CREATE TABLE `directors` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
+  `password` varchar(255) default NULL,
+  `message_id` int(11) NOT NULL,
+  `working_directory` varchar(255) default NULL,
+  `pid_directory` varchar(255) default NULL,
+  `scripts_directory` varchar(255) default NULL,
+  `queryfile` varchar(255) default NULL,
+  `heartbeat_interval` int(11),
+  `maximum_concurrent_jobs` int(11),
+  `fd_conect_timeout` int(11),
+  `sd_conect_timeout` int(11),
+  `diraddresses` varchar(255) default NULL,
+  `statistics_retention` varchar(255) default NULL,
+  `verid` varchar(255) default NULL,
+  `maximumconsoleconnections` int(11),
+
   `dbname` varchar(255) default NULL,
   `dbuser` varchar(255) default NULL,
   `dbpassword` varchar(255) default NULL,
   `dbaddress` varchar(255) default NULL,
   `address` varchar(255) default NULL,
+  `sourceaddress` varchar(255) default NULL,
   `port` int(11) NOT NULL DEFAULT 9101,
   PRIMARY KEY `PRIMARY` (`id`),
-  UNIQUE KEY `address_UNIQUE` (`address`)
+  UNIQUE KEY `name` (`name`),
+  CONSTRAINT `fk_message` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table storage';

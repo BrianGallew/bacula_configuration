@@ -57,13 +57,6 @@ class Fileset(DbDict):
         return
 
     # }}}
-    # {{{ _set(field, value): handy shortcut for setting and saving values
-
-    def _set(self, field, value):
-        self[field] = value
-        return self._save()
-
-    # }}}
     # {{{ parse_string(string): Entry point for a recursive descent parser
 
     def parse_string(self, string):
@@ -180,31 +173,3 @@ class Fileset(DbDict):
                          (self[NAME], self[VSSENABLED], self[IGNORECHANGES], self[ID]))
 # }}}
         
-# {{{ testme: function to test various pieces 'cause I'm too lazy to do unit tests
-
-def testme():      # Run the testing bits!
-    for t in [sample1, sample2, sample3, sample4]:
-        try:
-            s = Fileset(string = t)
-            print(s)
-        except Exception, e:
-            print e
-    print 'testing search'
-    try:
-        s = Fileset()
-        s.search('"WeeklyCycle"')
-        print s
-    except Exception, e:
-        print e
-        
-    try:
-        print 'testing delete'
-        s.delete()
-        s = Fileset()
-        s.search('"WeeklyCycle"')
-        print s
-    except Exception, e:
-        print e
-
-# }}}
-

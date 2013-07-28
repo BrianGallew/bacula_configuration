@@ -85,12 +85,13 @@ class ConfigFile(object):       # easy config file management
     
 class DbDict(dict):             # base class for all of the things derived from database rows
     brace_re = re.compile(r'\s*(.*?)\s*\{\s*(.*)\s*\}\s*', re.MULTILINE|re.DOTALL)
+    name_re = re.compile(r'^\s*name\s*=\s*(.*)', re.MULTILINE|re.IGNORECASE)
 
     # {{{ __init__(row): pass in a row (as a dict)
     def __init__(self, row):
         dict.__init__(self, row)
         self.table = 'override me'
-        self.field = NAME
+        self.field = DATA
         return
 
     # }}}
@@ -98,7 +99,7 @@ class DbDict(dict):             # base class for all of the things derived from 
 
     def search(self, string):
         bc = Bacula_Factory()
-        new_me = bc.value_check(self.table, self.field, string, asdict=True)
+        new_me = bc.value_check(self.table, NAME, string, asdict=True)
         try: self.update(new_me[0])
         except Exception, e: pass
         return self
@@ -121,69 +122,18 @@ class DbDict(dict):             # base class for all of the things derived from 
         return
 
     # }}}
+    # {{{ _set(field, value): handy shortcut for setting and saving values
 
-class Director(DbDict):
-    # {{{ __init__(row):
+    def _set(self, field, value):
+        self[field] = value
+        return self._save()
 
-    def __init__(self, row):
-        DbDict.__init__(self, row)
-        return
-
-# }}}
-    # {{{ __str__(): useful for printing out the Director clause needed by bconsole
-
-    def __str__(self):
+    # }}}
+    # {{{ _save(): Save the top-level fileset record
+    def _save(self):
         bc = Bacula_Factory()
-        myself = bc.get_clients(specific=self[HOSTNAME])[0]
-        return '''Director {
-  Name = %(hostname)s
-  DIRport = 9101
-  address = %(address)s
-  Password = "%(password)s"
-}
-''' % myself
-
-# }}}
-    # {{{ dir_conf(bc): bc == a valid Bacula_Config object
-
-    def dir_conf(self, bc):
-        # This is mostly boilerplate, but still
-        me_as_client = bc.get_clients(self[HOSTNAME])[0]
-        self[PASSWORD] = me_as_client[PASSWORD]
-        data = '''
-Director {
-  Name = %(hostname)s
-    DIRport = 9101                # where we listen for UA connections
-    QueryFile = "/etc/bacula/scripts/query.sql"
-    WorkingDirectory = "/var/lib/bacula"
-    PidDirectory = "/var/run/bacula"
-    Maximum Concurrent Jobs = 100
-    Password = "%(password)s"
-    Messages = Standard
-    Scripts Directory = /etc/bacula/scripts
-}
-
-Catalog {
-  Name = MyCatalog
-  DB Name = %(dbname)s
-  user = %(dbuser)s
-  password = "%(dbpassword)s"
-  DB Address = %(dbaddress)s
-}
-
-Messages {
-  Name = Standard
-  mailcommand = "/usr/local/bacula/zabbix.bacula %%c bacula@llnw.com %%t %%e %%l"
-  operatorcommand = "/usr/lib/bacula/bsmtp -h localhost -f \"\(Bacula\) bacula@llnw.com\" -s \"Bacula: Intervention needed for %%j\" %%r"
-  mail = bacula@llnw.com = all, !skipped
-  operator = hkugler@llnw.com, bacula@llnw.com, bgallew@llnw.com = mount
-  console = all, !skipped, !saved
-  syslog = all, !skipped
-  catalog = all, !skipped, !saved
-}
-'''
-        return data % self
-
+        sql = 'update %s set name = %%s, %s = %%s where id = %%s' % (self.table, self.field)
+        return bc.do_sql(sql, (self[NAME], self[self.field], self[ID]))
 # }}}
         
 class StorageDaemon(DbDict):

@@ -25,17 +25,23 @@ class Schedule(DbDict):
         which is that what will be passed in is a single Schedule{}
         resource, without comments.  Anything else will throw an
         exception.'''
-        name_re = compile(r'^\s*name\s*=\s*(.*)', MULTILINE|IGNORECASE)
         run_re = compile(r'^\s*run\s*=\s*(.*)', MULTILINE|IGNORECASE)
         data = string.strip()
-        g = name_re.search(data).groups()
-        self._set_name(g[0].strip())
-        data = name_re.sub('', data)
+        g = self.name_re.search(data).groups()
+        s = g[0].strip()
+        if s[0] == '"' and  s[-1] == '"': s = s[1:-1]
+        if s[0] == "'" and  s[-1] == "'": s = s[1:-1]
+        self._set_name(s)
+        data = self.name_re.sub('', data)
         while True:
             g = run_re.search(data)
             if not g: break
-            self._add_run(g.group(1))
+            s = g.group(1).strip()
+            if s[0] == '"' and  s[-1] == '"': s = s[1:-1]
+            if s[0] == "'" and  s[-1] == "'": s = s[1:-1]
+            self._add_run(s)
             data = run_re.sub('', data, 1)
+        print "Schedule:", self[NAME]
         return
 
     # }}}

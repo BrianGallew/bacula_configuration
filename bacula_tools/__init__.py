@@ -20,7 +20,9 @@ _INTERNED = ['Append', 'Available', 'Catalog', 'Cleaning', 'Error', 'Full',
              'sd_connect_timeout', 'service', 'services', 'sourceaddress',
              'statistics_retention', 'storagepassword', 'storageserver',
              'storageserveraddress', 'timespan', 'verid', 'vssenabled',
-             'working_directory', 'yes',
+             'working_directory', 'yes', 'catalogacl', 'clientacl', 'commandacl',
+             'filesetacl', 'jobacl', 'password', 'poolacl', 'scheduleacl',
+             'storageacl', 'whereacl', 'console', 'consoles',
              ]
 
 for w in _INTERNED: locals()[w.upper()] = w
@@ -133,6 +135,7 @@ from fileset import Fileset
 from messages import Messages
 from director import Director
 from catalog import Catalog
+from console import Console
 
 _DISPATCHER = {
     FILESET: Fileset,
@@ -140,4 +143,5 @@ _DISPATCHER = {
     MESSAGES: Messages,
     DIRECTOR: Director,
     CATALOG.lower(): Catalog,
+    CONSOLE: Console,
     }

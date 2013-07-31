@@ -14,14 +14,23 @@ DROP TABLE `services` ;
 DROP TABLE `fileset_link` ;
 DROP TABLE `fileset_files` ;
 DROP TABLE `filesets` ;
-DROP TABLE `templates`;
+DROP TABLE `consoles`;
 DROP TABLE `catalogs`;
 
-CREATE TABLE `templates` 
+CREATE TABLE `consoles` 
  (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
-  `template` text NOT NULL,
+  `password` varchar(4096),
+  `catalogacl` varchar(4096),	
+  `clientacl` varchar(4096),
+  `commandacl` varchar(4096),
+  `filesetacl` varchar(4096),
+  `jobacl` varchar(4096),
+  `poolacl` varchar(4096),
+  `scheduleacl` varchar(4096),
+  `storageacl` varchar(4096),
+  `whereacl` varchar(4096),
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

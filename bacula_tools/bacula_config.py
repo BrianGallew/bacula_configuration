@@ -40,9 +40,9 @@ class Bacula_Config:
         }
 
     # }}}
-    # {{{ db_connect(database=DBSCHEMA, user=DBUSER, passwd=DBPASSWORD, host=DBHOST):
+    # {{{ db_connect(database=MYSQL_DB, user=MYSQL_USER, passwd=MYSQL_PASS, host=MYSQL_HOST):
 
-    def db_connect(self, database=DBSCHEMA, user=DBUSER, passwd=DBPASSWORD, host=DBHOST):
+    def db_connect(self, database=MYSQL_DB, user=MYSQL_USER, passwd=MYSQL_PASS, host=MYSQL_HOST):
         '''Use the alt flag to get a one-off DB connection'''
         key = database+user+passwd+host
         if not self.CONNECTIONS.has_key(key): 
@@ -150,13 +150,13 @@ class Bacula_Config:
                         self.suggest(table, field, value))
 
     # }}}
-    # {{{ value_ensure(table, field, value):
+    # {{{ value_ensure(table, field, value, asdict=False):
 
-    def value_ensure(self, table, field, value):
+    def value_ensure(self, table, field, value, asdict=False):
         '''ensure the existence of a value in a column'''
-        if not self.value_check(table, field, value):
+        if not self.value_check(table, field, value, asdict=asdict):
             self.safe_do_sql("INSERT INTO %(table)s (%(field)s) VALUES (%%s)" % locals(), value);
-        return self.value_check(table, field, value)
+        return self.value_check(table, field, value, asdict=asdict)
 
     # }}}
     # {{{ dump_schedule(name):

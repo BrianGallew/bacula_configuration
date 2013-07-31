@@ -4,14 +4,23 @@ Configuration is at the *end* of this file.'''
 import re, shlex, sys, os
 
 
-_INTERNED = ['address', 'begin', 'Catalog', 'data', 'db', 'dbaddress',  'dbname', 'dbpassword',
-             'hosts', 'dbuser', 'director', 'directors', 'director_name', 'dirid', 'enabled', 'entries',
-             'end', 'exclude', 'excludes', 'failure', 'fileset', 'filesets', 'hostid', 'hostname', 'hostnames', 'id',
-             'includes', 'lastupdated', 'name', 'no', 'notes', 'os', 'owners', 'password', 'pool', 'option',
-             'primary_dir', 'priority', 'rows', 'run', 'schedule', 'schedules', 'schedule_time', 'vssenabled',
-             'storagepassword', 'storageserver', 'storageserveraddress', 'timespan', 'yes', 'fileset_files',
-             'service', 'services', 'bacula_enabled', 'file_retention', 'job_retention', 'options', 'messages',
-             'Full', 'Used', 'Append', 'Cleaning', 'Error', 'Purged', 'Recycle', 'Available', 'ignorechanges',
+_INTERNED = ['Append', 'Available', 'Catalog', 'Cleaning', 'Error', 'Full',
+             'Purged', 'Recycle', 'Used', 'address', 'bacula_enabled', 'begin',
+             'catalogs', 'data', 'db', 'dbaddress', 'dbname', 'dbpassword',
+             'dbport', 'dbsocket', 'dbuser', 'diraddresses', 'director',
+             'director_name', 'directors', 'dirid', 'enabled', 'end', 'entries',
+             'exclude', 'excludes', 'failure', 'fd_connect_timeout', 'file_retention',
+             'fileset', 'fileset_files', 'filesets', 'heartbeat_interval', 'hostid',
+             'hostname', 'hostnames', 'hosts', 'id', 'ignorechanges', 'includes',
+             'job_retention', 'lastupdated', 'maximum_concurrent_jobs',
+             'maximumconsoleconnections', 'message_id', 'messages', 'name', 'no',
+             'notes', 'option', 'options', 'os', 'owners', 'password', 'pid_directory',
+             'pool', 'port', 'primary_dir', 'priority', 'queryfile', 'rows', 'run',
+             'schedule', 'schedule_time', 'schedules', 'scripts_directory',
+             'sd_connect_timeout', 'service', 'services', 'sourceaddress',
+             'statistics_retention', 'storagepassword', 'storageserver',
+             'storageserveraddress', 'timespan', 'verid', 'vssenabled',
+             'working_directory', 'yes',
              ]
 
 for w in _INTERNED: locals()[w.upper()] = w
@@ -81,10 +90,10 @@ def set_bool_values(key, value, obj, okey):
 # MySQL credentials for the Bacula configuration database. They should be
 # overridden in one of the configuration files (see below for the config
 # files that are checked).
-MYSQL_DB = 'baculacfg'
-MYSQL_HOST = 'localhost'
-MYSQL_USER = 'baculacfg_user'
-MYSQL_PASS = 'baculacfg_pass'
+MYSQL_DB = 'OVERRIDE ME'
+MYSQL_HOST = 'OVERRIDE ME'
+MYSQL_USER = 'OVERRIDE ME'
+MYSQL_PASS = 'OVERRIDE ME'
 
 # These rules will be used to determine what fileset(s) and schedule(s)
 # will be applied to new jobs that are generated in an automated fashion.
@@ -115,22 +124,20 @@ CUSTOM_LIST = ['/etc/bacula/bacula.conf',
                ]
 for filename in CUSTOM_LIST:
     if not os.access(filename, os.R_OK): continue
-    for pair in shlex.split(open(filename), True):
-        parts = pair.split('=',1) # Only two pieces!
-        if len(parts) != 2:
-            print 'Unknown configuration line:', pair
-            continue
-        try: locals()[parts[0]] = int(parts[1])
-        except: locals()[parts[0]] = parts[1]
+    exec( open(filename).read(), locals(), locals())
 
 from bacula_config import *
 from util import *
 from schedule import Schedule
 from fileset import Fileset
 from messages import Messages
+from director import Director
+from catalog import Catalog
 
 _DISPATCHER = {
     FILESET: Fileset,
     SCHEDULE: Schedule,
     MESSAGES: Messages,
+    DIRECTOR: Director,
+    CATALOG.lower(): Catalog,
     }

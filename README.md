@@ -28,5 +28,7 @@ You will probably want to customize _guessing_rules, though that's not as
 amenable to configuration (sorry).
 
 pyparsing is required if and only if you want to import an existing
-configuration.  Otherwise, it's unneeded.
+configuration.  Otherwise, it's unneeded.  I should note that this is
+making DRY code difficult, as adding the parsing bits to the base class
+would make pyparsing required everywhere, which is really not desirable.
 

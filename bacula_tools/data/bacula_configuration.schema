@@ -15,6 +15,7 @@ DROP TABLE `fileset_link` ;
 DROP TABLE `fileset_files` ;
 DROP TABLE `filesets` ;
 DROP TABLE `templates`;
+DROP TABLE `catalogs`;
 
 CREATE TABLE `templates` 
  (
@@ -35,31 +36,42 @@ CREATE TABLE `messages`
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+-- select 'Creating table catalogs';
+CREATE TABLE `catalogs` 
+ (
+  `id` int(11) NOT NULL auto_increment,
+  `name` varchar(255) NOT NULL,
+  `dbuser` varchar(255),
+  `dbpassword` varchar(255),
+  `dbname` varchar(255),
+  `dbaddress` varchar(255),
+  `dbsocket` varchar(255),
+  `dbport` varchar(255),
+  PRIMARY KEY `PRIMARY` (`id`),
+  UNIQUE KEY `name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
 -- select 'Creating table directors';
 CREATE TABLE `directors` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
-  `password` varchar(255) default NULL,
-  `message_id` int(11) NOT NULL,
-  `working_directory` varchar(255) default NULL,
-  `pid_directory` varchar(255) default NULL,
-  `scripts_directory` varchar(255) default NULL,
-  `queryfile` varchar(255) default NULL,
+  `password` varchar(255),
+  `message_id` int(11),
+  `working_directory` varchar(255),
+  `pid_directory` varchar(255),
+  `scripts_directory` varchar(255),
+  `queryfile` varchar(255),
   `heartbeat_interval` int(11),
   `maximum_concurrent_jobs` int(11),
-  `fd_conect_timeout` int(11),
-  `sd_conect_timeout` int(11),
-  `diraddresses` varchar(255) default NULL,
-  `statistics_retention` varchar(255) default NULL,
-  `verid` varchar(255) default NULL,
+  `fd_connect_timeout` int(11),
+  `sd_connect_timeout` int(11),
+  `diraddresses` varchar(512),
+  `statistics_retention` varchar(255),
+  `verid` varchar(255),
   `maximumconsoleconnections` int(11),
 
-  `dbname` varchar(255) default NULL,
-  `dbuser` varchar(255) default NULL,
-  `dbpassword` varchar(255) default NULL,
-  `dbaddress` varchar(255) default NULL,
-  `address` varchar(255) default NULL,
-  `sourceaddress` varchar(255) default NULL,
+  `address` varchar(255),
+  `sourceaddress` varchar(255),
   `port` int(11) NOT NULL DEFAULT 9101,
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `name` (`name`),
@@ -71,8 +83,8 @@ CREATE TABLE `storage` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
   `dirid` int(11) NOT NULL,
-  `password` varchar(255) default NULL,
-  `address` varchar(255) default NULL,
+  `password` varchar(255),
+  `address` varchar(255),
   `port` int(11) NOT NULL DEFAULT 9103,
   PRIMARY KEY `id` (`id`),
   UNIQUE KEY `address_UNIQUE` (`address`),
@@ -98,7 +110,7 @@ CREATE TABLE `schedules` (
 -- select 'Creating table services';
 CREATE TABLE `services` (
   `id` int(11) NOT NULL auto_increment,
-  `name` varchar(255) default NULL,
+  `name` varchar(255),
   `notes` text NOT NULL COMMENT 'Notes specific to an entire service, rather than an individual host.',
   PRIMARY KEY  (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -132,7 +144,7 @@ CREATE TABLE `hosts` (
   `enabled` tinyint(1) NOT NULL default '1',
   `os` varchar(255) NOT NULL,
   `notes` text,
-  `director` int(11) default NULL,
+  `director` int(11),
   `owners` varchar(255) default NULL COMMENT 'This should be email addresses for people to be notified/questioned about service issues.',
   `lastupdated` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
   PRIMARY KEY `PRIMARY` (`id`),

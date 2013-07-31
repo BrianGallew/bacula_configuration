@@ -1,6 +1,7 @@
 from . import *
 from . import Bacula_Factory
 import re, os, sys, filecmp
+from pprint import pprint
 
 # {{{ guess_os():
 
@@ -86,12 +87,18 @@ class ConfigFile(object):       # easy config file management
 class DbDict(dict):             # base class for all of the things derived from database rows
     brace_re = re.compile(r'\s*(.*?)\s*\{\s*(.*)\s*\}\s*', re.MULTILINE|re.DOTALL)
     name_re = re.compile(r'^\s*name\s*=\s*(.*)', re.MULTILINE|re.IGNORECASE)
+    SETUP_KEYS = [(NAME, ''), (DATA, '')]
+    NULL_KEYS = [ID]
+    bc = Bacula_Factory()
+    table = 'override me'       # This needs to be overridden in every subclass, before calling __init__
 
     # {{{ __init__(row): pass in a row (as a dict)
-    def __init__(self, row):
-        dict.__init__(self, row)
-        self.table = 'override me'
-        self.field = DATA
+    def __init__(self, row={}, string = None):
+        dict.__init__(self)
+        for key, value in self.SETUP_KEYS: self[key] = value
+        for key in self.NULL_KEYS: self[key] = None
+        self.update(row)
+        if string: self.parse_string(string)
         return
 
     # }}}
@@ -132,10 +139,50 @@ class DbDict(dict):             # base class for all of the things derived from 
     # {{{ _save(): Save the top-level fileset record
     def _save(self):
         bc = Bacula_Factory()
-        sql = 'update %s set name = %%s, %s = %%s where id = %%s' % (self.table, self.field)
-        return bc.do_sql(sql, (self[NAME], self[self.field], self[ID]))
+        keys = [x for x in self.keys() if not x == ID]
+        keys.sort()
+        sql = 'update %s set %s where id = %%s' % (self.table,
+                                                   ', '.join(['%s = %%s' % x for x in keys]))
+        values = [self[x] for x in keys]
+        values.append(self[ID])
+        return bc.do_sql(sql, values)
 # }}}
+    # {{{ _set_name(name): set my name
+
+    def _set_name(self, name):
+        bc = Bacula_Factory()
+        row = bc.value_ensure(self.table, NAME, name.strip(), asdict=True)[0]
+        self.update(row)
+        return
+
+    # }}}
+    # {{{ parse_string(string): Entry point for a recursive descent parser
+
+    def parse_string(self, string):
+        '''Populate a new object from a string.
         
+        We're cheating and treating this object as a blob.
+        '''
+        g = self.name_re.search(string).groups()
+        self._set_name(g[0].strip())
+        string = self.name_re.sub('', string)
+        data = '\n  '.join([x.strip() for x in string.split('\n') if x])
+        self._set(DATA, data)
+        print "%s: %s" % (self.table.capitalize(), self[NAME])
+        return
+
+    # }}}
+    # {{{ _parse_setter(key, c_int=False):
+
+    def _parse_setter(self, key, c_int=False):
+        '''Shortcut called by parser for setting values'''
+        def rv(value):
+            if c_int: self._set(key, int(value[2]))
+            else: self._set(key, value[2])
+        return rv
+
+# }}}
+
 class StorageDaemon(DbDict):
     # {{{ __init__(row, timespan, directors):
 

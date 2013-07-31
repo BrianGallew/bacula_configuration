@@ -3,23 +3,11 @@ from re import compile, MULTILINE, IGNORECASE, DOTALL
 from pprint import pprint
 
 class Fileset(DbDict):
-    LEGAL_KEYS = []
-    # {{{ __init__(row={}, string=None):
-
-    def __init__(self, row={}, string=None):
-        # set some default values before updating
-        self[ID] = None
-        self[NAME] = ''
-        self[VSSENABLED] = 1    # Defaults to on
-        self[IGNORECHANGES] = 0 # Defaults to off
-        self[ENTRIES] = []
-        DbDict.__init__(self, row)
-        if string: self.parse_string(string)
-        # used to search
-        self.table = FILESETS
-        return
-
-    # }}}
+    table = FILESETS
+    SETUP_KEYS = [(VSSENABLED, 1),
+                  (IGNORECHANGES, 0),
+                  (ENTRIES, [])
+        ]
     # {{{ search(string): load information based on a name
     def search(self, string):
         DbDict.search(self, string)
@@ -33,8 +21,7 @@ class Fileset(DbDict):
         sql = '''SELECT b.id AS id, b.name AS name, b.option, a.exclude
                  FROM fileset_link a, fileset_files b
                  WHERE a.file_id = b.id AND a.fileset_id = %s'''
-        bc = Bacula_Factory()
-        self[ENTRIES] = list(bc.do_sql(sql, self[ID]))
+        self[ENTRIES] = list(self.bc.do_sql(sql, self[ID]))
         return self
 
     # }}}
@@ -98,17 +85,16 @@ class Fileset(DbDict):
         '''The logic here could bite you if it were legal to have an option
         and a file with the same content.
         '''
-        bc = Bacula_Factory()
-        new_entry = list(bc.value_ensure(FILESET_FILES, NAME, entry)[0])
+        new_entry = list(self.bc.value_ensure(FILESET_FILES, NAME, entry)[0])
         if not new_entry[2] == option:
             new_entry[2] = option
-            list(bc.do_sql('UPDATE fileset_files SET `option` = %s WHERE id = %s', (new_entry[2], new_entry[0])))
+            list(self.bc.do_sql('UPDATE fileset_files SET `option` = %s WHERE id = %s', (new_entry[2], new_entry[0])))
 
         new_entry.append(exclude)
-        row = bc.do_sql('SELECT * FROM fileset_link WHERE fileset_id = %s AND file_id = %s and exclude = %s',
-                        (self[ID], new_entry[0], new_entry[3]))
+        row = self.bc.do_sql('SELECT * FROM fileset_link WHERE fileset_id = %s AND file_id = %s and exclude = %s',
+                             (self[ID], new_entry[0], new_entry[3]))
         if not row:
-            try: bc.do_sql('INSERT INTO fileset_link(fileset_id, file_id, exclude) VALUES (%s, %s, %s)',
+            try: self.bc.do_sql('INSERT INTO fileset_link(fileset_id, file_id, exclude) VALUES (%s, %s, %s)',
                            (self[ID], new_entry[0], new_entry[3]))
             except: print 'You may not have the same entry in both Include{} and Exclude{} clauses.'
 
@@ -119,11 +105,10 @@ class Fileset(DbDict):
     # {{{ _delete_entry(entry): delete an entry
 
     def _delete_entry(self, entry):
-        bc = Bacula_Factory()
         for row in self[ENTRIES]:
             if not row[1] == entry: continue
-            bc.do_sql('DELETE FROM fileset_link WHERE fileset_id = %s AND file_id = %s and exclude = %s',
-                      (self[ID], row[0], row[3]))
+            self.bc.do_sql('DELETE FROM fileset_link WHERE fileset_id = %s AND file_id = %s and exclude = %s',
+                           (self[ID], row[0], row[3]))
             self[ENTRIES].remove(row)
             return
         print 'I cannot delete entries that do not exist!'
@@ -133,8 +118,8 @@ class Fileset(DbDict):
     # {{{ _set_name(name): set my name
 
     def _set_name(self, name):
-        bc = Bacula_Factory()
-        row = bc.value_ensure(FILESETS, NAME, name.strip())[0]
+        self.bc = Bacula_Factory()
+        row = self.bc.value_ensure(FILESETS, NAME, name.strip())[0]
         self[NAME] = row[1]
         self[ID] = row[0]
         changed = self[VSSENABLED] ^ row[2]
@@ -148,7 +133,7 @@ class Fileset(DbDict):
     # {{{ __str__(): 
 
     def __str__(self):
-        rows = ['Fileset {','  Name = %(name)s' % self]
+        rows = ['Fileset {','  Name = "%(name)s"' % self]
         if not self[VSSENABLED]: rows.append('  Enable VSS = no')
         if self[IGNORECHANGES]: rows.append('  Ignore FileSet Changes = yes')
         for test,phrase in ([0,'Include'],[1,'Exclude']):
@@ -168,8 +153,7 @@ class Fileset(DbDict):
 # }}}
     # {{{ _save(): Save the top-level fileset record
     def _save(self):
-        bc = Bacula_Factory()
-        return bc.do_sql('update %s set %s = %%s, %s = %%s, %s = %%s where id = %%s' % (FILESETS, NAME, VSSENABLED, IGNORECHANGES),
-                         (self[NAME], self[VSSENABLED], self[IGNORECHANGES], self[ID]))
+        return self.bc.do_sql('update %s set %s = %%s, %s = %%s, %s = %%s where id = %%s' % (FILESETS, NAME, VSSENABLED, IGNORECHANGES),
+                              (self[NAME], self[VSSENABLED], self[IGNORECHANGES], self[ID]))
 # }}}
         

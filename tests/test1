@@ -1,7 +1,9 @@
 #! /usr/bin/env python
 
-import os, sys
+import os, sys, pprint
 sys.path.insert(0, '..')
 
 from bacula_tools import parser
-print parser(open('/usr/local/etc/bacula-dir.conf').read())
+retval= parser(open('/usr/local/etc/bacula-dir.conf').read())
+print len(retval)
+pprint.pprint(retval)

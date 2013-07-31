@@ -40,13 +40,6 @@ class Director(DbDict):
         gr_stripped_string = quotedString.copy().setParseAction( removeQuotes )
         gr_opt_quoted_string = gr_stripped_string | restOfLine
         gr_number = Word(nums)
-        gr_yn = Keyword('yes', caseless=True).setParseAction(replaceWith('1')) | Keyword('no', caseless=True).setParseAction(replaceWith('0'))
-
-        def _setter(key, c_int=False):
-            def rv(value):
-                if c_int: self._set(key, int(value[2]))
-                else: self._set(key, value[2])
-            return rv
 
         def _handle_ip(*x):
             a,b,c =  x[2]
@@ -66,23 +59,23 @@ class Director(DbDict):
             return p
             
         gr_name = np((NAME,), action=lambda x: self._set_name(x[2]))
-        gr_address = np((ADDRESS,), action=_setter(ADDRESS))
-        gr_fd_conn = np(('fd connect timeout','fdconnect timeout','fd connecttimeout','fdconnecttimeout'), gr_number, _setter(FD_CONNECT_TIMEOUT, True))
-        gr_heart = np(('heartbeat interval', 'heartbeatinterval',), gr_number, _setter(HEARTBEAT_INTERVAL, True))
+        gr_address = np((ADDRESS,), action=self._parse_setter(ADDRESS))
+        gr_fd_conn = np(('fd connect timeout','fdconnect timeout','fd connecttimeout','fdconnecttimeout'), gr_number, self._parse_setter(FD_CONNECT_TIMEOUT, True))
+        gr_heart = np(('heartbeat interval', 'heartbeatinterval',), gr_number, self._parse_setter(HEARTBEAT_INTERVAL, True))
         gr_max_con = np(('maximumconsoleconnections', 'maximumconsole connections', 'maximum consoleconnections', 'maximum console connections'),
-                        gr_number, _setter(MAXIMUMCONSOLECONNECTIONS, True))
-        gr_max_jobs = np(('maximum concurrent jobs', 'maximumconcurrent jobs', 'maximum concurrentjobs', 'maximumconcurrentjobs'), gr_number, action=_setter(MAXIMUM_CONCURRENT_JOBS, True))
-        gr_pass = np((PASSWORD,), action=_setter(PASSWORD))
-        gr_pid = np(('pid directory', 'piddirectory'), action=_setter(PID_DIRECTORY))
-        gr_query = np(('query file', 'queryfile'), action=_setter(QUERYFILE))
-        gr_scripts = np(('scripts directory', 'scriptsdirectory'), action=_setter(SCRIPTS_DIRECTORY))
-        gr_sd_conn = np(('sd connect timeout', 'sdconnect timeout', 'sd connecttimeout', 'sdconnecttimeout'), gr_number, _setter(SD_CONNECT_TIMEOUT, True))
-        gr_source = np(('source address', 'sourceaddress'), action=_setter(SOURCEADDRESS))
-        gr_stats = np(('statistics retention', 'statisticsretention'), action=_setter(STATISTICS_RETENTION))
-        gr_verid = np((VERID,), action=_setter(VERID))
+                        gr_number, self._parse_setter(MAXIMUMCONSOLECONNECTIONS, True))
+        gr_max_jobs = np(('maximum concurrent jobs', 'maximumconcurrent jobs', 'maximum concurrentjobs', 'maximumconcurrentjobs'), gr_number, action=self._parse_setter(MAXIMUM_CONCURRENT_JOBS, True))
+        gr_pass = np((PASSWORD,), action=self._parse_setter(PASSWORD))
+        gr_pid = np(('pid directory', 'piddirectory'), action=self._parse_setter(PID_DIRECTORY))
+        gr_query = np(('query file', 'queryfile'), action=self._parse_setter(QUERYFILE))
+        gr_scripts = np(('scripts directory', 'scriptsdirectory'), action=self._parse_setter(SCRIPTS_DIRECTORY))
+        gr_sd_conn = np(('sd connect timeout', 'sdconnect timeout', 'sd connecttimeout', 'sdconnecttimeout'), gr_number, self._parse_setter(SD_CONNECT_TIMEOUT, True))
+        gr_source = np(('source address', 'sourceaddress'), action=self._parse_setter(SOURCEADDRESS))
+        gr_stats = np(('statistics retention', 'statisticsretention'), action=self._parse_setter(STATISTICS_RETENTION))
+        gr_verid = np((VERID,), action=self._parse_setter(VERID))
         gr_messages = np((MESSAGES,), action=lambda x:self._set_messages(x[2]))
-        gr_work_dir = np(('working directory', 'workingdirectory'), action=_setter(WORKING_DIRECTORY))
-        gr_port = np(('dirport', 'dir port'), gr_number, _setter(PORT, True))
+        gr_work_dir = np(('working directory', 'workingdirectory'), action=self._parse_setter(WORKING_DIRECTORY))
+        gr_port = np(('dirport', 'dir port'), gr_number, self._parse_setter(PORT, True))
 
         # This is a complicated one
         da_addr = np(('Addr','Port'), Word(printables), lambda x,y,z: ' '.join(z))
@@ -99,14 +92,18 @@ class Director(DbDict):
     # {{{ __str__(): 
 
     def __str__(self):
-        output = ['Director {\n  Name = %(name)s' % self,]
+        output = ['Director {\n  Name = "%(name)s"' % self,]
         output.append('  %s = %s' % (PORT.capitalize(), self[PORT]))
-        output.append('  %s = %s' % (MESSAGES.capitalize(), self._get_messages()))
+        output.append('  %s = "%s"' % (MESSAGES.capitalize(), self._get_messages()))
         
         for key in self.NULL_KEYS:
             if key in [MESSAGE_ID, ID]: continue
             if not self[key]: continue
-            output.append('  %s = %s' % (key.capitalize(), self[key]))
+            try:
+                int(self[key])
+                value = self[key]
+            except: value = '"' + self[key] + '"'
+            output.append('  %s = %s' % (key.capitalize(), value))
         output.append('}')
         return '\n'.join(output)
 

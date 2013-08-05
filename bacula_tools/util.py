@@ -90,6 +90,7 @@ class DbDict(dict):             # base class for all of the things derived from 
     SETUP_KEYS = [(NAME, ''), (DATA, '')]
     NULL_KEYS = [ID]
     bc = Bacula_Factory()
+    output = []
     table = 'override me'       # This needs to be overridden in every subclass, before calling __init__
 
     # {{{ __init__(row): pass in a row (as a dict)
@@ -129,9 +130,12 @@ class DbDict(dict):             # base class for all of the things derived from 
         return
 
     # }}}
-    # {{{ _set(field, value): handy shortcut for setting and saving values
+    # {{{ _set(field, value, bool=False): handy shortcut for setting and saving values
 
-    def _set(self, field, value):
+    def _set(self, field, value, bool=False):
+        if bool:
+            if value in ['0', 'no', 'No', 'NO', 'off', 'Off', 'OFF']: value = 0
+            else: value = 1
         self[field] = value
         return self._save()
 
@@ -177,12 +181,36 @@ class DbDict(dict):             # base class for all of the things derived from 
     def _parse_setter(self, key, c_int=False):
         '''Shortcut called by parser for setting values'''
         def rv(value):
-            if c_int: self._set(key, int(value[2]))
-            else: self._set(key, value[2])
+            if c_int: self._set(key, int(value[2].strip()))
+            else: self._set(key, value[2].strip())
         return rv
 
 # }}}
+    # {{{ _simple_phrase(key):
 
+    def _simple_phrase(self, key):
+        if self[key] == None: return
+        try:
+            int(self[key])
+            value = self[key]
+        except: value = '"' + self[key] + '"'
+        self.output.insert(-1,'  %s = %s' % (key.capitalize(), value))
+        return
+
+    # }}}
+    # {{{ _yesno_phrase(key, onlytrue=False):
+
+    def _yesno_phrase(self, key, onlytrue=False):
+        value = self[key]
+        if (not value) or value == '0': value = 'no'
+        else: value = 'yes'
+        if onlytrue and value == 'no': return
+        self.output.insert(-1,'  %s = %s' % (key.capitalize(), value))
+        return
+
+    # }}}
+
+    
 class StorageDaemon(DbDict):
     # {{{ __init__(row, timespan, directors):
 

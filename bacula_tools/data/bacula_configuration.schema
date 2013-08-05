@@ -4,7 +4,7 @@
 DROP TABLE `service_link` ;
 DROP TABLE `schedule_link` ;
 DROP TABLE `jobs` ;
-DROP TABLE `hosts` ;
+DROP TABLE `clients` ;
 DROP TABLE `storage` ;
 DROP TABLE `directors` ;
 DROP TABLE `messages`;
@@ -17,6 +17,7 @@ DROP TABLE `filesets` ;
 DROP TABLE `consoles`;
 DROP TABLE `catalogs`;
 
+-- select 'Creating table consoles (complete)';
 CREATE TABLE `consoles` 
  (
   `id` int(11) NOT NULL auto_increment,
@@ -35,7 +36,7 @@ CREATE TABLE `consoles`
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table messages';
+-- select 'Creating table messages (complete)';
 CREATE TABLE `messages` 
  (
   `id` int(11) NOT NULL auto_increment,
@@ -45,7 +46,7 @@ CREATE TABLE `messages`
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table catalogs';
+-- select 'Creating table catalogs (complete)';
 CREATE TABLE `catalogs` 
  (
   `id` int(11) NOT NULL auto_increment,
@@ -60,7 +61,7 @@ CREATE TABLE `catalogs`
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table directors';
+-- select 'Creating table directors (complete)';
 CREATE TABLE `directors` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
@@ -78,7 +79,7 @@ CREATE TABLE `directors` (
   `statistics_retention` varchar(255),
   `verid` varchar(255),
   `maximumconsoleconnections` int(11),
-
+  `monitor` tinyint(1) NOT NULL DEFAULT 0,
   `address` varchar(255),
   `sourceaddress` varchar(255),
   `port` int(11) NOT NULL DEFAULT 9101,
@@ -100,7 +101,7 @@ CREATE TABLE `storage` (
   CONSTRAINT `fk_dir` FOREIGN KEY (`dirid`) REFERENCES `directors` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table schedule_time';
+-- select 'Creating table schedule_time (complete)';
 CREATE TABLE `schedule_time` (
   `id` int(11) NOT NULL auto_increment,
   `data` varchar(255) NOT NULL,
@@ -108,7 +109,7 @@ CREATE TABLE `schedule_time` (
   UNIQUE KEY `u_schedule_time` (`data`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table schedules';
+-- select 'Creating table schedules (complete)';
 CREATE TABLE `schedules` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
@@ -124,7 +125,7 @@ CREATE TABLE `services` (
   PRIMARY KEY  (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table files';
+-- select 'Creating table fileset_files (complete)';
 CREATE TABLE `fileset_files` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
@@ -133,7 +134,7 @@ CREATE TABLE `fileset_files` (
   UNIQUE KEY `name_UNIQUE` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table filesets';
+-- select 'Creating table filesets (complete)';
 CREATE TABLE `filesets` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
@@ -143,21 +144,43 @@ CREATE TABLE `filesets` (
   UNIQUE KEY `name_UNIQUE` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table hosts';
-CREATE TABLE `hosts` (
+-- select 'Creating table clients';
+CREATE TABLE `clients` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
-  `address` varchar(255) NOT NULL,
-  `port` int(11) NOT NULL DEFAULT 9102,
-  `password` varchar(255) NOT NULL,
-  `enabled` tinyint(1) NOT NULL default '1',
-  `os` varchar(255) NOT NULL,
+  `fdport` int(11) NOT NULL DEFAULT 9102,
+
+  -- director configuration
+  `address` varchar(255),
+  `catalog_id` int(11),
+  `password` varchar(255),
+  `fileretention` varchar(255),
+  `jobretention` varchar(255),
+  `autoprune` tinyint(1) NOT NULL default 1,
+  `maximumconcurrentjobs` int(11) NOT NULL DEFAULT 1,
+  `maximumbandwidthperjob` varchar(255),
+  `priority` int(11),
+
+  -- FD configuration
+  `workingdirectory` varchar(255),
+  `piddirectory` varchar(255),
+  `heartbeatinterval` varchar(255),
+  `fdaddresses` varchar(32767),
+  `fdaddress` varchar(255),
+  `fdsourceaddress` varchar(255),
+  `sdconnecttimeout` varchar(255),
+  `maximumnetworkbuffersize` int(11) default 65536,
+  `pkiencryption` tinyint(1) NOT NULL default 0,
+  `pkisignatures` tinyint(1) NOT NULL default 0,
+  `pkikeypair` varchar(255),
+  `pkimasterkey` varchar(255),
+
+  -- extensions
   `notes` text,
-  `director` int(11),
-  `owners` varchar(255) default NULL COMMENT 'This should be email addresses for people to be notified/questioned about service issues.',
   `lastupdated` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
   PRIMARY KEY `PRIMARY` (`id`),
-  KEY `hostname` (`name`)
+  UNIQUE KEY `hostname` (`name`),
+  CONSTRAINT `fk_catalog` FOREIGN KEY (`catalog_id`) REFERENCES `catalogs` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table jobs';
@@ -180,10 +203,10 @@ CREATE TABLE `jobs` (
   PRIMARY KEY `PRIMARY` (`id`),
   CONSTRAINT `fk_fileset` FOREIGN KEY (`fileset`) REFERENCES `filesets` (`name`) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT `fk_schedule` FOREIGN KEY (`scheduleid`) REFERENCES `schedules` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `fk_hostid` FOREIGN KEY (`hostid`) REFERENCES `hosts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `fk_hostid` FOREIGN KEY (`hostid`) REFERENCES `clients` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table service_link';
+-- select 'Creating table service_link (complete)';
 CREATE TABLE `service_link` (
   `id` int(11) NOT NULL auto_increment,
   `serviceid` int(11) NOT NULL,
@@ -193,7 +216,7 @@ CREATE TABLE `service_link` (
   CONSTRAINT `fk_job` FOREIGN KEY (`jobid`) REFERENCES `jobs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table schedule_link';
+-- select 'Creating table schedule_link (complete)';
 CREATE TABLE `schedule_link` (
   `id` int(11) NOT NULL auto_increment,
   `scheduleid` int(11) NOT NULL,
@@ -203,7 +226,7 @@ CREATE TABLE `schedule_link` (
   CONSTRAINT `fk_time_id` FOREIGN KEY (`timeid`) REFERENCES `schedule_time` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table fileset_files';
+-- select 'Creating table fileset_files (complete)';
 CREATE TABLE `fileset_link` (
   `id` int(11) NOT NULL auto_increment,
   `fileset_id` int(11) NOT NULL,

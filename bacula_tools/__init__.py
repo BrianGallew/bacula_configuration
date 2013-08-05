@@ -22,7 +22,13 @@ _INTERNED = ['Append', 'Available', 'Catalog', 'Cleaning', 'Error', 'Full',
              'storageserveraddress', 'timespan', 'verid', 'vssenabled',
              'working_directory', 'yes', 'catalogacl', 'clientacl', 'commandacl',
              'filesetacl', 'jobacl', 'password', 'poolacl', 'scheduleacl',
-             'storageacl', 'whereacl', 'console', 'consoles',
+             'storageacl', 'whereacl', 'console', 'consoles', 'catalog_id', 'fileretention',
+             'jobretention', 'workingdirectory', 'piddirectory', 'heartbeatinterval',
+             'fdaddresses', 'fdaddress', 'fdport', 'fdsourceaddress', 'pkikeypair',
+             'pkimasterkey', 'pkisignatures', 'pkiencryption', 'director_id', 'autoprune',
+             'maximumconsoleconnections', 'maximumconcurrentjobs', 'clients', 'client',
+             'filedaemon', 'maximumbandwidthperjob', 'sdconnecttimeout', 'maximumnetworkbuffersize',
+             'monitor',
              ]
 
 for w in _INTERNED: locals()[w.upper()] = w
@@ -136,6 +142,7 @@ from messages import Messages
 from director import Director
 from catalog import Catalog
 from console import Console
+from client import Client
 
 _DISPATCHER = {
     FILESET: Fileset,
@@ -144,4 +151,6 @@ _DISPATCHER = {
     DIRECTOR: Director,
     CATALOG.lower(): Catalog,
     CONSOLE: Console,
+    CLIENT: Client,
+    FILEDAEMON: Client,
     }

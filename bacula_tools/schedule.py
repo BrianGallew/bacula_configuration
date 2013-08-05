@@ -60,8 +60,9 @@ class Schedule(DbDict):
     # {{{ __str__(): 
 
     def __str__(self):
-        self[ROWS] = '\n'.join(['  Run = %s' % x[1] for x in self[RUN]])
-        return '''Schedule {\n  Name = "%(name)s"\n%(rows)s\n}\n''' % self
+        self.output = ['''Schedule {\n  Name = "%(name)s"''' % self, '}']
+        [self.output.insert(-1,'  Run = %s' % x[1]) for x in self[RUN]]
+        return '\n'.join(self.output)
 
 # }}}
     # {{{ search(string): load information based on a name

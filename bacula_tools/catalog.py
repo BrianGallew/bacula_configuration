@@ -44,18 +44,12 @@ class Catalog(DbDict):
     # {{{ __str__(): 
 
     def __str__(self):
-        output = ['Catalog {\n  Name = "%(name)s"' % self,]
+        self.output = ['Catalog {\n  Name = "%(name)s"' % self,'}']
         
         for key in self.NULL_KEYS:
             if key == ID: continue
-            if not self[key]: continue
-            try:
-                int(self[key])
-                value = self[key]
-            except: value = '"' + self[key] + '"'
-            output.append('  %s = %s' % (key.capitalize(), value))
-        output.append('}')
-        return '\n'.join(output)
+            self._simple_phrase(key)
+        return '\n'.join(self.output)
 
 # }}}
         

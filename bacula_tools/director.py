@@ -3,7 +3,7 @@ from pprint import pprint
 keylist = []
 
 class Director(DbDict):
-    NULL_KEYS = [ID, ADDRESS, DIRADDRESSES,
+    NULL_KEYS = [ID, ADDRESS, DIRADDRESSES,MONITOR,
                  FD_CONNECT_TIMEOUT, HEARTBEAT_INTERVAL, MAXIMUMCONSOLECONNECTIONS,
                  MAXIMUM_CONCURRENT_JOBS, PASSWORD, PID_DIRECTORY, QUERYFILE,
                  SCRIPTS_DIRECTORY, SD_CONNECT_TIMEOUT, SOURCEADDRESS, STATISTICS_RETENTION,
@@ -15,6 +15,7 @@ class Director(DbDict):
     def _set_messages(self, string):
         m = Messages()
         m.search(string.strip())
+        if not m[ID]: m._set_name(string.strip())
         self._set(MESSAGE_ID, m[ID])
 
         # }}}
@@ -40,6 +41,7 @@ class Director(DbDict):
         gr_stripped_string = quotedString.copy().setParseAction( removeQuotes )
         gr_opt_quoted_string = gr_stripped_string | restOfLine
         gr_number = Word(nums)
+        gr_yn = Keyword('yes', caseless=True).setParseAction(replaceWith('1')) | Keyword('no', caseless=True).setParseAction(replaceWith('0'))
 
         def _handle_ip(*x):
             a,b,c =  x[2]
@@ -47,7 +49,7 @@ class Director(DbDict):
 
         def _handle_diraddr(*x):
             a,b,c =  x[2]
-            self._set(DIRADDRESSES, '{\n  %s\n  }' % '\n  '.join(c))
+            self._set(DIRADDRESSES, '  %s' % '\n  '.join(c))
             return
 
         def np(words, fn = gr_opt_quoted_string, action=None):
@@ -76,13 +78,14 @@ class Director(DbDict):
         gr_messages = np((MESSAGES,), action=lambda x:self._set_messages(x[2]))
         gr_work_dir = np(('working directory', 'workingdirectory'), action=self._parse_setter(WORKING_DIRECTORY))
         gr_port = np(('dirport', 'dir port'), gr_number, self._parse_setter(PORT, True))
+        gr_monitor = np((MONITOR,), gr_yn, action=self._parse_setter(MONITOR))
 
         # This is a complicated one
         da_addr = np(('Addr','Port'), Word(printables), lambda x,y,z: ' '.join(z))
         da_ip = np(('IPv4','IPv6','IP'), nestedExpr('{','}', OneOrMore(da_addr).setParseAction(lambda x,y,z: ' ; '.join(z)))).setParseAction(_handle_ip)
         da_addresses = np(('dir addresses', 'diraddresses'), nestedExpr('{','}', OneOrMore(da_ip)), _handle_diraddr)
 
-        gr_res = OneOrMore(gr_name | gr_address | gr_fd_conn | gr_heart | gr_max_con | gr_max_jobs | gr_pass | gr_pid | gr_query | gr_scripts | gr_sd_conn | gr_source | gr_stats | gr_verid | gr_messages | gr_work_dir | gr_port | da_addresses)
+        gr_res = OneOrMore(gr_name | gr_address | gr_fd_conn | gr_heart | gr_max_con | gr_max_jobs | gr_pass | gr_pid | gr_query | gr_scripts | gr_sd_conn | gr_source | gr_stats | gr_verid | gr_messages | gr_work_dir | gr_port | gr_monitor | da_addresses)
 
         result = gr_res.parseString(string, parseAll=True)
         print 'Director:', self[NAME]
@@ -92,21 +95,29 @@ class Director(DbDict):
     # {{{ __str__(): 
 
     def __str__(self):
-        output = ['Director {\n  Name = "%(name)s"' % self,]
-        output.append('  %s = %s' % (PORT.capitalize(), self[PORT]))
-        output.append('  %s = "%s"' % (MESSAGES.capitalize(), self._get_messages()))
-        
+        self.output = ['Director {\n  Name = "%(name)s"' % self,'}']
+        self._simple_phrase(PORT)
+        self.output.insert(-1, '  %s = "%s"' % (MESSAGES.capitalize(), self._get_messages()))
+        if self[DIRADDRESSES]:
+            self.output.insert(-1, '  %s {' % DIRADDRESSES.capitalize())
+            self.output.insert(-1,  self[DIRADDRESSES])
+            self.output.insert(-1, '  }')
         for key in self.NULL_KEYS:
-            if key in [MESSAGE_ID, ID]: continue
-            if not self[key]: continue
-            try:
-                int(self[key])
-                value = self[key]
-            except: value = '"' + self[key] + '"'
-            output.append('  %s = %s' % (key.capitalize(), value))
-        output.append('}')
-        return '\n'.join(output)
+            if key in [MESSAGE_ID, ID, DIRADDRESSES, MONITOR]: continue
+            self._simple_phrase(key)
+        return '\n'.join(self.output)
 
 # }}}
+# {{{ fd(): return the string that describes the filedaemon configuration
+
+    def fd(self):
+        '''This is what we'll call to dump out the config for the file daemon'''
+        self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
+        
+        self._simple_phrase(PASSWORD)
+        self._yesno_phrase(MONITOR)
+        return '\n'.join(self.output)
+
+    # }}}
         
   

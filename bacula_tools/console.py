@@ -44,17 +44,11 @@ class Console(DbDict):
     # {{{ __str__(): 
 
     def __str__(self):
-        output = ['Console {\n  Name = "%(name)s"' % self,]
+        self.output = ['Console {\n  Name = "%(name)s"' % self, '}']
         
         for key in self.NULL_KEYS:
             if key == ID: continue
-            if not self[key]: continue
-            try:
-                int(self[key])
-                value = self[key]
-            except: value = '"' + self[key] + '"'
-            output.append('  %s = %s' % (key.capitalize(), value))
-        output.append('}')
+            self._simple_phrase(key)
         return '\n'.join(output)
 
 # }}}

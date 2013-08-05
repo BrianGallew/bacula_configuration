@@ -133,22 +133,21 @@ class Fileset(DbDict):
     # {{{ __str__(): 
 
     def __str__(self):
-        rows = ['Fileset {','  Name = "%(name)s"' % self]
-        if not self[VSSENABLED]: rows.append('  Enable VSS = no')
-        if self[IGNORECHANGES]: rows.append('  Ignore FileSet Changes = yes')
+        self.output = ['Fileset {','  Name = "%(name)s"' % self, '}']
+        self._yesno_phrase(VSSENABLED)
+        self._yesno_phrase(IGNORECHANGES)
         for test,phrase in ([0,'Include'],[1,'Exclude']):
             subset =  [x for x in self[ENTRIES] if x[3] == test]
             if subset:              # We have includes
-                rows.append('  %s {' % phrase)
+                self.output.insert(-1, '  %s {' % phrase)
                 options = [x for x in subset if x[2]]
                 if options:
-                    rows.append('    Options {')
-                    [rows.append('      ' + x[1]) for x in options]
-                    rows.append('    }')
-                [rows.append('    %s' % x[1]) for x in subset if not x[2]]
-                rows.append('  }')
-        rows.append('}')
-        return '\n'.join(rows)
+                    self.output.insert(-1,'    Options {')
+                    [self.output.insert(-1,'      ' + x[1]) for x in options]
+                    self.output.insert(-1,'    }')
+                [self.output.insert(-1,'    %s' % x[1]) for x in subset if not x[2]]
+                self.output.insert(-1,'  }')
+        return '\n'.join(self.output)
 
 # }}}
     # {{{ _save(): Save the top-level fileset record

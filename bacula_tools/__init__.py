@@ -55,15 +55,29 @@ def parser(string):
     # You will lose here.
     RB = '}'
     LB = '{'
+    file_re = re.compile(r'\s@(.*)\s+', re.MULTILINE)
     comment_re = re.compile(r'#.*', re.MULTILINE)
     semicolon_re = re.compile(r';', re.MULTILINE)
-    string = semicolon_re.sub('\n', comment_re.sub('', string)).replace('\\\n','').replace('\n\n', '\n')
+    blankline_re = re.compile(r'^\s+$', re.MULTILINE)
+    string = blankline_re.sub('', comment_re.sub('', string)) # Strip the comments out
+
+    groups = file_re.search(string)
+    while groups:
+        filename = groups.group(1)
+        string = blankline_re.sub('', string.replace(groups.group(),
+                                                     '\n' + comment_re.sub('', open(filename).read()) + '\n'))
+        groups = file_re.search(string)
+
+    string = semicolon_re.sub('\n',  string).replace('\\\n','').replace('\n\n', '\n')
     parts = string.split(RB)
     parsed = []
     while parts:
         current = parts.pop(0)
         while current.count(RB) < (current.count(LB) - 1): current += RB + parts.pop(0)
-        name, body = current.split(LB,1)
+        try: name, body = current.split(LB,1)
+        except:
+            print "'%s'" % current
+            raise
         name = name.strip().lower()
         try: parsed.append(_DISPATCHER[name](string=body.strip()))
         except Exception, e:

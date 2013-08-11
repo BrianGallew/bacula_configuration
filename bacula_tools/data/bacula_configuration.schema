@@ -1,21 +1,21 @@
 -- -*- sql -*-
 -- select 'Creating table templates';
 -- Order matters!
-DROP TABLE `service_link` ;
-DROP TABLE `schedule_link` ;
-DROP TABLE `jobs` ;
-DROP TABLE `clients` ;
-DROP TABLE `storage` ;
-DROP TABLE `directors` ;
-DROP TABLE `messages`;
-DROP TABLE `schedule_time` ;
-DROP TABLE `schedules` ;
-DROP TABLE `services` ;
-DROP TABLE `fileset_link` ;
-DROP TABLE `fileset_files` ;
-DROP TABLE `filesets` ;
-DROP TABLE `consoles`;
-DROP TABLE `catalogs`;
+DROP TABLE IF EXISTS `service_link` ;
+DROP TABLE IF EXISTS `schedule_link` ;
+DROP TABLE IF EXISTS `jobs` ;
+DROP TABLE IF EXISTS `clients` ;
+DROP TABLE IF EXISTS `storage` ;
+DROP TABLE IF EXISTS `directors` ;
+DROP TABLE IF EXISTS `messages`;
+DROP TABLE IF EXISTS `schedule_time` ;
+DROP TABLE IF EXISTS `schedules` ;
+DROP TABLE IF EXISTS `services` ;
+DROP TABLE IF EXISTS `fileset_link` ;
+DROP TABLE IF EXISTS `fileset_files` ;
+DROP TABLE IF EXISTS `filesets` ;
+DROP TABLE IF EXISTS `consoles`;
+DROP TABLE IF EXISTS `catalogs`;
 
 -- select 'Creating table consoles (complete)';
 CREATE TABLE `consoles` 

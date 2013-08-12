@@ -29,8 +29,7 @@ class Schedule(DbDict):
             if s[0] == "'" and  s[-1] == "'": s = s[1:-1]
             self._add_run(s)
             data = run_re.sub('', data, 1)
-        print "Schedule:", self[NAME]
-        return
+        return "Schedule: " + self[NAME]
 
     # }}}
     # {{{ _add_run(run): add another run

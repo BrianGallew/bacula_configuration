@@ -51,8 +51,8 @@ CREATE TABLE `catalogs`
  (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
-  `dbuser` varchar(255),
-  `dbpassword` varchar(255),
+  `user` varchar(255),
+  `password` varchar(255),
   `dbname` varchar(255),
   `dbaddress` varchar(255),
   `dbsocket` varchar(255),

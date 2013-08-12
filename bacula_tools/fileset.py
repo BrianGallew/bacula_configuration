@@ -75,8 +75,7 @@ class Fileset(DbDict):
 
         gr_res = OneOrMore(gr_name | gr_inc | gr_exc | gr_ifsc | gr_evss)
         result = gr_res.parseString(string, parseAll=True)
-        print 'Fileset:', self[NAME]
-        return
+        return 'Fileset:' + self[NAME]
 
     # }}}
     # {{{ _add_entry(entry, option, exclude): add another entry

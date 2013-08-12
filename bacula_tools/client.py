@@ -99,8 +99,8 @@ class Client(DbDict):
 
         gr_res = OneOrMore(gr_line|da_addresses)
         result = gr_res.parseString(string, parseAll=True)
-        print 'Client:', self[NAME]
-        return
+        return 'Client: ' + self[NAME]
+
 
     # }}}
     # {{{ __str__(): 

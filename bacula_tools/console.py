@@ -37,8 +37,7 @@ class Console(DbDict):
 
         gr_res = OneOrMore(gr_line)
         result = gr_res.parseString(string, parseAll=True)
-        print 'Console:', self[NAME]
-        return
+        return 'Console: ' + self[NAME]
 
     # }}}
     # {{{ __str__(): 

@@ -28,7 +28,7 @@ _INTERNED = ['Append', 'Available', 'Catalog', 'Cleaning', 'Error', 'Full',
              'pkimasterkey', 'pkisignatures', 'pkiencryption', 'director_id', 'autoprune',
              'maximumconsoleconnections', 'maximumconcurrentjobs', 'clients', 'client',
              'filedaemon', 'maximumbandwidthperjob', 'sdconnecttimeout', 'maximumnetworkbuffersize',
-             'monitor',
+             'monitor', 'user'
              ]
 
 for w in _INTERNED: locals()[w.upper()] = w
@@ -48,7 +48,7 @@ WORKING_DIR = {
     'Windows': "/bacula/working",
     }
 
-def parser(string):
+def parser(string, output=None):
     '''parse a string out into top-level resource items and pass them off to the relevant classes.'''
     # strip out comments, and turn semi-colons into newlines
     # NB: if you have embedded semi-colons in any values (e.g. runscripts),
@@ -76,12 +76,20 @@ def parser(string):
         while current.count(RB) < (current.count(LB) - 1): current += RB + parts.pop(0)
         try: name, body = current.split(LB,1)
         except:
-            print "'%s'" % current
+            if output: output(current)
+            else: print "'%s'" % current
             raise
         name = name.strip().lower()
-        try: parsed.append(_DISPATCHER[name](string=body.strip()))
+        try:
+            obj = _DISPATCHER[name]()
+            parsed.append(obj)
+            result = obj.parse_string(body.strip())
+            if output: output(result)
+            else: print result
         except Exception, e:
-            print 'Unable to handle %s at this time' % name, e
+            msg = '%s: Unable to handle %s at this time' % (name.capitalize(), e)
+            if output: output(msg)
+            else: print msg
         while parts and parts[0] == '\n': del parts[0]
     return parsed
 

@@ -172,8 +172,7 @@ class DbDict(dict):             # base class for all of the things derived from 
         string = self.name_re.sub('', string)
         data = '\n  '.join([x.strip() for x in string.split('\n') if x])
         self._set(DATA, data)
-        print "%s: %s" % (self.table.capitalize(), self[NAME])
-        return
+        return "%s: %s" % (self.table.capitalize(), self[NAME])
 
     # }}}
     # {{{ _parse_setter(key, c_int=False):
@@ -209,7 +208,7 @@ class DbDict(dict):             # base class for all of the things derived from 
         return
 
     # }}}
-
+    def fd(self): return ''
     
 class StorageDaemon(DbDict):
     # {{{ __init__(row, timespan, directors):

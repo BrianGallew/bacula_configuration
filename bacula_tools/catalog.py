@@ -4,7 +4,7 @@ keylist = []
 
 class Catalog(DbDict):
     NULL_KEYS = [
-        ID, DBADDRESS, DBNAME, DBPORT, DBSOCKET, DBPASSWORD, DBUSER
+        ID, DBADDRESS, DBNAME, DBPORT, DBSOCKET, PASSWORD, USER
         ]
     SETUP_KEYS = [(NAME, ''),]
     table = CATALOGS
@@ -31,14 +31,16 @@ class Catalog(DbDict):
             return p
 
         gr_line = np((NAME,), action=lambda x: self._set_name(x[2]))
-        for key in self.NULL_KEYS:
-            if key == id: continue
-            gr_line = gr_line | np((key,), action=self._parse_setter(key))
+        gr_line = gr_line | np((USER,), action=self._parse_setter(USER))
+        gr_line = gr_line | np((PASSWORD,), action=self._parse_setter(PASSWORD))
+        gr_line = gr_line | np((DBSOCKET,), action=self._parse_setter(DBSOCKET))
+        gr_line = gr_line | np((DBPORT,), gr_number, action=self._parse_setter(DBPORT))
+        gr_line = gr_line | np((DBNAME, 'db name'), action=self._parse_setter(DBNAME))
+        gr_line = gr_line | np((DBADDRESS,'db address'), action=self._parse_setter(DBADDRESS))
 
         gr_res = OneOrMore(gr_line)
         result = gr_res.parseString(string, parseAll=True)
-        print 'Catalog:', self[NAME]
-        return
+        return 'Catalog: ' + self[NAME]
 
     # }}}
     # {{{ __str__(): 
@@ -52,5 +54,3 @@ class Catalog(DbDict):
         return '\n'.join(self.output)
 
 # }}}
-        
-  

@@ -5,9 +5,9 @@ keylist = []
 class Director(DbDict):
     NULL_KEYS = [ID, ADDRESS, DIRADDRESSES,MONITOR,
                  FD_CONNECT_TIMEOUT, HEARTBEAT_INTERVAL, MAXIMUMCONSOLECONNECTIONS,
-                 MAXIMUM_CONCURRENT_JOBS, PASSWORD, PID_DIRECTORY, QUERYFILE,
+                 MAXIMUM_CONCURRENT_JOBS, PASSWORD, PIDDIRECTORY, QUERYFILE,
                  SCRIPTS_DIRECTORY, SD_CONNECT_TIMEOUT, SOURCEADDRESS, STATISTICS_RETENTION,
-                 VERID, WORKING_DIRECTORY, MESSAGE_ID]
+                 VERID, WORKINGDIRECTORY, MESSAGE_ID]
     SETUP_KEYS = [(PORT, 9101),(NAME, ''),]
     table = DIRECTORS
     # {{{ _set_messages(string):
@@ -68,7 +68,7 @@ class Director(DbDict):
                         gr_number, self._parse_setter(MAXIMUMCONSOLECONNECTIONS, True))
         gr_max_jobs = np(('maximum concurrent jobs', 'maximumconcurrent jobs', 'maximum concurrentjobs', 'maximumconcurrentjobs'), gr_number, action=self._parse_setter(MAXIMUM_CONCURRENT_JOBS, True))
         gr_pass = np((PASSWORD,), action=self._parse_setter(PASSWORD))
-        gr_pid = np(('pid directory', 'piddirectory'), action=self._parse_setter(PID_DIRECTORY))
+        gr_pid = np((PIDDIRECTORY, 'pid directory'), action=self._parse_setter(PIDDIRECTORY))
         gr_query = np(('query file', 'queryfile'), action=self._parse_setter(QUERYFILE))
         gr_scripts = np(('scripts directory', 'scriptsdirectory'), action=self._parse_setter(SCRIPTS_DIRECTORY))
         gr_sd_conn = np(('sd connect timeout', 'sdconnect timeout', 'sd connecttimeout', 'sdconnecttimeout'), gr_number, self._parse_setter(SD_CONNECT_TIMEOUT, True))
@@ -76,7 +76,7 @@ class Director(DbDict):
         gr_stats = np(('statistics retention', 'statisticsretention'), action=self._parse_setter(STATISTICS_RETENTION))
         gr_verid = np((VERID,), action=self._parse_setter(VERID))
         gr_messages = np((MESSAGES,), action=lambda x:self._set_messages(x[2]))
-        gr_work_dir = np(('working directory', 'workingdirectory'), action=self._parse_setter(WORKING_DIRECTORY))
+        gr_work_dir = np((WORKINGDIRECTORY, 'working directory'), action=self._parse_setter(WORKINGDIRECTORY))
         gr_port = np(('dirport', 'dir port'), gr_number, self._parse_setter(PORT, True))
         gr_monitor = np((MONITOR,), gr_yn, action=self._parse_setter(MONITOR))
 

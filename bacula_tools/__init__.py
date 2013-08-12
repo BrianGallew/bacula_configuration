@@ -4,32 +4,28 @@ Configuration is at the *end* of this file.'''
 import re, shlex, sys, os
 
 
-_INTERNED = ['Append', 'Available', 'Catalog', 'Cleaning', 'Error', 'Full',
-             'Purged', 'Recycle', 'Used', 'address', 'bacula_enabled', 'begin',
-             'catalogs', 'data', 'db', 'dbaddress', 'dbname', 'dbpassword',
-             'dbport', 'dbsocket', 'dbuser', 'diraddresses', 'director',
-             'director_name', 'directors', 'dirid', 'enabled', 'end', 'entries',
-             'exclude', 'excludes', 'failure', 'fd_connect_timeout', 'file_retention',
-             'fileset', 'fileset_files', 'filesets', 'heartbeat_interval', 'hostid',
-             'hostname', 'hostnames', 'hosts', 'id', 'ignorechanges', 'includes',
-             'job_retention', 'lastupdated', 'maximum_concurrent_jobs',
-             'maximumconsoleconnections', 'message_id', 'messages', 'name', 'no',
-             'notes', 'option', 'options', 'os', 'owners', 'password', 'pid_directory',
-             'pool', 'port', 'primary_dir', 'priority', 'queryfile', 'rows', 'run',
-             'schedule', 'schedule_time', 'schedules', 'scripts_directory',
-             'sd_connect_timeout', 'service', 'services', 'sourceaddress',
-             'statistics_retention', 'storagepassword', 'storageserver',
-             'storageserveraddress', 'timespan', 'verid', 'vssenabled',
-             'working_directory', 'yes', 'catalogacl', 'clientacl', 'commandacl',
-             'filesetacl', 'jobacl', 'password', 'poolacl', 'scheduleacl',
-             'storageacl', 'whereacl', 'console', 'consoles', 'catalog_id', 'fileretention',
-             'jobretention', 'workingdirectory', 'piddirectory', 'heartbeatinterval',
-             'fdaddresses', 'fdaddress', 'fdport', 'fdsourceaddress', 'pkikeypair',
-             'pkimasterkey', 'pkisignatures', 'pkiencryption', 'director_id', 'autoprune',
-             'maximumconsoleconnections', 'maximumconcurrentjobs', 'clients', 'client',
-             'filedaemon', 'maximumbandwidthperjob', 'sdconnecttimeout', 'maximumnetworkbuffersize',
-             'monitor', 'user'
-             ]
+_INTERNED = ['Append', 'Available', 'Catalog', 'Cleaning', 'Error', 'Full', 'Purged', 'Recycle', 'Used',
+             'actiononpurge', 'address', 'autoprune', 'autoprune', 'bacula_enabled', 'begin', 'catalog_id',
+             'catalogacl', 'catalogfiles', 'catalogs', 'cleaningprefix', 'client', 'clientacl', 'clients',
+             'commandacl', 'console', 'consoles', 'data', 'db', 'dbaddress', 'dbname', 'dbpassword',
+             'dbport', 'dbsocket', 'dbuser', 'diraddresses', 'director', 'director_id', 'director_name',
+             'directors', 'dirid', 'enabled', 'end', 'entries', 'exclude', 'excludes', 'failure',
+             'fd_connect_timeout', 'fdaddress', 'fdaddresses', 'fdport', 'fdsourceaddress', 'file_retention',
+             'filedaemon', 'fileretention', 'fileset', 'fileset_files', 'filesetacl', 'filesets',
+             'heartbeat_interval', 'heartbeatinterval', 'hostid', 'hostname', 'hostnames', 'hosts', 'id',
+             'ignorechanges', 'includes', 'job_retention', 'jobacl', 'jobretention', 'labelformat',
+             'lastupdated', 'maximum_concurrent_jobs', 'maximumbandwidthperjob', 'maximumconcurrentjobs',
+             'maximumconsoleconnections', 'maximumconsoleconnections', 'maximumnetworkbuffersize',
+             'maximumvolumebytes', 'maximumvolumefiles', 'maximumvolumejobs', 'maximumvolumes', 'message_id',
+             'messages', 'monitor', 'name', 'no', 'notes', 'option', 'options', 'os', 'owners', 'password',
+             'piddirectory', 'pkiencryption', 'pkikeypair', 'pkimasterkey', 'pkisignatures', 'pool',
+             'poolacl', 'pools', 'pooltype', 'port', 'primary_dir', 'priority', 'purgeoldestvolume',
+             'queryfile', 'recycle', 'recyclecurrentvolume', 'recycleoldestvolume', 'recyclepool', 'rows',
+             'run', 'schedule', 'schedule_time', 'scheduleacl', 'schedules', 'scratchpool',
+             'scripts_directory', 'sd_connect_timeout', 'sdconnecttimeout', 'service', 'services',
+             'sourceaddress', 'statistics_retention', 'storage', 'storageacl', 'storagepassword',
+             'storageserver', 'storageserveraddress', 'timespan', 'user', 'usevolumeonce', 'verid',
+             'volumeretention', 'volumeuseduration', 'vssenabled', 'whereacl', 'workingdirectory', 'yes']
 
 for w in _INTERNED: locals()[w.upper()] = w
 
@@ -165,6 +161,7 @@ from director import Director
 from catalog import Catalog
 from console import Console
 from client import Client
+from pool import Pool
 
 _DISPATCHER = {
     FILESET: Fileset,
@@ -175,4 +172,5 @@ _DISPATCHER = {
     CONSOLE: Console,
     CLIENT: Client,
     FILEDAEMON: Client,
+    POOL: Pool,
     }

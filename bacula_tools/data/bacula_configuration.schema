@@ -16,6 +16,38 @@ DROP TABLE IF EXISTS `fileset_files` ;
 DROP TABLE IF EXISTS `filesets` ;
 DROP TABLE IF EXISTS `consoles`;
 DROP TABLE IF EXISTS `catalogs`;
+DROP TABLE IF EXISTS `pools`;
+
+-- select 'Creating table pools (complete)';
+CREATE TABLE `pools` 
+ (
+  `id` int(11) NOT NULL auto_increment,
+  `name` varchar(255) NOT NULL,
+  `maximumvolumes` int(11) DEFAULT NULL,
+  `pooltype` ENUM('Backup', 'Archive', 'Cloned', 'Migration', 'Copy', 'Save') NOT NULL DEFAULT 'Backup',
+  `storage` varchar(255) DEFAULT NULL,
+  `usevolumeonce` tinyint(1) NOT NULL DEFAULT 0,
+  `maximumvolumejobs` int(11) DEFAULT NULL,
+  `maximumvolumefiles` int(11) DEFAULT NULL,
+  `maximumvolumebytes` int(11) DEFAULT NULL,
+  `volumeuseduration` varchar(255) DEFAULT NULL,
+  `catalogfiles` tinyint(1) NOT NULL DEFAULT 1,
+  `autoprune` tinyint(1) NOT NULL default 1,
+  `volumeretention` varchar(255) DEFAULT NULL,
+  `actiononpurge` varchar(255) DEFAULT NULL,
+  `scratchpool` varchar(255) DEFAULT NULL,
+  `recyclepool` varchar(255) DEFAULT NULL,
+  `recycle` tinyint(1) NOT NULL default 1,
+  `recycleoldestvolume` tinyint(1) NOT NULL default 0,
+  `recyclecurrentvolume` tinyint(1) NOT NULL default 0,
+  `purgeoldestvolume` tinyint(1) NOT NULL default 0,
+  `fileretention` varchar(255) DEFAULT NULL,
+  `jobretention` varchar(255) DEFAULT NULL,
+  `cleaningprefix` varchar(255) DEFAULT NULL,
+  `labelformat` varchar(255) DEFAULT NULL,
+  PRIMARY KEY `PRIMARY` (`id`),
+  UNIQUE KEY `name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table consoles (complete)';
 CREATE TABLE `consoles` 
@@ -67,8 +99,8 @@ CREATE TABLE `directors` (
   `name` varchar(255) NOT NULL,
   `password` varchar(255),
   `message_id` int(11),
-  `working_directory` varchar(255),
-  `pid_directory` varchar(255),
+  `workingdirectory` varchar(255),
+  `piddirectory` varchar(255),
   `scripts_directory` varchar(255),
   `queryfile` varchar(255),
   `heartbeat_interval` int(11),

@@ -29,7 +29,7 @@ CREATE TABLE `pools`
   `usevolumeonce` tinyint(1) NOT NULL DEFAULT 0,
   `maximumvolumejobs` int(11) DEFAULT NULL,
   `maximumvolumefiles` int(11) DEFAULT NULL,
-  `maximumvolumebytes` int(11) DEFAULT NULL,
+  `maximumvolumebytes` varchar(255) DEFAULT NULL,
   `volumeuseduration` varchar(255) DEFAULT NULL,
   `catalogfiles` tinyint(1) NOT NULL DEFAULT 1,
   `autoprune` tinyint(1) NOT NULL default 1,

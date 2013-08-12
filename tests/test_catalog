@@ -1,0 +1,25 @@
+#! /usr/bin/env python
+
+import os, sys, pprint
+sys.path.insert(0, '..')
+sys.path.insert(0, '.')
+import bacula_tools
+
+test_cases = [
+    '''  Name = MyCatalog
+  DB Name = bacula
+  user = bacula
+  password = "Dd35Sd0j"
+  DB Address = db-llnw18-ha.phx3.llnw.net
+''',
+    '''  Name = MyCatalog
+  dbname = "bacula"
+ dbuser = "bacula"
+ dbpassword = ""
+''',
+for string in test_cases:
+    c = bacula_tools.Catalog()
+    c.parse_string(string)
+
+    print c
+    print c.fd()

@@ -31,8 +31,8 @@ class Catalog(DbDict):
             return p
 
         gr_line = np((NAME,), action=lambda x: self._set_name(x[2]))
-        gr_line = gr_line | np((USER,), action=self._parse_setter(USER))
-        gr_line = gr_line | np((PASSWORD,), action=self._parse_setter(PASSWORD))
+        gr_line = gr_line | np((USER, 'dbuser', 'db user'), action=self._parse_setter(USER))
+        gr_line = gr_line | np((PASSWORD, 'dbpassword', 'db password'), action=self._parse_setter(PASSWORD))
         gr_line = gr_line | np((DBSOCKET,), action=self._parse_setter(DBSOCKET))
         gr_line = gr_line | np((DBPORT,), gr_number, action=self._parse_setter(DBPORT))
         gr_line = gr_line | np((DBNAME, 'db name'), action=self._parse_setter(DBNAME))

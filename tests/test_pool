@@ -5,7 +5,7 @@ sys.path.insert(0, '..')
 sys.path.insert(0, '.')
 import bacula_tools
 
-string='''  Name = bs-sd001
+test_cases = ['''  Name = bs-sd001
   Pool Type = Backup
   Recycle = yes
   AutoPrune = yes
@@ -13,9 +13,28 @@ string='''  Name = bs-sd001
   Maximum Volume Jobs = 1
   Label Format = bs-sd001-
   Action On Purge = Truncate
-'''
-c = bacula_tools.Pool()
-c.parse_string(string)
+''',
+              '''  Name = Default
+  Pool Type = Backup
+  Recycle = yes                       
+  AutoPrune = yes                     
+  Volume Retention = 365 days         
+''',
+              '''  Name = File
+  Pool Type = Backup
+  Recycle = yes                       
+  AutoPrune = yes                     
+  Volume Retention = 365 days         
+  Maximum Volume Bytes = 50G          
+  Maximum Volumes = 100               
+''',
+              '''  Name = Scratch
+  Pool Type = Backup
+''',
+]
+for string in test_cases:
+    c = bacula_tools.Pool()
+    c.parse_string(string)
 
-print c
-print c.fd()
+    print c
+    print c.fd()

@@ -48,7 +48,7 @@ class Pool(DbDict):
         gr_line = gr_line | np((PURGEOLDESTVOLUME, 'purge oldest volume', 'purge oldestvolume', 'purgeoldest volume'), gr_yn, action=self._parse_setter(PURGEOLDESTVOLUME))
         gr_line = gr_line | np((MAXIMUMVOLUMEJOBS, 'maximum volume jobs', 'maximum volumejobs', 'maximumvolume jobs'), gr_number, action=self._parse_setter(MAXIMUMVOLUMEJOBS))
         gr_line = gr_line | np((MAXIMUMVOLUMEFILES, 'maximum volume files', 'maximum volumefiles', 'maximumvolume files'), gr_number, action=self._parse_setter(MAXIMUMVOLUMEFILES))
-        gr_line = gr_line | np((MAXIMUMVOLUMEBYTES, 'maximum volume bytes', 'maximum volumebytes', 'maximumvolume bytes'), gr_number, action=self._parse_setter(MAXIMUMVOLUMEBYTES))
+        gr_line = gr_line | np((MAXIMUMVOLUMEBYTES, 'maximum volume bytes', 'maximum volumebytes', 'maximumvolume bytes'), action=self._parse_setter(MAXIMUMVOLUMEBYTES))
         gr_line = gr_line | np((VOLUMEUSEDURATION, 'volume use duration', 'volume useduration', 'volumeuse duration'), action=self._parse_setter(VOLUMEUSEDURATION))
         gr_line = gr_line | np((VOLUMERETENTION, 'volume retention'), action=self._parse_setter(VOLUMERETENTION))
         gr_line = gr_line | np((ACTIONONPURGE, 'action on purge', 'action onpurge', 'actionon purge'), action=self._parse_setter(ACTIONONPURGE))

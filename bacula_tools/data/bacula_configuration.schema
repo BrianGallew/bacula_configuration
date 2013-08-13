@@ -103,8 +103,8 @@ CREATE TABLE `directors` (
   `piddirectory` varchar(255),
   `scripts_directory` varchar(255),
   `queryfile` varchar(255),
-  `heartbeat_interval` int(11),
-  `maximum_concurrent_jobs` int(11),
+  `heartbeatinterval` int(11),
+  `maximumconcurrentjobs` int(11),
   `fd_connect_timeout` int(11),
   `sd_connect_timeout` int(11),
   `diraddresses` varchar(512),
@@ -124,13 +124,17 @@ CREATE TABLE `directors` (
 CREATE TABLE `storage` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
-  `dirid` int(11) NOT NULL,
-  `password` varchar(255),
   `address` varchar(255),
-  `port` int(11) NOT NULL DEFAULT 9103,
+  `sdport` int(11) DEFAULT NULL,
+  `password` varchar(255),
+  `device` varchar(255),
+  `mediatype` varchar(255),
+  `autochanger` tinyint(1) NOT NULL DEFAULT 0,
+  `maximumconcurrentjobs` int(11),
+  `allowcompression` tinyint(1) NOT NULL DEFAULT 0,
+  `heartbeatinterval` varchar(255),
   PRIMARY KEY `id` (`id`),
   UNIQUE KEY `address_UNIQUE` (`address`),
-  CONSTRAINT `fk_dir` FOREIGN KEY (`dirid`) REFERENCES `directors` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table schedule_time (complete)';

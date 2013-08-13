@@ -4,8 +4,8 @@ keylist = []
 
 class Director(DbDict):
     NULL_KEYS = [ID, ADDRESS, DIRADDRESSES,MONITOR,
-                 FD_CONNECT_TIMEOUT, HEARTBEAT_INTERVAL, MAXIMUMCONSOLECONNECTIONS,
-                 MAXIMUM_CONCURRENT_JOBS, PASSWORD, PIDDIRECTORY, QUERYFILE,
+                 FD_CONNECT_TIMEOUT, HEARTBEATINTERVAL, MAXIMUMCONSOLECONNECTIONS,
+                 MAXIMUMCONCURRENTJOBS, PASSWORD, PIDDIRECTORY, QUERYFILE,
                  SCRIPTS_DIRECTORY, SD_CONNECT_TIMEOUT, SOURCEADDRESS, STATISTICS_RETENTION,
                  VERID, WORKINGDIRECTORY, MESSAGE_ID]
     SETUP_KEYS = [(PORT, 9101),(NAME, ''),]
@@ -63,10 +63,10 @@ class Director(DbDict):
         gr_name = np((NAME,), action=lambda x: self._set_name(x[2]))
         gr_address = np((ADDRESS,), action=self._parse_setter(ADDRESS))
         gr_fd_conn = np(('fd connect timeout','fdconnect timeout','fd connecttimeout','fdconnecttimeout'), gr_number, self._parse_setter(FD_CONNECT_TIMEOUT, True))
-        gr_heart = np(('heartbeat interval', 'heartbeatinterval',), gr_number, self._parse_setter(HEARTBEAT_INTERVAL, True))
+        gr_heart = np(('heartbeat interval', 'heartbeatinterval',), gr_number, self._parse_setter(HEARTBEATINTERVAL, True))
         gr_max_con = np(('maximumconsoleconnections', 'maximumconsole connections', 'maximum consoleconnections', 'maximum console connections'),
                         gr_number, self._parse_setter(MAXIMUMCONSOLECONNECTIONS, True))
-        gr_max_jobs = np(('maximum concurrent jobs', 'maximumconcurrent jobs', 'maximum concurrentjobs', 'maximumconcurrentjobs'), gr_number, action=self._parse_setter(MAXIMUM_CONCURRENT_JOBS, True))
+        gr_max_jobs = np(('maximum concurrent jobs', 'maximumconcurrent jobs', 'maximum concurrentjobs', 'maximumconcurrentjobs'), gr_number, action=self._parse_setter(MAXIMUMCONCURRENTJOBS, True))
         gr_pass = np((PASSWORD,), action=self._parse_setter(PASSWORD))
         gr_pid = np((PIDDIRECTORY, 'pid directory'), action=self._parse_setter(PIDDIRECTORY))
         gr_query = np(('query file', 'queryfile'), action=self._parse_setter(QUERYFILE))
@@ -89,7 +89,6 @@ class Director(DbDict):
 
         result = gr_res.parseString(string, parseAll=True)
         return 'Director: ' + self[NAME]
-
 
     # }}}
     # {{{ __str__(): 

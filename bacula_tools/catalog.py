@@ -4,7 +4,7 @@ keylist = []
 
 class Catalog(DbDict):
     NULL_KEYS = [
-        ID, DBADDRESS, DBNAME, DBPORT, DBSOCKET, PASSWORD, USER
+        ID, DBADDRESS, DBNAME, DBPORT, DBSOCKET, PASSWORD, USER, DIRECTOR_ID
         ]
     SETUP_KEYS = [(NAME, ''),]
     table = CATALOGS
@@ -49,7 +49,7 @@ class Catalog(DbDict):
         self.output = ['Catalog {\n  Name = "%(name)s"' % self,'}']
         
         for key in self.NULL_KEYS:
-            if key == ID: continue
+            if key in [ID, DIRECTOR_ID]: continue
             self._simple_phrase(key)
         return '\n'.join(self.output)
 

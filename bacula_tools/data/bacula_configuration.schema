@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS `schedule_link` ;
 DROP TABLE IF EXISTS `jobs` ;
 DROP TABLE IF EXISTS `clients` ;
 DROP TABLE IF EXISTS `storage` ;
+DROP TABLE IF EXISTS `catalogs`;
 DROP TABLE IF EXISTS `directors` ;
 DROP TABLE IF EXISTS `messages`;
 DROP TABLE IF EXISTS `schedule_time` ;
@@ -15,7 +16,6 @@ DROP TABLE IF EXISTS `fileset_link` ;
 DROP TABLE IF EXISTS `fileset_files` ;
 DROP TABLE IF EXISTS `filesets` ;
 DROP TABLE IF EXISTS `consoles`;
-DROP TABLE IF EXISTS `catalogs`;
 DROP TABLE IF EXISTS `pools`;
 
 -- select 'Creating table pools (complete)';
@@ -78,21 +78,6 @@ CREATE TABLE `messages`
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table catalogs (complete)';
-CREATE TABLE `catalogs` 
- (
-  `id` int(11) NOT NULL auto_increment,
-  `name` varchar(255) NOT NULL,
-  `user` varchar(255),
-  `password` varchar(255),
-  `dbname` varchar(255),
-  `dbaddress` varchar(255),
-  `dbsocket` varchar(255),
-  `dbport` varchar(255),
-  PRIMARY KEY `PRIMARY` (`id`),
-  UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
 -- select 'Creating table directors (complete)';
 CREATE TABLE `directors` (
   `id` int(11) NOT NULL auto_increment,
@@ -118,6 +103,23 @@ CREATE TABLE `directors` (
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `name` (`name`),
   CONSTRAINT `fk_message` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- select 'Creating table catalogs (complete)';
+CREATE TABLE `catalogs` 
+ (
+  `id` int(11) NOT NULL auto_increment,
+  `name` varchar(255) NOT NULL,
+  `user` varchar(255),
+  `password` varchar(255),
+  `dbname` varchar(255),
+  `dbaddress` varchar(255),
+  `dbsocket` varchar(255),
+  `dbport` varchar(255),
+  `director_id` int(11) DEFAULT NULL,
+  PRIMARY KEY `PRIMARY` (`id`),
+  UNIQUE KEY `name` (`name`),
+  CONSTRAINT `fk_dir_id` FOREIGN KEY (`director_id`) REFERENCES `directors` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table storage';

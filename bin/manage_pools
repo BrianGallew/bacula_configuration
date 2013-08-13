@@ -51,7 +51,7 @@ if args.create: s._set_name(pool_arg[0])
 
 s.search(pool_arg[0])
 if not s[ID]:
-    print 'No such fileset: %s' % pool_arg[0],
+    print 'No such pool: %s' % pool_arg[0],
     exit()
 
 if args.delete:

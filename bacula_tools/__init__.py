@@ -21,11 +21,12 @@ _INTERNED = ['Append', 'Available', 'Catalog', 'Cleaning', 'Error', 'Full', 'Pur
              'piddirectory', 'pkiencryption', 'pkikeypair', 'pkimasterkey', 'pkisignatures', 'pool',
              'poolacl', 'pools', 'pooltype', 'port', 'primary_dir', 'priority', 'purgeoldestvolume',
              'queryfile', 'recycle', 'recyclecurrentvolume', 'recycleoldestvolume', 'recyclepool', 'rows',
-             'run', 'schedule', 'schedule_time', 'scheduleacl', 'schedules', 'scratchpool',
+             'run', 'schedule', 'schedule_time', 'scheduleacl', 'schedules', 'scratchpool', 'sdport',
              'scripts_directory', 'sd_connect_timeout', 'sdconnecttimeout', 'service', 'services',
              'sourceaddress', 'statistics_retention', 'storage', 'storageacl', 'storagepassword',
              'storageserver', 'storageserveraddress', 'timespan', 'user', 'usevolumeonce', 'verid',
-             'volumeretention', 'volumeuseduration', 'vssenabled', 'whereacl', 'workingdirectory', 'yes']
+             'volumeretention', 'volumeuseduration', 'vssenabled', 'whereacl', 'workingdirectory', 'yes',
+             'device', 'mediatype', 'autochanger', 'allowcompression']
 
 for w in _INTERNED: locals()[w.upper()] = w
 
@@ -162,6 +163,7 @@ from catalog import Catalog
 from console import Console
 from client import Client
 from pool import Pool
+from storage import Storage
 
 _DISPATCHER = {
     FILESET: Fileset,
@@ -173,4 +175,5 @@ _DISPATCHER = {
     CLIENT: Client,
     FILEDAEMON: Client,
     POOL: Pool,
+    STORAGE: Storage,
     }

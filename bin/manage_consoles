@@ -48,7 +48,7 @@ if args.create: s._set_name(console_arg[0])
 
 s.search(console_arg[0])
 if not s[ID]:
-    print 'No such fileset: %s' % console_arg[0],
+    print 'No such console: %s' % console_arg[0],
     exit()
 
 if args.delete:

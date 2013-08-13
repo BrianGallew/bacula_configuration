@@ -1,5 +1,5 @@
 #! /usr/local/bin/python
-# Add/remove/update/dump clients
+# Add/remove/update/dump storage
 
 import sys, os
 import optparse
@@ -7,15 +7,15 @@ from bacula_tools import *
 
 # {{{ Parser configuration and sanity checking.  Also, "bacula" is instantiated in here
 
-parser = optparse.OptionParser(description='Manage Bacula clients.', usage='usage: %prog [options] [client]')
+parser = optparse.OptionParser(description='Manage Bacula storage.', usage='usage: %prog [options] [storage]')
 parser.add_option('--create', action='store_true',
-                   default=False, help='Create the given client')
+                   default=False, help='Create the given storage')
 parser.add_option('--delete', action='store_true',
-                   default=False, help='Delete the given client')
+                   default=False, help='Delete the given storage')
 parser.add_option('--rename', metavar='NEW_NAME',
-                   help='Rename the given client')
+                   help='Rename the given storage')
 parser.add_option('--list', action='store_true',
-                   default=False, help='List the available client')
+                   default=False, help='List the available storage')
 
 group = optparse.OptionGroup(parser, "Setters",
                              "These options are used for setting various values.  "
@@ -23,18 +23,13 @@ group = optparse.OptionGroup(parser, "Setters",
                              "You should be aware that no sanity checking is done here, so it is quite possible "
                              "to break your configuration while using them.  Caveat emptor."
                              )
-keylist = [x for x in Client.NULL_KEYS if not x == ID]
+keylist = [x for x in Storage.NULL_KEYS if not x == ID]
 for key in keylist: group.add_option('--' + key)
-group.add_option('--' + FDPORT)
-group.add_option('--' + AUTOPRUNE)
-group.add_option('--' + MAXIMUMCONCURRENTJOBS)
-group.add_option('--' + PKIENCRYPTION)
-group.add_option('--' + PKISIGNATURES)         
 
 
 parser.add_option_group(group)
 
-(args, client_arg) = parser.parse_args()
+(args, storage_arg) = parser.parse_args()
 bacula = Bacula_Factory()        # Instantiate our DB connection thingy
 
 if args.delete and (args.create or args.set or args.rename):
@@ -44,37 +39,35 @@ if args.delete and (args.create or args.set or args.rename):
 # }}}
 
 if args.list:
-    print bacula.formatted_query_result('select name from %s order by name' % CLIENTS, infix='\n')
-    if not client_arg: exit()
-if not client_arg:
+    print bacula.formatted_query_result('select name from %s order by name' % STORAGE, infix='\n')
+    if not storage_arg: exit()
+if not storage_arg:
     parser.print_help()
     exit()
 
-s = Client()
-if args.create: s._set_name(client_arg[0])
+s = Storage()
+if args.create: s._set_name(storage_arg[0])
 
-s.search(client_arg[0])
+s.search(storage_arg[0])
 if not s[ID]:
-    print 'No such client: %s' % client_arg[0],
+    print 'No such storage: %s' % storage_arg[0],
     exit()
 
 if args.delete:
     s.delete()
-    print 'Deleted client:', client_arg[0]
+    print 'Deleted storage:', storage_arg[0]
     exit()                      # Nothing to print out now
     
 if args.rename: s.change_name(args.rename)
 for key in keylist:
-    if key in [AUTOPRUNE, PKIENCRYPTION, PKISIGNATURES]: continue
+    if key in [AUTOCHANGER, ALLOWCOMPRESSION]: continue
     value = getattr(args, key)
     if value == None: continue
     try: s._set(key, value)
     except: pass
-if not args.autoprune == None: s._set(AUTOPRUNE, args.autoprune, True)
-if not args.pkisignatures == None: s._set(PKISIGNATURES, args.pkisignatures, True)
-if not args.pkiencryption == None: s._set(PKIENCRYPTION, args.pkiencryption, True)
+if not args.autochanger == None: s._set(AUTOCHANGER, args.autochanger, True)
+if not args.allowcompression == None: s._set(ALLOWCOMPRESSION, args.ALLOWCOMPRESSION, True)
 
-print 'Director config\n', s, '\n', 'File Daemon config\n', s.fd()
-if s[NOTES]:
-    print "\nNotes:", s[NOTES]
+
+print 'Director config\n', s, '\n'
 exit()

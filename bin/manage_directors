@@ -49,7 +49,7 @@ if args.create: s._set_name(director_arg[0])
 
 s.search(director_arg[0])
 if not s[ID]:
-    print 'No such fileset: %s' % director_arg[0],
+    print 'No such director: %s' % director_arg[0],
     exit()
 
 if args.delete:

@@ -1,0 +1,43 @@
+#! /usr/bin/env python
+
+import os, sys, pprint
+sys.path.insert(0, '..')
+sys.path.insert(0, '.')
+import bacula_tools
+
+test_cases = ['''    Name = File
+  Address = 127.0.0.1                
+  SDPort = 9103
+  Password = "lLpGzQjpOwCGtUKkSwFWuLNAFsi7Bmpq1bHGtsf/213T"
+  Device = FileStorage
+  Media Type = File
+''',
+              '''  Name = DDS-4
+  Address = outbidoverdrive
+  SDPort = 9103
+  Password = "lLpGzQjpOwCGtUKkSwFWuLNAFsi7Bmpq1bHGtsf/213T"
+  Device = DDS-4
+  Media Type = DDS-4
+  Autochanger = yes
+''',
+              '''  Name = "8mmDrive"
+  Address = outbidoverdrive
+  SDPort = 9103
+  Password = "lLpGzQjpOwCGtUKkSwFWuLNAFsi7Bmpq1bHGtsf/213T"
+  Device = "Exabyte 8mm"
+  MediaType = "8mm"
+''',
+              '''  Name = "DVD"
+  Address = outbidoverdrive
+  SDPort = 9103
+  Password = "lLpGzQjpOwCGtUKkSwFWuLNAFsi7Bmpq1bHGtsf/213T"
+  Device = "DVD Writer"
+  MediaType = "DVD"
+''',
+]
+for string in test_cases:
+    c = bacula_tools.Storage()
+    c.parse_string(string)
+
+    print c
+    print c.fd()

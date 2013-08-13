@@ -136,7 +136,7 @@ CREATE TABLE `storage` (
   `allowcompression` tinyint(1) NOT NULL DEFAULT 0,
   `heartbeatinterval` varchar(255),
   PRIMARY KEY `id` (`id`),
-  UNIQUE KEY `address_UNIQUE` (`address`),
+  UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table schedule_time (complete)';

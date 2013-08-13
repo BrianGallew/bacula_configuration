@@ -3,7 +3,7 @@
 
 import sys, os
 import optparse
-from bacula_tools import Catalog, Bacula_Factory, CATALOGS, ID
+from bacula_tools import Catalog, Bacula_Factory, CATALOGS, ID, DIRECTOR_ID, Director
 
 # {{{ Parser configuration and sanity checking.  Also, "bacula" is instantiated in here
 
@@ -23,8 +23,9 @@ group = optparse.OptionGroup(parser, "Setters",
                              "You should be aware that no sanity checking is done here, so it is quite possible "
                              "to break your configuration while using them.  Caveat emptor."
                              )
-keylist = [x for x in Catalog.NULL_KEYS if not x == ID]
+keylist = [x for x in Catalog.NULL_KEYS if not x in [ID, DIRECTOR_ID]]
 for key in keylist: group.add_option('--' + key)
+group.add_option('--director')
 parser.add_option_group(group)
 
 (args, catalog_arg) = parser.parse_args()
@@ -62,6 +63,10 @@ for key in keylist:
     if value == None: continue
     try: s._set(key, value)
     except: pass
+if args.director:
+    d = Director()
+    d.search(args.director)
+    s._set(DIRECTOR_ID, d[ID])
 
 print s
 exit()

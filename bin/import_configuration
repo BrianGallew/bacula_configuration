@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 import os, sys, time
-from bacula_tools import parser
+from bacula_tools import parser, Director, Catalog, ID, DIRECTOR_ID
 import curses, curses.wrapper
 from pprint import *
 
@@ -57,10 +57,19 @@ def display_all(stdscreen):
     screen_setup(stdscreen)
     w = Writer(stdscreen)
     for f in sys.argv[1:]:
-        try: parser(open(f).read(), w)
+        try: stuff = parser(open(f).read(), w)
         except: pass
+    director = None
+    for d in stuff:
+        if type(d) == Director:
+            director = d
+            break
+    for d in stuff:
+        if type(d) == Catalog:
+            d._set(DIRECTOR_ID, director[ID])
+        
     w.finish()
-    return
+    return 
 
 try:
     curses.wrapper(display_all)

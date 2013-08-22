@@ -1,0 +1,62 @@
+#! /usr/bin/env python
+
+import os, sys, pprint
+sys.path.insert(0, '..')
+sys.path.insert(0, '.')
+import bacula_tools
+
+silliness = '''  Name = "DefaultJob"
+  Type = Backup
+  Level = Incremental
+  Client = outbidoverdrive.gallew.org-fd 
+  FileSet = "Full Set"
+  Schedule = "WeeklyCycle"
+  Storage = File
+  Messages = Standard
+  Pool = File
+  Priority = 10
+  Write Bootstrap = "/usr/local/Cellar/bacula/5.2.13/opt/bacula/working/%c.bsr"
+'''
+
+test_cases = ['''  Name = "BackupClient1"
+  JobDefs = "DefaultJob"
+
+''',
+              '''  Name = "BackupClient2"
+  Client = outbidoverdrive.gallew.org2-fd
+  RunBeforeJob = "/usr/local/Cellar/bacula/5.2.13/etc/make_catalog_backup.pl MyCatalog"
+  JobDefs = "DefaultJob"
+
+''',
+              '''  Name = "BackupCatalog"
+  JobDefs = "DefaultJob"
+  Level = Full
+  FileSet="Catalog"
+  Schedule = "WeeklyCycleAfterBackup"
+  RunBeforeJob = "/usr/local/Cellar/bacula/5.2.13/etc/make_catalog_backup.pl MyCatalog"
+  Write Bootstrap = "/usr/local/Cellar/bacula/5.2.13/opt/bacula/working/%n.bsr"
+  Priority = 11                   # run after main backup
+
+''',
+              '''  Name = "RestoreFiles"
+  Type = Restore
+  Client=outbidoverdrive.gallew.org-fd                 
+  FileSet="Full Set"                  
+  Storage = File                      
+  RunAfterJob  = "/usr/local/Cellar/bacula/5.2.13/etc/delete_catalog_backup"
+  Pool = Default
+  Messages = Standard
+  Where = /tmp/bacula-restores
+
+''',
+]
+
+jd = bacula_tools.JobDef()
+jd.parse_string(silliness)
+print jd
+
+for string in test_cases:
+    c = bacula_tools.Job()
+    c.parse_string(string)
+
+    print c

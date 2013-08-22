@@ -1,32 +1,45 @@
 '''Bacula configuration database stuff: common routines, credentials, etc.
 Configuration is at the *end* of this file.'''
 
+from __future__ import print_function
 import re, shlex, sys, os
 
-
-_INTERNED = ['Append', 'Available', 'Catalog', 'Cleaning', 'Error', 'Full', 'Purged', 'Recycle', 'Used',
-             'actiononpurge', 'address', 'autoprune', 'autoprune', 'bacula_enabled', 'begin', 'catalog_id',
-             'catalogacl', 'catalogfiles', 'catalogs', 'cleaningprefix', 'client', 'clientacl', 'clients',
-             'commandacl', 'console', 'consoles', 'data', 'db', 'dbaddress', 'dbname', 'dbpassword',
-             'dbport', 'dbsocket', 'dbuser', 'diraddresses', 'director', 'director_id', 'director_name',
-             'directors', 'dirid', 'enabled', 'end', 'entries', 'exclude', 'excludes', 'failure',
-             'fd_connect_timeout', 'fdaddress', 'fdaddresses', 'fdport', 'fdsourceaddress', 'file_retention',
-             'filedaemon', 'fileretention', 'fileset', 'fileset_files', 'filesetacl', 'filesets',
-             'heartbeatinterval', 'hostid', 'hostname', 'hostnames', 'hosts', 'id',
-             'ignorechanges', 'includes', 'job_retention', 'jobacl', 'jobretention', 'labelformat',
-             'lastupdated', 'maximumconcurrentjobs', 'maximumbandwidthperjob', 'maximumconcurrentjobs',
-             'maximumconsoleconnections', 'maximumconsoleconnections', 'maximumnetworkbuffersize',
-             'maximumvolumebytes', 'maximumvolumefiles', 'maximumvolumejobs', 'maximumvolumes', 'message_id',
-             'messages', 'monitor', 'name', 'no', 'notes', 'option', 'options', 'os', 'owners', 'password',
-             'piddirectory', 'pkiencryption', 'pkikeypair', 'pkimasterkey', 'pkisignatures', 'pool',
-             'poolacl', 'pools', 'pooltype', 'port', 'primary_dir', 'priority', 'purgeoldestvolume',
-             'queryfile', 'recycle', 'recyclecurrentvolume', 'recycleoldestvolume', 'recyclepool', 'rows',
-             'run', 'schedule', 'schedule_time', 'scheduleacl', 'schedules', 'scratchpool', 'sdport',
-             'scripts_directory', 'sd_connect_timeout', 'sdconnecttimeout', 'service', 'services',
-             'sourceaddress', 'statistics_retention', 'storage', 'storageacl', 'storagepassword',
-             'storageserver', 'storageserveraddress', 'timespan', 'user', 'usevolumeonce', 'verid',
-             'volumeretention', 'volumeuseduration', 'vssenabled', 'whereacl', 'workingdirectory', 'yes',
-             'device', 'mediatype', 'autochanger', 'allowcompression']
+_INTERNED = [
+    'Append', 'Available', 'Catalog', 'Cleaning', 'Error', 'Full', 'Purged', 'Recycle', 'Used',
+    'actiononpurge', 'address', 'autoprune', 'autoprune', 'bacula_enabled', 'begin', 'catalog_id',
+    'catalogacl', 'catalogfiles', 'catalogs', 'cleaningprefix', 'client', 'clientacl', 'clients',
+    'commandacl', 'console', 'consoles', 'data', 'db', 'dbaddress', 'dbname', 'dbpassword',
+    'dbport', 'dbsocket', 'dbuser', 'diraddresses', 'director', 'director_id', 'director_name',
+    'directors', 'dirid', 'enabled', 'end', 'entries', 'exclude', 'excludes', 'failure',
+    'fd_connect_timeout', 'fdaddress', 'fdaddresses', 'fdport', 'fdsourceaddress', 'file_retention',
+    'filedaemon', 'fileretention', 'fileset', 'fileset_files', 'filesetacl', 'filesets',
+    'heartbeatinterval', 'hostid', 'hostname', 'hostnames', 'hosts', 'id',
+    'ignorechanges', 'includes', 'job_retention', 'jobacl', 'jobretention', 'labelformat',
+    'lastupdated', 'maximumconcurrentjobs', 'maximumbandwidthperjob', 'maximumconcurrentjobs',
+    'maximumconsoleconnections', 'maximumconsoleconnections', 'maximumnetworkbuffersize',
+    'maximumvolumebytes', 'maximumvolumefiles', 'maximumvolumejobs', 'maximumvolumes', 'message_id',
+    'messages', 'monitor', 'name', 'no', 'notes', 'option', 'options', 'os', 'owners', 'password',
+    'piddirectory', 'pkiencryption', 'pkikeypair', 'pkimasterkey', 'pkisignatures', 'pool',
+    'poolacl', 'pools', 'pooltype', 'port', 'primary_dir', 'priority', 'purgeoldestvolume',
+    'queryfile', 'recycle', 'recyclecurrentvolume', 'recycleoldestvolume', 'recyclepool', 'rows',
+    'run', 'schedule', 'schedule_time', 'scheduleacl', 'schedules', 'scratchpool', 'sdport',
+    'scripts_directory', 'sd_connect_timeout', 'sdconnecttimeout', 'service', 'services',
+    'sourceaddress', 'statistics_retention', 'storage', 'storageacl', 'storagepassword',
+    'storageserver', 'storageserveraddress', 'timespan', 'user', 'usevolumeonce', 'verid',
+    'volumeretention', 'volumeuseduration', 'vssenabled', 'whereacl', 'workingdirectory', 'yes',
+    'device', 'mediatype', 'autochanger', 'allowcompression', 'type', 'level', 'differentialpool_id',
+    'fileset_id', 'fullpool_id', 'incrementalpool_id', 'client_id', 'messages_id', 'pool_id',
+    'schedule_id', 'job_id', 'rescheduletimes', 'accurate', 'allowduplicatejobs',
+    'allowmixedpriority', 'cancellowerlevelduplicates', 'cancelqueuedduplicates',
+    'cancelrunningduplicates', 'prefermountedvolumes', 'prefixlinks', 'prunefiles', 'prunejobs',
+    'prunevolumes', 'rerunfailedlevels', 'rescheduleonerror', 'spoolattributes', 'spooldata',
+    'writepartafterjob', 'addprefix', 'addsuffix', 'base', 'bootstrap', 'differentialmaxwaittime',
+    'idmaxwaittime', 'incrementalmaxruntime', 'maxfullinterval', 'maximumbandwidth',
+    'maxrunschedtime', 'maxruntime', 'maxstartdelay', 'maxwaittime', 'regexwhere',
+    'rescheduleinterval', 'spoolsize', 'stripprefix', 'verifyjob', 'where', 'writebootstrap',
+    'replace', 'jobdef', 'jobs', 'job', 'storage_id', 'command', 'runsonsuccess', 'runsonfailure',
+    'runsonclient', 'runswhen', 'failjobonerror', 'scripts'
+    ]
 
 for w in _INTERNED: locals()[w.upper()] = w
 
@@ -36,7 +49,7 @@ STATUS = [FULL, USED, APPEND, CLEANING, ERROR, PURGED, RECYCLE, AVAILABLE]
 BACULA_DIR_PORT = 9101
 BACULA_FD_PORT = 9102
 BACULA_SD_PORT = 9103
-DEBUG = None
+DEBUG = os.environ.get('DEBUG', None)
 
 WORKING_DIR = {
     'Linux': "/var/lib/bacula",
@@ -74,7 +87,7 @@ def parser(string, output=None):
         try: name, body = current.split(LB,1)
         except:
             if output: output(current)
-            else: print "'%s'" % current
+            else: print("'%s'" % current)
             raise
         name = name.strip().lower()
         try:
@@ -82,19 +95,18 @@ def parser(string, output=None):
             parsed.append(obj)
             result = obj.parse_string(body.strip())
             if output: output(result)
-            else: print result
-        except Exception, e:
+            else: print(result)
+        except Exception as e:
             msg = '%s: Unable to handle %s at this time' % (name.capitalize(), e)
             if output: output(msg)
-            else: print msg
+            else: print(msg)
         while parts and parts[0] == '\n': del parts[0]
     return parsed
-
     
 
 def debug_print(msg, *args):
     global DEBUG
-    if DEBUG: print >> sys.stderr, msg % args
+    if DEBUG: print(msg % args, file=sys.stderr)
     sys.stderr.flush()
     return
 
@@ -164,6 +176,9 @@ from console import Console
 from client import Client
 from pool import Pool
 from storage import Storage
+from job import Job, JobDef
+
+import util
 
 _DISPATCHER = {
     FILESET: Fileset,
@@ -176,4 +191,6 @@ _DISPATCHER = {
     FILEDAEMON: Client,
     POOL: Pool,
     STORAGE: Storage,
+    JOB: Job,
+    JOBDEF: JobDef,
     }

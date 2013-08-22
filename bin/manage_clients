@@ -1,5 +1,6 @@
 #! /usr/local/bin/python
 # Add/remove/update/dump clients
+from __future__ import print_function
 
 import sys, os
 import optparse
@@ -44,7 +45,7 @@ if args.delete and (args.create or args.set or args.rename):
 # }}}
 
 if args.list:
-    print bacula.formatted_query_result('select name from %s order by name' % CLIENTS, infix='\n')
+    print(bacula.formatted_query_result('select name from %s order by name' % CLIENTS, infix='\n'))
     if not client_arg: exit()
 if not client_arg:
     parser.print_help()
@@ -55,12 +56,12 @@ if args.create: s._set_name(client_arg[0])
 
 s.search(client_arg[0])
 if not s[ID]:
-    print 'No such client: %s' % client_arg[0],
+    print('No such client: %s' % client_arg[0])
     exit()
 
 if args.delete:
     s.delete()
-    print 'Deleted client:', client_arg[0]
+    print('Deleted client:', client_arg[0])
     exit()                      # Nothing to print out now
     
 if args.rename: s.change_name(args.rename)
@@ -74,7 +75,7 @@ if not args.autoprune == None: s._set(AUTOPRUNE, args.autoprune, True)
 if not args.pkisignatures == None: s._set(PKISIGNATURES, args.pkisignatures, True)
 if not args.pkiencryption == None: s._set(PKIENCRYPTION, args.pkiencryption, True)
 
-print 'Director config\n', s, '\n', 'File Daemon config\n', s.fd()
+print('Director config\n', s, '\n', 'File Daemon config\n', s.fd())
 if s[NOTES]:
-    print "\nNotes:", s[NOTES]
+    print("\nNotes:", s[NOTES])
 exit()

@@ -1,7 +1,6 @@
 from . import *
-from . import Bacula_Factory
+import bacula_tools
 import re, os, sys, filecmp
-from pprint import pprint
 
 # {{{ guess_os():
 
@@ -89,8 +88,9 @@ class DbDict(dict):             # base class for all of the things derived from 
     name_re = re.compile(r'^\s*name\s*=\s*(.*)', re.MULTILINE|re.IGNORECASE)
     SETUP_KEYS = [(NAME, ''), (DATA, '')]
     NULL_KEYS = [ID]
-    bc = Bacula_Factory()
+    bc = bacula_tools.Bacula_Factory()
     output = []
+    prefix = '  '               # Used for spacing out members when printing
     table = 'override me'       # This needs to be overridden in every subclass, before calling __init__
 
     # {{{ __init__(row): pass in a row (as a dict)
@@ -103,59 +103,59 @@ class DbDict(dict):             # base class for all of the things derived from 
         return
 
     # }}}
-    # {{{ search(string):
+    # {{{ search(string, id=None):
 
-    def search(self, string):
-        bc = Bacula_Factory()
-        new_me = bc.value_check(self.table, NAME, string, asdict=True)
+    def search(self, string, id=None):
+        if string:
+            new_me = self.bc.value_check(self.table, NAME, string, asdict=True)
+        elif not id == None:
+            new_me = self.bc.value_check(self.table, ID, id, asdict=True)
         try: self.update(new_me[0])
-        except Exception, e: pass
+        except Exception as e: pass
         return self
 
     # }}}
     # {{{ delete(): delete it from the database
 
     def delete(self):
-        bc = Bacula_Factory()
-        bc.do_sql('DELETE FROM %s WHERE id = %%s' % self.table, self[ID])
+        self.bc.do_sql('DELETE FROM %s WHERE id = %%s' % self.table, self[ID])
         return
 
 # }}}
     # {{{ change_name(name): set my name
 
     def change_name(self, name):
-        bc = Bacula_Factory()
         self[NAME] = name
-        row = bc.do_sql('update %s set name = %%s where id = %%s' % self.table, (name, self[ID]))
+        row = self.bc.do_sql('update %s set name = %%s where id = %%s' % self.table, (name, self[ID]))
         return
 
     # }}}
-    # {{{ _set(field, value, bool=False): handy shortcut for setting and saving values
+    # {{{ _set(field, value, bool=False, dereference=False): handy shortcut for setting and saving values
 
-    def _set(self, field, value, bool=False):
+    def _set(self, field, value, bool=False, dereference=False):
         if bool:
             if value in ['0', 'no', 'No', 'NO', 'off', 'Off', 'OFF']: value = 0
             else: value = 1
+        if dereference:
+            value = self._fk_reference(field, value)[ID]
         self[field] = value
         return self._save()
 
     # }}}
     # {{{ _save(): Save the top-level fileset record
     def _save(self):
-        bc = Bacula_Factory()
         keys = [x for x in self.keys() if not x == ID]
         keys.sort()
         sql = 'update %s set %s where id = %%s' % (self.table,
-                                                   ', '.join(['%s = %%s' % x for x in keys]))
+                                                   ', '.join(['`%s` = %%s' % x for x in keys]))
         values = [self[x] for x in keys]
         values.append(self[ID])
-        return bc.do_sql(sql, values)
+        return self.bc.do_sql(sql, values)
 # }}}
     # {{{ _set_name(name): set my name
 
     def _set_name(self, name):
-        bc = Bacula_Factory()
-        row = bc.value_ensure(self.table, NAME, name.strip(), asdict=True)[0]
+        row = self.bc.value_ensure(self.table, NAME, name.strip(), asdict=True)[0]
         self.update(row)
         return
 
@@ -177,11 +177,11 @@ class DbDict(dict):             # base class for all of the things derived from 
     # }}}
     # {{{ _parse_setter(key, c_int=False):
 
-    def _parse_setter(self, key, c_int=False):
+    def _parse_setter(self, key, c_int=False, dereference=False):
         '''Shortcut called by parser for setting values'''
         def rv(value):
-            if c_int: self._set(key, int(value[2].strip()))
-            else: self._set(key, value[2].strip())
+            if c_int: self._set(key, int(value[2].strip()), dereference=dereference)
+            else: self._set(key, value[2].strip(), dereference=dereference)
         return rv
 
 # }}}
@@ -193,7 +193,7 @@ class DbDict(dict):             # base class for all of the things derived from 
             int(self[key])
             value = self[key]
         except: value = '"' + self[key] + '"'
-        self.output.insert(-1,'  %s = %s' % (key.capitalize(), value))
+        self.output.insert(-1,'%s%s = %s' % (self.prefix, key.capitalize(), value))
         return
 
     # }}}
@@ -205,11 +205,55 @@ class DbDict(dict):             # base class for all of the things derived from 
         else: value = YES
         if onlytrue and value == NO: return
         if onlyfalse and value == YES: return
-        self.output.insert(-1,'  %s = %s' % (key.capitalize(), value))
+        self.output.insert(-1,'%s%s = %s' % (self.prefix,key.capitalize(), value))
         return
 
     # }}}
+    # {{{ fd(): stub function to make testing a little easier
+
     def fd(self): return ''
+
+    # }}}
+    # {{{ _fk_reference(fk, string=None): Set/get fk-references
+
+    def _fk_reference(self, fk, string=None):
+        obj = bacula_tools._DISPATCHER[fk.replace('_id','')]()
+        if string:
+            obj.search(string.strip())
+            if not obj[ID]: obj._set_name(string.strip())
+            if not self[fk] == obj[ID]: self._set(fk, obj[ID])
+        else: obj.search(None, id=self[fk])
+        return obj
+
+# }}}
+
+class PList(list):
+    '''This bizarre construct takes a phrase and lazily turns it into a
+    list that is all the permutations of the phrase with all spaces
+    removed.  Further, this list is sorted such that the first element is
+    the original phrase, while the last one has no spaces at all.  It's
+    kind of a weird thing, but it makes the string parsing much, much more
+    compact and efficient.
+    '''
+    def __init__(self, phrase):
+        list.__init__(self)
+        self._expand(phrase)
+        return
+
+    def _p2(self, ary):
+        if len(ary) == 1: return ary
+        if len(ary) == 2: return [''.join(ary), ' '.join(ary)]
+        results = []
+        for x in self._p2(ary[1:]):
+            results.append(ary[0] + x)
+            results.append(ary[0] + ' ' + x)
+        return results
+
+    def _expand(self, phrase):
+        result = self._p2(phrase.split(' '))
+        result.sort()
+        self.extend(result)
+        return
     
 class StorageDaemon(DbDict):
     # {{{ __init__(row, timespan, directors):
@@ -521,7 +565,7 @@ Job {
         if args.script_end: self[END] = args.script_end
         if args.script_fail: self[FAILURE] = args.script_fail
         if args.toggle: self[BACULA_ENABLED] =  1 if self[BACULA_ENABLED] == 0 else 0
-        print self
+        print( self)
         bc = Bacula_Factory()
         sql = '''INSERT INTO bacula_hosts
                  (hostname, address, storageserver, password, fileset,
@@ -538,9 +582,9 @@ Job {
                 ]
         try:
             bc.do_sql(sql, data)
-            print 'New job created for', self[HOSTNAME]
+            print('New job created for', self[HOSTNAME])
         except:
-            print 'Unable to create the job'
+            print( 'Unable to create the job')
             pass             # This will happen under lots of circumstances
 
         # }}}

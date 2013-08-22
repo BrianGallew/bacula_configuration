@@ -52,7 +52,7 @@ class Schedule(DbDict):
             self.bc.do_sql('DELETE FROM schedule_link WHERE scheduleid = %s AND timeid = %s', (self[ID], row[0]))
             self[RUN].remove(row)
             return
-        print 'I cannot delete Run entries that do not exist!'
+        print('I cannot delete Run entries that do not exist!')
         return
 
     # }}}
@@ -64,13 +64,6 @@ class Schedule(DbDict):
         return '\n'.join(self.output)
 
 # }}}
-    # {{{ search(string): load information based on a name
-
-    def search(self, string):
-        DbDict.search(self, string)
-        return self._load_runs()
-
-    # }}}
     # {{{ _load_runs(): helper for loading self from the database
 
     def _load_runs(self):

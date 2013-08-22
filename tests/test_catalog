@@ -16,7 +16,9 @@ test_cases = [
   dbname = "bacula"
  dbuser = "bacula"
  dbpassword = ""
-''',
+'''
+    ]
+
 for string in test_cases:
     c = bacula_tools.Catalog()
     c.parse_string(string)

@@ -1,5 +1,4 @@
 from . import *
-from pprint import pprint
 keylist = []
 
 class Console(DbDict):
@@ -48,7 +47,7 @@ class Console(DbDict):
         for key in self.NULL_KEYS:
             if key == ID: continue
             self._simple_phrase(key)
-        return '\n'.join(output)
+        return '\n'.join(self.output)
 
 # }}}
         

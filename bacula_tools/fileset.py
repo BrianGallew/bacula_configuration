@@ -1,6 +1,5 @@
 from . import *
 from re import compile, MULTILINE, IGNORECASE, DOTALL
-from pprint import pprint
 
 class Fileset(DbDict):
     table = FILESETS
@@ -8,13 +7,6 @@ class Fileset(DbDict):
                   (IGNORECHANGES, 0),
                   (ENTRIES, [])
         ]
-    # {{{ search(string): load information based on a name
-    def search(self, string):
-        DbDict.search(self, string)
-        if not self[ID]: return
-        return self._load_parts()
-
-    # }}}
     # {{{ _load_parts(): helper for loading self from the database
 
     def _load_parts(self):
@@ -95,7 +87,7 @@ class Fileset(DbDict):
         if not row:
             try: self.bc.do_sql('INSERT INTO fileset_link(fileset_id, file_id, exclude) VALUES (%s, %s, %s)',
                            (self[ID], new_entry[0], new_entry[3]))
-            except: print 'You may not have the same entry in both Include{} and Exclude{} clauses.'
+            except: print('You may not have the same entry in both Include{} and Exclude{} clauses.')
 
         self._load_parts()
         return
@@ -110,7 +102,7 @@ class Fileset(DbDict):
                            (self[ID], row[0], row[3]))
             self[ENTRIES].remove(row)
             return
-        print 'I cannot delete entries that do not exist!'
+        print('I cannot delete entries that do not exist!')
         return
 
     # }}}

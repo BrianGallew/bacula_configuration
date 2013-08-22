@@ -1,5 +1,6 @@
 #! /usr/local/bin/python
 # Add/remove/update/dump catalogs
+from __future__ import print_function
 
 import sys, os
 import optparse
@@ -38,7 +39,7 @@ if args.delete and (args.create or args.set or args.rename):
 # }}}
 
 if args.list:
-    print bacula.formatted_query_result('select name from %s order by name' % CATALOGS, infix='\n')
+    print(bacula.formatted_query_result('select name from %s order by name' % CATALOGS, infix='\n'))
     if not catalog_arg: exit()
 if not catalog_arg:
     parser.print_help()
@@ -49,12 +50,12 @@ if args.create: s._set_name(catalog_arg[0])
 
 s.search(catalog_arg[0])
 if not s[ID]:
-    print 'No such catalog: %s' % catalog_arg[0],
+    print('No such catalog: %s' % catalog_arg[0])
     exit()
 
 if args.delete:
     s.delete()
-    print 'Deleted catalog:', catalog_arg[0]
+    print('Deleted catalog:', catalog_arg[0])
     exit()                      # Nothing to print out now
     
 if args.rename: s.change_name(args.rename)
@@ -68,5 +69,5 @@ if args.director:
     d.search(args.director)
     s._set(DIRECTOR_ID, d[ID])
 
-print s
+print(s)
 exit()

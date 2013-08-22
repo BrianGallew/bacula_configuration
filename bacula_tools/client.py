@@ -1,5 +1,4 @@
 from . import *
-from pprint import pprint
 keylist = []
 
 class Client(DbDict):
@@ -13,27 +12,6 @@ class Client(DbDict):
     SETUP_KEYS = [(NAME, ''),(FDPORT, 9102), (AUTOPRUNE, 1), (MAXIMUMCONCURRENTJOBS, 1),
                   (PKIENCRYPTION, 0), (PKISIGNATURES, 0),]
     table = CLIENTS
-    # {{{ _set_catalog(arg): associate a catalog with this client
-
-    def _set_catalog(self, arg):
-        '''There are two cases here: either we get called with a simple
-        string, or else we are called with a tuple.'''
-        c = Catalog()
-        if type(arg) != type(''): arg = arg[2]
-        c.search(arg.strip())
-        if not c[ID]: c._set_name(arg.strip())
-        self._set(CATALOG_ID, c[ID])
-        return
-
-# }}}
-    # {{{ _get_catalog(string):
-
-    def _get_catalog(self):
-        sql = 'select %s from %s where id = %%s' % (NAME,CATALOGS)
-        row = self.bc.do_sql(sql, self[CATALOG_ID])[0]
-        return row[0]
-
-        # }}}
     # {{{ parse_string(string): Entry point for a recursive descent parser
 
     def parse_string(self, string):
@@ -68,7 +46,7 @@ class Client(DbDict):
 
         gr_line = np((NAME,), action=lambda x: self._set_name(x[2]))
         gr_line = gr_line | np((ADDRESS,), action=self._parse_setter(ADDRESS))
-        gr_line = gr_line | np((CATALOG,), action=self._set_catalog)
+        gr_line = gr_line | np((CATALOG,), action=self._parse_setter(CATALOG_ID, dereference=True))
         gr_line = gr_line | np((PASSWORD,), action=self._parse_setter(PASSWORD))
         gr_line = gr_line | np((FILERETENTION,'file retention'), action=self._parse_setter(FILERETENTION))
         gr_line = gr_line | np((JOBRETENTION,'job retention'), action=self._parse_setter(JOBRETENTION))
@@ -107,7 +85,7 @@ class Client(DbDict):
 
     def __str__(self):
         self.output = ['Client {\n  Name = "%(name)s"' % self,'}']
-        self.output.insert(-1, '  %s = "%s"' % (CATALOG.capitalize(), self._get_catalog()))
+        self.output.insert(-1, '  %s = "%s"' % (CATALOG.capitalize(), self._fk_reference(CATALOG_ID)[NAME]))
         
         for key in [NAME, ADDRESS, FDPORT, PASSWORD, FILERETENTION,
                     JOBRETENTION, MAXIMUMCONCURRENTJOBS,

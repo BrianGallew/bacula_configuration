@@ -1,5 +1,6 @@
 #! /usr/local/bin/python
 # Add/remove/update/dump storage
+from __future__ import print_function
 
 import sys, os
 import optparse
@@ -39,7 +40,7 @@ if args.delete and (args.create or args.set or args.rename):
 # }}}
 
 if args.list:
-    print bacula.formatted_query_result('select name from %s order by name' % STORAGE, infix='\n')
+    print(bacula.formatted_query_result('select name from %s order by name' % STORAGE, infix='\n'))
     if not storage_arg: exit()
 if not storage_arg:
     parser.print_help()
@@ -50,12 +51,12 @@ if args.create: s._set_name(storage_arg[0])
 
 s.search(storage_arg[0])
 if not s[ID]:
-    print 'No such storage: %s' % storage_arg[0],
+    print('No such storage: %s' % storage_arg[0])
     exit()
 
 if args.delete:
     s.delete()
-    print 'Deleted storage:', storage_arg[0]
+    print('Deleted storage:', storage_arg[0])
     exit()                      # Nothing to print out now
     
 if args.rename: s.change_name(args.rename)
@@ -69,5 +70,5 @@ if not args.autochanger == None: s._set(AUTOCHANGER, args.autochanger, True)
 if not args.allowcompression == None: s._set(ALLOWCOMPRESSION, args.ALLOWCOMPRESSION, True)
 
 
-print 'Director config\n', s, '\n'
+print('Director config\n', s, '\n')
 exit()

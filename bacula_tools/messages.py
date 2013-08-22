@@ -1,5 +1,4 @@
 from . import *
-from pprint import pprint
 
 class Messages(DbDict):
     table = MESSAGES

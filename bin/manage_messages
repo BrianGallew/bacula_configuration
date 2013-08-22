@@ -1,5 +1,6 @@
 #! /usr/local/bin/python
 # Add/remove/update/dump messagess
+from __future__ import print_function
 
 import sys, os
 import optparse
@@ -29,7 +30,7 @@ if args.delete and (args.create or args.set or args.rename):
 # }}}
 
 if args.list:
-    print bacula.formatted_query_result('select name from %s order by name' % MESSAGES, infix='\n')
+    print(bacula.formatted_query_result('select name from %s order by name' % MESSAGES, infix='\n'))
     if not messages_arg: exit()
 if not messages_arg:
     parser.print_help()
@@ -40,15 +41,15 @@ if args.create: s._set_name(messages_arg[0])
 
 s.search(messages_arg[0])
 if not s[ID]:
-    print 'No such message definition: %s' % messages_arg[0],
+    print('No such message definition: %s' % messages_arg[0])
     exit()
 
 if args.delete:
     s.delete()
-    print 'Deleted messages:', messages_arg[0]
+    print('Deleted messages:', messages_arg[0])
     exit()                      # Nothing to print out now
     
 if args.rename: s.change_name(args.rename)
 if args.set: s._set(DATA, args.set)
-print s
+print(s)
 exit()

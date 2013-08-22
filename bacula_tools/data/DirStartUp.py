@@ -38,7 +38,7 @@ class BaculaEvents(object):
             so = subprocess.Popen('bconsole', shell=True,
                                   stdin=subprocess.PIPE,
                                   stdout=subprocess.PIPE).communicate(runcmd)[0]
-        except Exception, e:
+        except Exception as e:
             job.JobReport = 'Bailing ... '
             job.JobReport = str(e)
             return

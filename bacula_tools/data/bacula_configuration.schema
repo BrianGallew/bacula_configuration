@@ -1,9 +1,11 @@
 -- -*- sql -*-
 -- select 'Creating table templates';
 -- Order matters!
+DROP TABLE IF EXISTS `job_scripts` ;
 DROP TABLE IF EXISTS `service_link` ;
 DROP TABLE IF EXISTS `schedule_link` ;
 DROP TABLE IF EXISTS `jobs` ;
+DROP TABLE IF EXISTS `scripts` ;
 DROP TABLE IF EXISTS `clients` ;
 DROP TABLE IF EXISTS `storage` ;
 DROP TABLE IF EXISTS `catalogs`;
@@ -221,27 +223,106 @@ CREATE TABLE `clients` (
   CONSTRAINT `fk_catalog` FOREIGN KEY (`catalog_id`) REFERENCES `catalogs` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+-- select 'Creating table scripts';
+CREATE TABLE `scripts` (
+  `id` int(11) NOT NULL auto_increment,
+  `runsonsuccess` tinyint(1) NOT NULL DEFAULT 1,
+  `runsonfailure` tinyint(1) NOT NULL DEFAULT 0,
+  `runsonclient` tinyint(1) NOT NULL DEFAULT 1,
+  `runswhen` ENUM('Before', 'After', 'Always', 'AfterVSS', 'Never') NOT NULL DEFAULT 'Never',
+  `failjobonerror` tinyint(1) NOT NULL DEFAULT 1,
+  `command` varchar(255),
+  `console` varchar(255),
+  PRIMARY KEY `PRIMARY` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
 -- select 'Creating table jobs';
 CREATE TABLE `jobs` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
-  `hostid` int(11) NOT NULL,
-  `storageserver` varchar(255) NOT NULL,
-  `fileset` varchar(255) NOT NULL,
-  `enabled` tinyint(1) NOT NULL default '1',
-  `priority` int(3) NOT NULL default '10',
-  `scheduleid` int(11) NOT NULL,
+
+  `differentialpool_id` int(11),
+  `fileset_id` int(11),
+  `fullpool_id` int(11),
+  `client_id` int(11) COMMENT 'will be printed as Client = $HOSTNAME',
+  `incrementalpool_id` int(11),
+  `messages_id` int(11),
+  `pool_id` int(11),
+  `schedule_id` int(11),
+  `storage_id` int(11),
+  `job_id` int(11),
+
+  `accurate` tinyint(1) NOT NULL DEFAULT 0,
+  `enabled` tinyint(1) NOT NULL DEFAULT 1,
+  `prefermountedvolumes` tinyint(1) NOT NULL DEFAULT 1,
+  `prunefiles` tinyint(1) NOT NULL DEFAULT 0,
+  `prunejobs` tinyint(1) NOT NULL DEFAULT 0,
+  `prunevolumes` tinyint(1) NOT NULL DEFAULT 0,
+  `rerunfailedlevels` tinyint(1) NOT NULL DEFAULT 0,
+  `spoolattributes` tinyint(1) NOT NULL DEFAULT 0,
+  `spooldata` tinyint(1) NOT NULL DEFAULT 0,
+  `jobdef` tinyint(1) NOT NULL DEFAULT 0,
+
+  `type` ENUM('Backup', 'Restore', 'Admin', 'Verify'),
+  `level` ENUM('Full', 'Incremental', 'Differential', 'InitCatalog', 'Catalog', 'VolumeToCatalog', 'DiskToCatalog'),
+  `replace` ENUM('always', 'ifnewer', 'ifolder', 'never') NOT NULL DEFAULT 'always',
+
+  `verifyjob` varchar(255),
+  `bootstrap` varchar(255),  
+  `writebootstrap` varchar(255),  
+  `base` varchar(255),  
+  `maxstartdelay` varchar(255),
+  `maxruntime` varchar(255),
+  `idmaxwaittime` varchar(255),
+  `incrementalmaxruntime` varchar(255),
+  `differentialmaxwaittime` varchar(255),
+  `maxrunschedtime` varchar(255),
+  `maxwaittime` varchar(255),
+  `maximumbandwidth` varchar(255),
+  `maxfullinterval` varchar(255),
+  `spoolsize` varchar(255),
+  `where` varchar(255),
+  `addprefix` varchar(255),
+  `addsuffix` varchar(255),
+  `stripprefix` varchar(255),
+  `regexwhere` varchar(255),
+  `prefixlinks` tinyint(1) NOT NULL DEFAULT 0,
+  `maximumconcurrentjobs` int(11) NOT NULL DEFAULT 1,
+  `rescheduleonerror` tinyint(1) NOT NULL DEFAULT 0,
+  `rescheduleinterval` varchar(255),
+  `rescheduletimes` int(11) NOT NULL DEFAULT 0,
+  `allowduplicatejobs` tinyint(1) NOT NULL DEFAULT 0,
+  -- allowhigherduplicates doesn't work, and so we discard it.
+  `cancellowerlevelduplicates` tinyint(1) NOT NULL DEFAULT 0,
+  `cancelqueuedduplicates` tinyint(1) NOT NULL DEFAULT 0,
+  `cancelrunningduplicates` tinyint(1) NOT NULL DEFAULT 0,
+  `run` varchar(255),
+  `priority` int(3) NOT NULL default 10,
+  `allowmixedpriority` tinyint(1) NOT NULL DEFAULT 0,
+  `writepartafterjob` tinyint(1) NOT NULL DEFAULT 0,
   `notes` text,
-  `begin` text,
-  `end` text,
-  `failure` text,
-  `file_retention` varchar(24) NOT NULL default '60 days',
-  `job_retention` varchar(24) NOT NULL default '60 days',
-  `lastupdated` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
+
   PRIMARY KEY `PRIMARY` (`id`),
-  CONSTRAINT `fk_fileset` FOREIGN KEY (`fileset`) REFERENCES `filesets` (`name`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `fk_schedule` FOREIGN KEY (`scheduleid`) REFERENCES `schedules` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `fk_hostid` FOREIGN KEY (`hostid`) REFERENCES `clients` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `fk_messages1` FOREIGN KEY (`messages_id`) REFERENCES `messages` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fk_fileset1` FOREIGN KEY (`fileset_id`) REFERENCES `filesets` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fk_schedule1` FOREIGN KEY (`schedule_id`) REFERENCES `schedules` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fk_storage1` FOREIGN KEY (`storage_id`) REFERENCES `storage` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `fk_hostid1` FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_poolid1` FOREIGN KEY (`pool_id`) REFERENCES `pools` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_jobid1` FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_fullpoolid1` FOREIGN KEY (`fullpool_id`) REFERENCES `pools` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_diffpoolid1` FOREIGN KEY (`differentialpool_id`) REFERENCES `pools` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_incpoolid` FOREIGN KEY (`incrementalpool_id`) REFERENCES `pools` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- select 'Creating table job_scripts';
+CREATE TABLE `job_scripts` (
+  `id` int(11) NOT NULL auto_increment,
+  `job_id` int(11) NOT NULL,
+  `script_id` int(11) NOT NULL,
+  PRIMARY KEY `PRIMARY` (`id`),
+  CONSTRAINT `js_script` FOREIGN KEY (`script_id`) REFERENCES `scripts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `js_job` FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table service_link (complete)';

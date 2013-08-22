@@ -94,7 +94,7 @@ class Bacula_Config:
     def safe_do_sql(self, sql, args=None):
         try:
             return self.do_sql(sql, args)
-        except Exception, e:
+        except Exception as e:
             (errno, string) = eval(str(e))
             if errno == 1142: self.die('%s is not allowed to do that' % os.uname()[1])
             self.die(str(e))
@@ -120,9 +120,9 @@ class Bacula_Config:
     # {{{ die(*msg):
 
     def die(self, *msg):
-        print "An error occurred and %s is no longer able to continue\n" % sys.argv[0]
-        print '\n'.join(msg)
-        print '\n'
+        print("An error occurred and %s is no longer able to continue\n" % sys.argv[0])
+        print('\n'.join(msg))
+        print('\n')
         exit(-1)
         return                  # This will never happen, but it makes auto-formatting a little happier.
 
@@ -142,7 +142,8 @@ class Bacula_Config:
 
     def value_check(self, table, field, value, suggest=False, asdict=False):
         '''check the existence of a value in a column'''
-        result = self.do_sql("SELECT * FROM %(table)s where %(field)s = %%s" % locals(), value, asdict);
+        sql = "SELECT * FROM `%(table)s` where `%(field)s` = %%s" % locals()
+        result = self.do_sql(sql, value, asdict);
         if result: return result
         if not suggest: return result
         return self.die('No such value (%(value)s) in %(table)s' % locals(),

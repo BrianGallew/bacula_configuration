@@ -1,6 +1,4 @@
 from . import *
-from pprint import pprint
-keylist = []
 
 class Storage(DbDict):
     NULL_KEYS = [
@@ -17,7 +15,7 @@ class Storage(DbDict):
         Parsing is hard, so we're going to call out to the pyparsing
         library here.  I hope you installed it!
         '''
-        from pyparsing import Suppress, Regex, quotedString, restOfLine, Keyword, nestedExpr, Group, OneOrMore, Word, Literal, alphanums, removeQuotes, replaceWith, nums, printables
+        from pyparsing import Suppress, Regex, quotedString, restOfLine, Keyword, nestedExpr, Group, OneOrMore, Word, Literal, alphanums, removeQuotes, replaceWith, nums
         gr_eq = Literal('=')
         gr_stripped_string = quotedString.copy().setParseAction( removeQuotes )
         gr_opt_quoted_string = gr_stripped_string | restOfLine

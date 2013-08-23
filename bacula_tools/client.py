@@ -96,7 +96,7 @@ class Client(DbDict):
         return '\n'.join(self.output)
 
 # }}}
-# {{{ fd(): return the string that describes the filedaemon configuration
+    # {{{ fd(): return the string that describes the filedaemon configuration
 
     def fd(self):
         '''This is what we'll call to dump out the config for the file daemon'''

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from bacula_tools import *
 import bacula_tools
 
@@ -146,6 +147,18 @@ class Job(DbDict):
         gr_line = gr_line | np(CRAJ, gr_stripped_string,
                                action=self._parse_script(runswhen='After'))
         
+        # This is a complicated one
+        gr_script_parts = np(('Command',), gr_stripped_string)
+        gr_script_parts = gr_script_parts | np((CONSOLE,), gr_stripped_string)
+        gr_script_parts = gr_script_parts | np(PList('Runs When'), gr_stripped_string)
+        gr_script_parts = gr_script_parts | np(PList('Runs On Success'), gr_yn)
+        gr_script_parts = gr_script_parts | np(PList('Runs On Failure'), gr_yn)
+        gr_script_parts = gr_script_parts | np(PList('Runs On Client'), gr_yn)
+        gr_script_parts = gr_script_parts | np(PList('Fail Job On Error'), gr_yn)
+        gr_script = np(PList('Run Script'), nestedExpr('{','}', OneOrMore(gr_script_parts))).setParseAction(self._parse_script_full)
+        gr_line = gr_line | gr_script
+
+        
         gr_res = OneOrMore(gr_line)
         result = gr_res.parseString(string, parseAll=True)
         return self.retlabel + ': '+ self[NAME]
@@ -168,8 +181,6 @@ class Job(DbDict):
         for x in [ENABLED, PREFERMOUNTEDVOLUMES]:
             self._yesno_phrase(x, onlyfalse=True)
         for x in self.scripts: self.output.insert(-1, str(x))
-        #self.output.extend(['  %s = "%s"' % (x.replace('_id', '').capitalize(), self._fk_reference(x)) for x in self.NULL_KEYS if '_id' in x])
-        #self._simple_phrase(key)
         return '\n'.join(self.output)
 
 # }}}

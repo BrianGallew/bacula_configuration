@@ -1,0 +1,83 @@
+#! /usr/local/bin/python
+# Add/remove/update/dump scripts
+from __future__ import print_function
+
+import sys, os
+import optparse
+from bacula_tools import *
+
+# {{{ Parser configuration and sanity checking.  Also, "bacula" is instantiated in here
+
+parser = optparse.OptionParser(description='Manage Bacula scripts.', usage='usage: %prog [options] [scriptid]')
+parser.add_option('--create', action='store_true',
+                   default=False, help='Create the given script')
+parser.add_option('--delete', action='store_true',
+                   default=False, help='Delete the given script')
+parser.add_option('--list', action='store_true',
+                   default=False, help='List the available script')
+
+group = optparse.OptionGroup(parser, "Setters",
+                             "These options are used for setting various values.  "
+                             "Use an empty string, e.g. '' to unset the value for strings variables.  "
+                             "You should be aware that no sanity checking is done here, so it is quite possible "
+                             "to break your configuration while using them.  Caveat emptor."
+                             )
+keylist = [x for x in Script.NULL_KEYS if not x == ID] + [x[0] for x in Script.SETUP_KEYS] 
+truefalse = [RUNSONSUCCESS, RUNSONFAILURE, RUNSONCLIENT, FAILJOBONERROR]
+for key in keylist: group.add_option('--' + key)
+
+parser.add_option_group(group)
+
+(args, script_arg) = parser.parse_args()
+bacula = Bacula_Factory()        # Instantiate our DB connection thingy
+
+if args.delete and args.create:
+    bacula.die('','If you delete then there is no sense in doing anything else.',
+               "You didn't think this one out very well, did you?.")
+
+# }}}
+if args.list:
+    for row in bacula.do_sql('select * from %s order by id' % SCRIPTS, asdict=True):
+        s = Script(row)
+        print(s)
+        print()
+    if not script_arg: exit()
+if not script_arg:
+    parser.print_help()
+    exit()
+
+finder = {'id': int(script_arg[0])}
+s = Script(finder)
+if args.create:
+    s._save()
+else:                           # scripts don't fit the standard paradigm
+    if not bacula.do_sql('select * from %s where id = %%s' % SCRIPTS, s[ID]):
+        print('No such script ID: %s' % s[ID])
+        exit()
+
+s.search()
+if not s[ID]:
+    print('No such script: %s' % script_arg[0])
+    exit()
+
+if args.delete:
+    s.delete()
+    print('Deleted script:', script_arg[0])
+    exit()                      # Nothing to print out now
+    
+for key in keylist:
+    if key in truefalse: continue
+    value = getattr(args, key)
+    if value == None: continue
+    if value == '': value = None
+    try: s._set(key, value)
+    except: pass
+
+if not args.runsonsuccess == None: s._set(RUNSONSUCCESS, args.runsonsuccess, True)
+if not args.runsonfailure == None: s._set(RUNSONFAILURE, args.runsonfailure, True)
+if not args.runsonclient == None: s._set(RUNSONCLIENT, args.runsonclient, True)
+if not args.failjobonerror == None: s._set(FAILJOBONERROR, args.failjobonerror, True)
+
+
+print('Director config\n', s, '\n')
+exit()

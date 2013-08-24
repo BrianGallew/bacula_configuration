@@ -9,7 +9,7 @@ class Script(DbDict):
     # {{{ __str__(): 
 
     def __str__(self):
-        self.output = ['  RunScript {','  # Script ID: %d' % self[ID],'  }']
+        self.output = ['  RunScript {  # Script ID: %d' % self[ID],'  }']
         self._simple_phrase(COMMAND)
         self._simple_phrase(CONSOLE)
         self._simple_phrase(RUNSWHEN)
@@ -24,12 +24,16 @@ class Script(DbDict):
 
     def search(self):
         conditions = []
-        values = []
-        for key in self.NULL_KEYS + [x[0] for x in self.SETUP_KEYS]:
-            if not self[key] == None:
-                conditions.append('`%s` = %%s' % key)
-                values.append(self[key])
-        sql = 'select * from %s where %s' % (self.table, ' and '.join(conditions))
+        values = [self[ID],]
+        sql = 'select * from %s where id = %%s' % self.table
+        if not self[ID]:
+            values = []
+            for key in self.NULL_KEYS + [x[0] for x in self.SETUP_KEYS]:
+                if not self[key] == None:
+                    conditions.append('`%s` = %%s' % key)
+                    values.append(self[key])
+            sql = 'select * from %s where %s' % (self.table, ' and '.join(conditions))
+            values = tuple(values)
         new_me = self.bc.do_sql(sql, values, asdict=True)
         if not new_me: self._create()
         else: self.update(new_me[0])

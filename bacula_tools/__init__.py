@@ -57,7 +57,7 @@ WORKING_DIR = {
     'Windows': "/bacula/working",
     }
 
-def parser(string, output=None):
+def parser(string, output=print):
     '''parse a string out into top-level resource items and pass them off to the relevant classes.'''
     # strip out comments, and turn semi-colons into newlines
     # NB: if you have embedded semi-colons in any values (e.g. runscripts),
@@ -85,20 +85,17 @@ def parser(string, output=None):
         while current.count(RB) < (current.count(LB) - 1): current += RB + parts.pop(0)
         try: name, body = current.split(LB,1)
         except:
-            if output: output(current)
-            else: print("'%s'" % current)
+            output(current)
             raise
         name = name.strip().lower()
         try:
             obj = _DISPATCHER[name]()
             parsed.append(obj)
             result = obj.parse_string(body.strip())
-            if output: output(result)
-            else: print(result)
+            output(result)
         except Exception as e:
-            msg = '%s: Unable to handle %s at this time' % (name.capitalize(), e)
-            if output: output(msg)
-            else: print(msg)
+            msg = '%s: Unable to handle %s at this time:\n%s' % (name.capitalize(), e,body.strip())
+            output(msg)
         while parts and parts[0] == '\n': del parts[0]
     return parsed
     

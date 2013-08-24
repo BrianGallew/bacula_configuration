@@ -9,7 +9,7 @@ class Script(DbDict):
     # {{{ __str__(): 
 
     def __str__(self):
-        self.output = ['  RunScript {','  }']
+        self.output = ['  RunScript {','  # Script ID: %d' % self[ID],'  }']
         self._simple_phrase(COMMAND)
         self._simple_phrase(CONSOLE)
         self._simple_phrase(RUNSWHEN)

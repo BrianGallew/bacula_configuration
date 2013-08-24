@@ -36,6 +36,7 @@ class Writer():
         row[3] = value
         if 'Unable to handle' in value:
             row[2] += 1
+            errorlog.append(value)
         else:
             row[1] += 1
         output = '%s: %d/%d %s' % (key, row[1], row[2], row[3])
@@ -53,13 +54,14 @@ class Writer():
         self.screen.getkey()
 
 w = None
+errorlog = []
 def display_all(stdscreen):
     global w
     screen_setup(stdscreen)
     w = Writer(stdscreen)
     for f in sys.argv[1:]:
         try: stuff = parser(open(f).read(), w)
-        except: pass
+        except: stuff = []
     director = None
     for d in stuff:
         if type(d) == Director:
@@ -77,3 +79,7 @@ try:
 except:
     pprint(w.rows)
     raise
+
+if errorlog:
+    print( "Encountered these errors")
+    for e in errorlog: print(e)

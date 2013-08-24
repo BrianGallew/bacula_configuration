@@ -53,15 +53,51 @@ test_cases = ['''  Name = "BackupClient1"
   FileSet="Full Set"                  
   Storage = File                      
   Pool = Default
-  RunScript {
+  Run Script {
     Command = "clever script"
     Runswhen = "Before"
-    Runsonclient = no
+    Runsonclient = No
   }
   Messages = Standard
   Where = /tmp/bacula-restores
-
 ''',
+              '''
+Name = zabbix-db02-FullSnap
+  Client = zabbix-db02
+  Enabled = yes
+  Storage = zabbix-db02-FullSnap
+  Write Bootstrap = "/var/db/bacula/zabbix-db02FullSnap.bsr"
+  Priority = 10
+  Maximum Concurrent Jobs = 1
+  Type = Backup
+  Level = Incremental
+  FileSet = FullSnap
+  Schedule = DaytimeWeeklyFull
+  Messages = Standard
+  Pool = bs-sd002
+  Rerun Failed Levels = yes
+  Allow Mixed Priority = yes
+        Run Script {
+                Command = "/usr/local/llnw/mysql/backup_begin.sh"
+                RunsWhen = Before
+                RunsOnFailure = No
+                RunsOnClient = Yes
+                FailJobOnError = Yes
+        }
+        Run Script {
+                Command = "/usr/local/llnw/mysql/backup_end.sh"
+                RunsWhen = After
+                RunsOnFailure = No
+                RunsOnClient = Yes
+        }
+        Run Script {
+                Command = "/usr/local/llnw/mysql/backup_fail.sh"
+                RunsWhen = After
+                RunsOnFailure = yes
+                RunsOnClient = Yes
+                RunsOnSuccess = No
+        }''',
+              
 ]
 
 jd = bacula_tools.JobDef()

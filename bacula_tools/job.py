@@ -159,7 +159,7 @@ class Job(DbDict):
         # This is a complicated one
         gr_script_parts = np(('Command',), gr_stripped_string)
         gr_script_parts = gr_script_parts | np((CONSOLE,), gr_stripped_string)
-        gr_script_parts = gr_script_parts | np(PList('Runs When'), gr_stripped_string)
+        gr_script_parts = gr_script_parts | np(PList('Runs When'))
         gr_script_parts = gr_script_parts | np(PList('Runs On Success'), gr_yn)
         gr_script_parts = gr_script_parts | np(PList('Runs On Failure'), gr_yn)
         gr_script_parts = gr_script_parts | np(PList('Runs On Client'), gr_yn)

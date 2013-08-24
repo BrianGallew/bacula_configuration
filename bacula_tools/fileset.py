@@ -7,9 +7,9 @@ class Fileset(DbDict):
                   (IGNORECHANGES, 0),
                   (ENTRIES, [])
         ]
-    # {{{ _load_parts(): helper for loading self from the database
+    # {{{ _loadup_parts(): helper for loading self from the database
 
-    def _load_parts(self):
+    def _loadup_parts(self):
         sql = '''SELECT b.id AS id, b.name AS name, b.option, a.exclude
                  FROM fileset_link a, fileset_files b
                  WHERE a.file_id = b.id AND a.fileset_id = %s'''
@@ -89,7 +89,7 @@ class Fileset(DbDict):
                            (self[ID], new_entry[0], new_entry[3]))
             except: print('You may not have the same entry in both Include{} and Exclude{} clauses.')
 
-        self._load_parts()
+        self._loadup_parts()
         return
 
     # }}}

@@ -1,5 +1,6 @@
 from __future__ import print_function
 from bacula_tools import *
+from bacula_tools.scripts import Script
 import bacula_tools
 
 RBJ = PList('Run Before Job')
@@ -31,8 +32,15 @@ class Job(DbDict):
     SETUP_KEYS = [(REPLACE, 'always'), (NAME, ''), (JOBDEF, 0)]
     table = JOBS
     retlabel = 'Job'
-    scripts = []
-    
+    # {{{ __init__(row={}, string = None):
+
+    def __init__(self, row={}, string = None):
+        '''Need to have a nice, clean scripts member'''
+        DbDict.__init__(self, row, string)
+        self.scripts = []
+        return
+
+    # }}}
     # {{{ parse_string(string): Entry point for a recursive descent parser
 
     def parse_string(self, string):
@@ -44,14 +52,14 @@ class Job(DbDict):
         library here.  I hope you installed it!
         FTR: this is hideous.
         '''
-        from pyparsing import Suppress, Regex, quotedString, restOfLine, Keyword, nestedExpr, Group, OneOrMore, Word, Literal, alphanums, removeQuotes, replaceWith, nums, printables
+        from pyparsing import Suppress, Regex, quotedString, restOfLine, Keyword, nestedExpr, Group, OneOrMore, Word, Literal, alphanums, removeQuotes, replaceWith, nums, printables, nullDebugAction
         gr_eq = Literal('=')
         gr_stripped_string = quotedString.copy().setParseAction( removeQuotes )
         gr_opt_quoted_string = gr_stripped_string | restOfLine
         gr_number = Word(nums)
         gr_yn = Keyword('yes', caseless=True).setParseAction(replaceWith('1')) | Keyword('no', caseless=True).setParseAction(replaceWith('0'))
 
-        def np(words, fn = gr_opt_quoted_string, action=None):
+        def np(words, fn = gr_opt_quoted_string, action=nullDebugAction):
             p = Keyword(words[0], caseless=True).setDebug(bacula_tools.DEBUG)
             for w in words[1:]:
                 p = p | Keyword(w, caseless=True).setDebug(bacula_tools.DEBUG)
@@ -141,7 +149,8 @@ class Job(DbDict):
         gr_line = gr_line | np(RAJ, gr_stripped_string,
                                action=self._parse_script(runsonclient=0, runswhen='After'))
         gr_line = gr_line | np(RAFJ, gr_stripped_string,
-                               action=self._parse_script(runsonsuccess=0, runsonfailure=1, runsonclient=0, runswhen='After'))
+                               action=self._parse_script(runsonsuccess=0, runsonfailure=1,
+                                                         runsonclient=0, runswhen='After'))
         gr_line = gr_line | np(CRBJ, gr_stripped_string,
                                action=self._parse_script(runswhen='Before'))
         gr_line = gr_line | np(CRAJ, gr_stripped_string,
@@ -155,11 +164,9 @@ class Job(DbDict):
         gr_script_parts = gr_script_parts | np(PList('Runs On Failure'), gr_yn)
         gr_script_parts = gr_script_parts | np(PList('Runs On Client'), gr_yn)
         gr_script_parts = gr_script_parts | np(PList('Fail Job On Error'), gr_yn)
-        gr_script = np(PList('Run Script'), nestedExpr('{','}', OneOrMore(gr_script_parts))).setParseAction(self._parse_script_full)
-        gr_line = gr_line | gr_script
-
+        gr_script = ((Keyword('Run Script', caseless=True) | Keyword('RunScript', caseless=True)) + nestedExpr('{','}', OneOrMore(gr_script_parts))).setParseAction(self._parse_script_full)
         
-        gr_res = OneOrMore(gr_line)
+        gr_res = OneOrMore(gr_line | gr_script)
         result = gr_res.parseString(string, parseAll=True)
         return self.retlabel + ': '+ self[NAME]
 
@@ -198,6 +205,20 @@ class Job(DbDict):
         return obj
 
 # }}}
+    # {{{ _load_scripts():
+
+    def _load_scripts(self):
+        if self[ID]:
+            for row in self.bc.do_sql('SELECT * FROM job_scripts WHERE job_id = %s', (self[ID],), asdict=True):
+                s = Script(row)
+                for x in self.scripts:
+                     if x[ID] == s[ID]: continue
+                     self.scripts.append(s)
+        return
+
+    # }}}
+    # {{{ _parse_script(**kwargs): returns a parser for the script shortcuts
+
     def _parse_script(self, **kwargs):
         def doit(a,b,c):
             from bacula_tools.scripts import Script
@@ -207,6 +228,9 @@ class Job(DbDict):
             return self._add_script(s)
         return doit
 
+    # }}}
+    # {{{ _add_script(s): Add a script to myself
+
     def _add_script(self, s):
         self.scripts.append(s)
         row = self.bc.do_sql('SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (self[ID], s[ID]))
@@ -214,9 +238,24 @@ class Job(DbDict):
             self.bc.do_sql('INSERT INTO job_scripts(job_id, script_id) VALUES (%s, %s)', (self[ID], s[ID]))
         return s
 
+    # }}}
+    # {{{ _delete_script(s): Remove a script from myself
+
     def _delete_script(self, s):
         self.bc.do_sql('DELETE FROM job_scripts WHERE id = %s', (s[ID]))
         self.scripts = [x for x in self.scripts if not x[ID] == s[ID]]
+        return
+
+    # }}}
+
+    def _parse_script_full(self, tokens):
+        s = Script()
+        values = tokens[1]
+        while values:
+            k,n,v = values[:3]
+            del values[:3]
+            s[k.lower()] = v
+        self._add_script(s.search())
         return
 
 class JobDef(Job):

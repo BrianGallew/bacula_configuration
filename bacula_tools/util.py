@@ -93,7 +93,7 @@ class DbDict(dict):             # base class for all of the things derived from 
     prefix = '  '               # Used for spacing out members when printing
     table = 'override me'       # This needs to be overridden in every subclass, before calling __init__
 
-    # {{{ __init__(row): pass in a row (as a dict)
+    # {{{ __init__(row={}, string=None): pass in a row (as a dict)
     def __init__(self, row={}, string = None):
         dict.__init__(self)
         for key, value in self.SETUP_KEYS: self[key] = value
@@ -103,15 +103,16 @@ class DbDict(dict):             # base class for all of the things derived from 
         return
 
     # }}}
-    # {{{ search(string, id=None):
+    # {{{ search(string=None, id=None):
 
-    def search(self, string, id=None):
+    def search(self, string=None, id=None):
         if string:
             new_me = self.bc.value_check(self.table, NAME, string, asdict=True)
         elif not id == None:
             new_me = self.bc.value_check(self.table, ID, id, asdict=True)
         try: self.update(new_me[0])
         except Exception as e: pass
+        [getattr(self, x)() for x in dir(self) if '_load_' in x]
         return self
 
     # }}}
@@ -157,6 +158,7 @@ class DbDict(dict):             # base class for all of the things derived from 
     def _set_name(self, name):
         row = self.bc.value_ensure(self.table, NAME, name.strip(), asdict=True)[0]
         self.update(row)
+        [getattr(self, x)() for x in dir(self) if '_load_' in x]
         return
 
     # }}}

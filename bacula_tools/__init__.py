@@ -49,7 +49,6 @@ STATUS = [FULL, USED, APPEND, CLEANING, ERROR, PURGED, RECYCLE, AVAILABLE]
 BACULA_DIR_PORT = 9101
 BACULA_FD_PORT = 9102
 BACULA_SD_PORT = 9103
-DEBUG = os.environ.get('DEBUG', None)
 
 WORKING_DIR = {
     'Linux': "/var/lib/bacula",
@@ -115,6 +114,8 @@ def set_debug(value):
     DEBUG = value
     return
 
+set_debug(os.environ.get('DEBUG', False))
+
 def set_bool_values(key, value, obj, okey):
     if value in ['1','y','yes','Y','YES','Yes','t','T','true','True','TRUE']:
         if 1 ^ obj[okey]: obj._set(okey, 1)
@@ -177,6 +178,7 @@ from client import Client
 from pool import Pool
 from storage import Storage
 from job import Job, JobDef
+from scripts import Script
 
 import util
 

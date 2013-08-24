@@ -33,9 +33,9 @@ test_cases = ['''  Name = "BackupClient1"
   Level = Full
   FileSet="Catalog"
   Schedule = "WeeklyCycleAfterBackup"
-  RunBeforeJob = "/usr/local/Cellar/bacula/5.2.13/etc/make_catalog_backup.pl MyCatalog"
+  RunBeforeJob = "kiss butt goodbye"
   Write Bootstrap = "/usr/local/Cellar/bacula/5.2.13/opt/bacula/working/%n.bsr"
-  Priority = 11                   # run after main backup
+  Priority = 11
 
 ''',
               '''  Name = "RestoreFiles"
@@ -43,8 +43,21 @@ test_cases = ['''  Name = "BackupClient1"
   Client=outbidoverdrive.gallew.org-fd                 
   FileSet="Full Set"                  
   Storage = File                      
-  RunAfterJob  = "/usr/local/Cellar/bacula/5.2.13/etc/delete_catalog_backup"
   Pool = Default
+  Messages = Standard
+  Where = /tmp/bacula-restores
+  RunAfterJob  = "/usr/local/Cellar/bacula/5.2.13/etc/delete_catalog_backup"
+''',
+              '''  Name = "Clever Test"
+  Client=outbidoverdrive.gallew.org-fd                 
+  FileSet="Full Set"                  
+  Storage = File                      
+  Pool = Default
+  RunScript {
+    Command = "clever script"
+    Runswhen = "Before"
+    Runsonclient = no
+  }
   Messages = Standard
   Where = /tmp/bacula-restores
 

@@ -38,7 +38,7 @@ _INTERNED = [
     'maxrunschedtime', 'maxruntime', 'maxstartdelay', 'maxwaittime', 'regexwhere',
     'rescheduleinterval', 'spoolsize', 'stripprefix', 'verifyjob', 'where', 'writebootstrap',
     'replace', 'jobdef', 'jobs', 'job', 'storage_id', 'command', 'runsonsuccess', 'runsonfailure',
-    'runsonclient', 'runswhen', 'failjobonerror', 'scripts', 'message'
+    'runsonclient', 'runswhen', 'failjobonerror', 'scripts', 'message', 'script_id',
     ]
 
 for w in _INTERNED: locals()[w.upper()] = w

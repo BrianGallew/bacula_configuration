@@ -211,10 +211,10 @@ class Job(DbDict):
     def _load_scripts(self):
         if self[ID]:
             for row in self.bc.do_sql('SELECT * FROM job_scripts WHERE job_id = %s', (self[ID],), asdict=True):
-                s = Script(row)
-                for x in self.scripts:
-                     if x[ID] == s[ID]: continue
-                     self.scripts.append(s)
+                s = Script({ID: row[SCRIPT_ID]})
+                s.search()
+                self.scripts = [x for x in self.scripts if not x[ID] == s[ID]]
+                self.scripts.append(s)
         return
 
     # }}}
@@ -233,6 +233,7 @@ class Job(DbDict):
     # {{{ _add_script(s): Add a script to myself
 
     def _add_script(self, s):
+        self.scripts = [x for x in self.scripts if not x[ID] == s[ID]]
         self.scripts.append(s)
         row = self.bc.do_sql('SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (self[ID], s[ID]))
         if not row:

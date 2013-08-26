@@ -41,6 +41,8 @@ for key in Job.REFERENCE_KEYS:
     else:
         group.add_option('--' + k, help='The name of a %s resource' % k.capitalize())
 group.add_option('--job', help='The name of the job from which this will take its defaults')
+group.add_option('--add-runscript', type='int', help='The number of an existing Run Script to be added to this job')
+group.add_option('--del-runscript', type='int', help='The number of an existing Run Script to be removed from this job')
 parser.add_option_group(group)
 
 (args, job_arg) = parser.parse_args()
@@ -95,6 +97,14 @@ for key in Job.TRUE_KEYS + Job.FALSE_KEYS:
     try: s._set(key, value, bool=True)
     except: pass
 
+if args.add_runscript:
+    runscript = Script({ID: int(args.add_runscript)})
+    runscript.search()
+    s._add_script(runscript)
+
+if args.del_runscript:
+    runscript = Script({ID: int(args.del_runscript)})
+    s._delete_script(runscript)
 
 print('Director config\n' + str(s) + '\n')
 exit()

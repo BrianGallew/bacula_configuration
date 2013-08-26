@@ -86,7 +86,6 @@ class ConfigFile(object):       # easy config file management
 class DbDict(dict):             # base class for all of the things derived from database rows
     brace_re = re.compile(r'\s*(.*?)\s*\{\s*(.*)\s*\}\s*', re.MULTILINE|re.DOTALL)
     name_re = re.compile(r'^\s*name\s*=\s*(.*)', re.MULTILINE|re.IGNORECASE)
-    SETUP_KEYS = [(NAME, ''), (DATA, '')]
     bc = bacula_tools.Bacula_Factory()
     output = []
     prefix = '  '               # Used for spacing out members when printing

@@ -11,6 +11,7 @@ CRAJ = PList('Client Run After Job')
 
 class Job(DbDict):
     NULL_KEYS = [
+        (NAME, ''),
         # Enum
         TYPE, LEVEL,
         # Strings
@@ -19,7 +20,7 @@ class Job(DbDict):
         MAXSTARTDELAY, MAXWAITTIME, REGEXWHERE, RESCHEDULEINTERVAL, RUN, SPOOLSIZE, 
         STRIPPREFIX, VERIFYJOB, WHERE, WRITEBOOTSTRAP,
         # keys with values
-        (REPLACE, 'always'), (NAME, ''),
+        (REPLACE, 'always'), 
         ]
     REFERENCE_KEYS = [          # foreign keys
         DIFFERENTIALPOOL_ID, FILESET_ID, FULLPOOL_ID, CLIENT_ID,
@@ -81,44 +82,44 @@ class Job(DbDict):
             # }}}
         # {{{ # Group of _id variables
 
-        gr_line = gr_line | np(('differential pool', 'differentialpool'), action=self._parse_setter(DIFFERENTIALPOOL_ID))
-        gr_line = gr_line | np((FILESET, 'file set'), action=self._parse_setter(FILESET_ID, dereference=True))
-        gr_line = gr_line | np(('full pool', 'fullpool'), action=self._parse_setter(FULLPOOL_ID))
+        gr_line = gr_line | np(PList('differential pool'), action=self._parse_setter(DIFFERENTIALPOOL_ID))
+        gr_line = gr_line | np(PList('file set'), action=self._parse_setter(FILESET_ID, dereference=True))
+        gr_line = gr_line | np(PList('full pool'), action=self._parse_setter(FULLPOOL_ID))
         gr_line = gr_line | np((CLIENT,), action=self._parse_setter(CLIENT_ID, dereference=True))
-        gr_line = gr_line | np(('incremental pool', 'incrementalpool'), action=self._parse_setter(INCREMENTALPOOL_ID))
+        gr_line = gr_line | np(PList('incremental pool'), action=self._parse_setter(INCREMENTALPOOL_ID))
         gr_line = gr_line | np((MESSAGES,), action=self._parse_setter(MESSAGES_ID, dereference=True))
         gr_line = gr_line | np((POOL,), action=self._parse_setter(POOL_ID, dereference=True))
         gr_line = gr_line | np((SCHEDULE,), action=self._parse_setter(SCHEDULE_ID, dereference=True))
         gr_line = gr_line | np((STORAGE,), action=self._parse_setter(STORAGE_ID, dereference=True))
-        gr_line = gr_line | np(('job defs', 'jobdefs'), action=self._parse_setter(JOB_ID, dereference=True))
+        gr_line = gr_line | np(PList('job defs'), action=self._parse_setter(JOB_ID, dereference=True))
 
         # }}}
         # {{{ # INTs
 
-        gr_line = gr_line | np((MAXIMUMCONCURRENTJOBS, 'maximum concurrent jobs', 'maximum concurrentjobs', 'maximumconcurrent jobs'), gr_number, action=self._parse_setter(MAXIMUMCONCURRENTJOBS))
-        gr_line = gr_line | np((RESCHEDULETIMES, 'rescheduletimes', 'reschedule times'), gr_number, action=self._parse_setter(RESCHEDULETIMES))
+        gr_line = gr_line | np(PList('maximum concurrent jobs'), gr_number, action=self._parse_setter(MAXIMUMCONCURRENTJOBS))
+        gr_line = gr_line | np(PList('re schedule times'), gr_number, action=self._parse_setter(RESCHEDULETIMES))
         gr_line = gr_line | np((PRIORITY,), gr_number, action=self._parse_setter(PRIORITY))
 
         # }}}
         # {{{ # True/False
 
         gr_line = gr_line | np((ACCURATE,), gr_yn, action=self._parse_setter(ACCURATE))
-        gr_line = gr_line | np((ALLOWDUPLICATEJOBS, 'allow duplicate jobs', 'allow duplicatejobs', 'allowduplicate jobs'), gr_yn, action=self._parse_setter(ALLOWDUPLICATEJOBS))
-        gr_line = gr_line | np((ALLOWMIXEDPRIORITY, 'allow mixed priority', 'allow mixedpriority', 'allowmixed priority'), gr_yn, action=self._parse_setter(ALLOWMIXEDPRIORITY))
-        gr_line = gr_line | np((CANCELLOWERLEVELDUPLICATES, 'cancel lower level duplicates', 'cancellowerlevel duplicates', 'cancellower levelduplicates', 'cancel lowerlevelduplicates', 'cancellower level duplicates', 'cancel lowerlevel duplicates', 'cancel lower levelduplicates'), gr_yn, action=self._parse_setter(CANCELLOWERLEVELDUPLICATES))
-        gr_line = gr_line | np((CANCELQUEUEDDUPLICATES, 'cancel queued duplicates', 'cancel queuedduplicates', 'cancelqueued duplicates'), gr_yn, action=self._parse_setter(CANCELQUEUEDDUPLICATES))
-        gr_line = gr_line | np((CANCELRUNNINGDUPLICATES, 'cancel running duplicates', 'cancel runningduplicates', 'cancelrunning duplicates'), gr_yn, action=self._parse_setter(CANCELRUNNINGDUPLICATES))
+        gr_line = gr_line | np(PList('allow duplicate jobs'), gr_yn, action=self._parse_setter(ALLOWDUPLICATEJOBS))
+        gr_line = gr_line | np(PList('allow mixed priority'), gr_yn, action=self._parse_setter(ALLOWMIXEDPRIORITY))
+        gr_line = gr_line | np(PList('cancel lower level duplicates'), gr_yn, action=self._parse_setter(CANCELLOWERLEVELDUPLICATES))
+        gr_line = gr_line | np(PList('cancel queued duplicates'), gr_yn, action=self._parse_setter(CANCELQUEUEDDUPLICATES))
+        gr_line = gr_line | np(PList('cancel running duplicates'), gr_yn, action=self._parse_setter(CANCELRUNNINGDUPLICATES))
         gr_line = gr_line | np((ENABLED,), gr_yn, action=self._parse_setter(ENABLED))
-        gr_line = gr_line | np((PREFERMOUNTEDVOLUMES, 'prefer mounted volumes', 'prefer mountedvolumes', 'prefermounted volumes'), gr_yn, action=self._parse_setter(PREFERMOUNTEDVOLUMES))
-        gr_line = gr_line | np((PREFIXLINKS, 'prefix links'), gr_yn, action=self._parse_setter(PREFIXLINKS))
-        gr_line = gr_line | np((PRUNEFILES, 'prune files'), gr_yn, action=self._parse_setter(PRUNEFILES))
-        gr_line = gr_line | np((PRUNEJOBS, 'prune jobs'), gr_yn, action=self._parse_setter(PRUNEJOBS))
-        gr_line = gr_line | np((PRUNEVOLUMES, 'prune volumes'), gr_yn, action=self._parse_setter(PRUNEVOLUMES))
-        gr_line = gr_line | np((RERUNFAILEDLEVELS, 're run failed levels', 're runfailedlevels', 'rerun failedlevels', 'rerunfailed levels', 'rerun failed levels', 're runfailed levels', 're run failedlevels'), gr_yn, action=self._parse_setter(RERUNFAILEDLEVELS))
-        gr_line = gr_line | np((RESCHEDULEONERROR, 're schedule on error', 'rescheduleon error', 'reschedule onerror', 're scheduleonerror', 'reschedule on error', 're scheduleon error', 're schedule onerror'), gr_yn, action=self._parse_setter(RESCHEDULEONERROR))
-        gr_line = gr_line | np((SPOOLATTRIBUTES, 'spool attributes'), gr_yn, action=self._parse_setter(SPOOLATTRIBUTES))
-        gr_line = gr_line | np((SPOOLDATA, 'spool data'), gr_yn, action=self._parse_setter(SPOOLDATA))
-        gr_line = gr_line | np((WRITEBOOTSTRAP, 'write boot strap', 'writeboot strap', 'write bootstrap'), gr_yn, action=self._parse_setter(WRITEPARTAFTERJOB))
+        gr_line = gr_line | np(PList('prefer mounted volumes'), gr_yn, action=self._parse_setter(PREFERMOUNTEDVOLUMES))
+        gr_line = gr_line | np(PList('prefix links'), gr_yn, action=self._parse_setter(PREFIXLINKS))
+        gr_line = gr_line | np(PList('prune files'), gr_yn, action=self._parse_setter(PRUNEFILES))
+        gr_line = gr_line | np(PList('prune jobs'), gr_yn, action=self._parse_setter(PRUNEJOBS))
+        gr_line = gr_line | np(PList('prune volumes'), gr_yn, action=self._parse_setter(PRUNEVOLUMES))
+        gr_line = gr_line | np(PList('re run failed levels'), gr_yn, action=self._parse_setter(RERUNFAILEDLEVELS))
+        gr_line = gr_line | np(PList('re schedule on error'), gr_yn, action=self._parse_setter(RESCHEDULEONERROR))
+        gr_line = gr_line | np(PList('spool attributes'), gr_yn, action=self._parse_setter(SPOOLATTRIBUTES))
+        gr_line = gr_line | np(PList('spool data'), gr_yn, action=self._parse_setter(SPOOLDATA))
+        gr_line = gr_line | np(PList('write boot strap'), gr_yn, action=self._parse_setter(WRITEPARTAFTERJOB))
 
         # }}}
         # {{{ # plain strings
@@ -171,14 +172,18 @@ class Job(DbDict):
         gr_script = ((Keyword('Run Script', caseless=True) | Keyword('RunScript', caseless=True)) + nestedExpr('{','}', OneOrMore(gr_script_parts))).setParseAction(self._parse_script_full)
         
         gr_res = OneOrMore(gr_line | gr_script)
-        result = gr_res.parseString(string, parseAll=True)
+        try:
+            result = gr_res.parseString(string, parseAll=True)
+        except Exception as e:
+            print(e)
+            raise
         return self.retlabel + ': '+ self[NAME]
 
     # }}}
     # {{{ __str__(): 
 
     def __str__(self):
-        self.output = ['%s {\n  Name = "%s"' % (self.retlabel, self[NAME]),'}']
+        self.output = ['%s {' % self.retlabel,'}']
         for x in self.NULL_KEYS: self._simple_phrase(x)
         for x in self.INT_KEYS: self._simple_phrase(x)
         for x in self.REFERENCE_KEYS:

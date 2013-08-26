@@ -39,11 +39,10 @@ class Writer():
             errorlog.append(value)
         else:
             row[1] += 1
-        output = '%s: %d/%d %s' % (key, row[1], row[2], row[3])
         self.screen.addstr(row[0], 3, '%s: %d/' % (key, row[1]), self.normal )
         if row[2]: self.screen.addstr(str(row[2]), self.problem)
         else: self.screen.addstr('0', self.normal)
-        self.screen.addstr('  ' + row[3], self.normal)
+        self.screen.addstr('  ' + row[3].split('\n')[0], self.normal)
         (y,x) = self.screen.getyx()
         self.screen.addstr(' ' * ((self.RESTX - x) - 2), self.normal)
         self.screen.refresh()

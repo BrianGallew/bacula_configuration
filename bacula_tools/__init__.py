@@ -38,7 +38,7 @@ _INTERNED = [
     'maxrunschedtime', 'maxruntime', 'maxstartdelay', 'maxwaittime', 'regexwhere',
     'rescheduleinterval', 'spoolsize', 'stripprefix', 'verifyjob', 'where', 'writebootstrap',
     'replace', 'jobdef', 'jobs', 'job', 'storage_id', 'command', 'runsonsuccess', 'runsonfailure',
-    'runsonclient', 'runswhen', 'failjobonerror', 'scripts', 'message', 'script_id',
+    'runsonclient', 'runswhen', 'failjobonerror', 'scripts', 'message', 'script_id', 'jobdefs'
     ]
 
 for w in _INTERNED: locals()[w.upper()] = w
@@ -96,6 +96,7 @@ def parser(string, output=print):
         except Exception as e:
             msg = '%s: Unable to handle %s at this time:\n%s' % (name.capitalize(), e,body.strip())
             output(msg)
+            raise
         while parts and parts[0] == '\n': del parts[0]
     return parsed
     
@@ -193,4 +194,5 @@ _DISPATCHER = {
     STORAGE: Storage,
     JOB: Job,
     JOBDEF: JobDef,
+    JOBDEFS: JobDef,
     }

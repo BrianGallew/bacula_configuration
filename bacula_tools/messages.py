@@ -1,6 +1,7 @@
 from . import *
 
 class Messages(DbDict):
+    SETUP_KEYS = [(NAME, ''), (DATA, '')]
     table = MESSAGES
     # {{{ __str__(): 
 

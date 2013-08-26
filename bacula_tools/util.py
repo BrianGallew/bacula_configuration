@@ -87,7 +87,6 @@ class DbDict(dict):             # base class for all of the things derived from 
     brace_re = re.compile(r'\s*(.*?)\s*\{\s*(.*)\s*\}\s*', re.MULTILINE|re.DOTALL)
     name_re = re.compile(r'^\s*name\s*=\s*(.*)', re.MULTILINE|re.IGNORECASE)
     SETUP_KEYS = [(NAME, ''), (DATA, '')]
-    NULL_KEYS = [ID]
     bc = bacula_tools.Bacula_Factory()
     output = []
     prefix = '  '               # Used for spacing out members when printing
@@ -96,8 +95,15 @@ class DbDict(dict):             # base class for all of the things derived from 
     # {{{ __init__(row={}, string=None): pass in a row (as a dict)
     def __init__(self, row={}, string = None):
         dict.__init__(self)
-        for key, value in self.SETUP_KEYS: self[key] = value
-        for key in self.NULL_KEYS: self[key] = None
+        self[ID] = None         # Ensure we have an ID
+        # This allows flexibility in key setup/declaration, which in turn
+        # will allow intelligent groupings to make parse/set/get code
+        # somewhat simpler (or at least more clear).
+        for x in dir(self):
+            if not '_KEYS' in x: continue # Look only for, e.g., NULL_KEYS, SETUP_KEYS, TRUE_KEYS, etc
+            for key in getattr(self, x):  # If it's a simple value,
+                if type(key) == str: self[key] = None # Assign none
+                else: self[key[0]] = key[1]           # Otherwise assume [1] is the desired default  value
         self.update(row)
         if string: self.parse_string(string)
         return
@@ -177,7 +183,7 @@ class DbDict(dict):             # base class for all of the things derived from 
         return "%s: %s" % (self.table.capitalize(), self[NAME])
 
     # }}}
-    # {{{ _parse_setter(key, c_int=False):
+    # {{{ _parse_setter(key, c_int=False, dereference=False):
 
     def _parse_setter(self, key, c_int=False, dereference=False):
         '''Shortcut called by parser for setting values'''
@@ -190,6 +196,7 @@ class DbDict(dict):             # base class for all of the things derived from 
     # {{{ _simple_phrase(key):
 
     def _simple_phrase(self, key):
+        if not type(key) == str: key = key[0]
         if self[key] == None: return
         try:
             int(self[key])
@@ -202,6 +209,7 @@ class DbDict(dict):             # base class for all of the things derived from 
     # {{{ _yesno_phrase(key, onlytrue=False, onlyfalse=False):
 
     def _yesno_phrase(self, key, onlytrue=False, onlyfalse=False):
+        if not type(key) == str: key = key[0]
         value = self[key]
         if (not value) or value == '0': value = NO
         else: value = YES
@@ -257,364 +265,3 @@ class PList(list):
         self.extend(result)
         return
     
-class StorageDaemon(DbDict):
-    # {{{ __init__(row, timespan, directors):
-
-    def __init__(self, row, timespan, directors):
-        DbDict.__init__(self, row)
-        self[TIMESPAN] = timespan
-        self.directors = directors
-        return
-
-    # }}}
-    # {{{ print_pool_storage():
-
-    def print_pool_storage(self):
-        return '''
-Pool {
-  Name = %(hostname)s
-  Pool Type = Backup
-  Recycle = yes
-  AutoPrune = yes
-  Volume Retention = %(timespan)s
-  Maximum Volume Jobs = 1
-  Label Format = %(hostname)s-
-  Action On Purge = Truncate
-}
-
-Storage {
-  Name = %(hostname)s
-  Address = %(address)s
-  SDPort = 9103
-  Password = %(password)s
-  Device = %(hostname)s
-  Media Type = %(hostname)s
-  Maximum Concurrent Jobs = 1
-}
-''' % self
-
-    # }}}
-    # {{{ print_device_storage():
-
-    def print_device_storage(self):
-        if self[DIRECTOR] == None:
-            for d in self.directors:
-                if d[PRIMARY_DIR]: self[DIRECTOR_NAME] = d[HOSTNAME]
-        else:
-            for d in self.directors:
-                if d[DIRID] == self[DIRECTOR]: self[DIRECTOR_NAME] = d[HOSTNAME]
-        return '''
-Storage {
-  Name = %(hostname)s
-  SDPort = 9103
-  WorkingDirectory = "/var/lib/bacula"
-  Pid Directory = "/var/run/bacula"
-  Maximum Concurrent Jobs = 60
-}
-
-Messages {
-  Name = Standard
-  director = %(director_name)s = all
-}
-''' % self
-
-# }}}
-    # {{{ print_director_access():
-
-    def print_director_access(self):
-        result = []
-        for d in self.directors:
-            result.append('''
-Director {
-  Name = %s
-  Password = %s
-}
-''' % (d[HOSTNAME], self[PASSWORD]))
-        return '\n'.join(result)
-
-    # }}}
-                          
-class Client(DbDict):           # Should do lots of client stuff all in one place
-    # {{{ __init__(row):
-
-    # These two values have to do with formatting the output and are related.
-    fmt = '%31s: %s'
-    spacer = '\n'+33*' '
-    def __init__(self, row):
-        DbDict.__init__(self, row)
-        bc = Bacula_Factory()
-        for x in bc.get_storage_daemons():
-            if x[HOSTNAME] == self[STORAGESERVER]:
-                self[STORAGESERVERADDRESS] = x[ADDRESS]
-                self[STORAGEPASSWORD] = x[PASSWORD]
-        self['message_set'] = 'Standard'
-        directors = bc.get_directors()
-        imadirector = False
-        shorthost = os.uname()[1].split('.')[0]
-        for d in directors:
-            if shorthost in d[HOSTNAME]: imadirector = True
-            if not self[DIRECTOR] and d[PRIMARY_DIR]: self[DIRECTOR] = d[DIRID]
-            if self[DIRECTOR] == d[DIRID]:
-                self[DIRECTOR_NAME] = d[HOSTNAME]
-                self[DBNAME] = d[DBNAME]
-                self[DBUSER] = d[DBUSER]
-                self[DBPASSWORD] = d[DBPASSWORD]
-                self[DBADDRESS] = d[DBADDRESS]
-
-        # This is kind of complicated.  If we are running this on an actual
-        # director, then we should check to see if the Client's director
-        # matches the current host.  If not, mark it disabled (Clients are
-        # always disabled on every director but the one to which they
-        # belong)
-        if self[BACULA_ENABLED] and imadirector:
-            my_director = [x for x in directors if shorthost in x[HOSTNAME]]
-            if self[DIRECTOR] != my_director[DIRID]: self[BACULA_ENABLED] = 0
-        self['bootstrapdir'] = Bacula_Config.BOOTSTRAPDIR
-        self[ENABLED] = YES if self[BACULA_ENABLED] else NO
-        self[POOL] = self[STORAGESERVER]
-        return
-
-    # }}}
-    # {{{ __str__(): nice string representation
-
-    def __str__(self):
-        result = []
-        # This overrides the work in __init__ because it ignores the director information as being irrelevant.
-        if self[BACULA_ENABLED] != 0: self[ENABLED] = 'yes'
-        else: self[ENABLED] = 'no'
-        result.append(self.fmt % (HOSTNAME.capitalize(), '%s (%s)' % (self[HOSTNAME], self[ADDRESS])))
-        for key in (HOSTID, ENABLED, FILESET, SCHEDULE, PRIORITY, STORAGESERVER, OS, FILE_RETENTION, JOB_RETENTION, SERVICES, OWNERS, LASTUPDATED):
-            result.append(self.fmt % (key.capitalize(), self[key]))
-
-        for key in (BEGIN, END, FAILURE):
-            if self[key]: result.append(self.fmt % ('%s Script' % key.capitalize(), self[key]))
-
-        if self[NOTES]: result.append(self.fmt % ('Host Notes', self[NOTES].replace('\n', self.spacer)))
-        bacula = Bacula_Factory()
-        if self[SERVICES]: service_notes = bacula.get_column('notes', 'service = %s', self[SERVICES], dbtable='service_notes')
-        else: service_notes = bacula.get_column('notes', 'service is NULL', dbtable='service_notes')
-        if service_notes:
-            service_string = '\n'.join(service_notes).replace('\n', self.spacer)
-            result.append(self.fmt % ('Service Notes (%s)' % self[SERVICES], service_string))
-
-        return '\n'.join(result)
-
-    # }}}
-    # {{{ client_conf():
-
-    def client_conf(self):
-        return '''
-Client {
-  Name = %(hostname)s
-  Address = %(address)s
-  Catalog = MyCatalog
-  Password = %(password)s
-  File Retention = %(file_retention)s
-  Job Retention = %(job_retention)s
-  AutoPrune = yes
-}
-''' % self
-
-    # }}}
-    # {{{ client_device():
-
-    def client_device(self):
-        return '''
-Device {
-  Name = %(hostname)s-%(fileset)s
-  Media Type = %(hostname)s-%(fileset)s
-  Archive Device = /data/bacula
-  LabelMedia = yes;
-  Random Access = yes;
-  AutomaticMount = yes;
-  RemovableMedia = no;
-  AlwaysOpen = no;
-}
-''' % self
-
-    # }}}
-    # {{{ client_storage():
-
-    def client_storage(self):
-        return '''
-Storage {
-  Name = %(hostname)s-%(fileset)s
-  Address = %(storageserveraddress)s
-  SDPort = 9103
-  Password = %(storagepassword)s
-  Device = %(hostname)s-%(fileset)s
-  Media Type = %(hostname)s-%(fileset)s
-  Maximum Concurrent Jobs = 1
-}
-''' % self
-
-    # }}}
-    # {{{ client_job():
-    
-    def client_job(self):
-        self['script'] = ''.join([self.script(x) for x in ('begin', 'end', 'failure')])
-        return '''
-Job {
-  Name = %(hostname)s-%(fileset)s
-  Client = %(hostname)s
-  Enabled = %(enabled)s
-  Storage = %(hostname)s-%(fileset)s
-  Write Bootstrap = \"%(bootstrapdir)s/%(hostname)s%(fileset)s.bsr\"
-  Priority = %(priority)s
-  Maximum Concurrent Jobs = 1
-  Type = Backup
-  Level = Incremental
-  FileSet = %(fileset)s
-  Schedule = %(schedule)s
-  Messages = %(message_set)s
-  Pool = %(pool)s
-  Rerun Failed Levels = yes
-  Allow Mixed Priority = yes
-%(script)s
-}
-''' % self
-
-# }}}
-    # {{{ client_verify_job():
-    
-    def client_verify_job(self):
-        if 'Snap' in self[FILESET]: return ''
-        return '''
-Job {
-  Name = %(hostname)s-%(fileset)s-Verify
-  Client = %(hostname)s
-  Enabled = Yes
-  Storage = %(hostname)s-%(fileset)s
-  Priority = %(priority)s
-  Maximum Concurrent Jobs = 1
-  Type = Verify
-  Level = VolumeToCatalog
-  Verify Job = %(hostname)s-%(fileset)s
-  FileSet = %(fileset)s
-  Messages = %(message_set)s
-  Pool = %(pool)s
-  Allow Mixed Priority = yes
-}
-''' % self
-
-# }}}
-    # {{{ script(word):
-
-    def script(self, word):
-        s = self[word]
-        if not s: return ''
-        s = s % self
-        sWhen = 'After'
-        sFail = 'No'
-        sExtra = ''
-        if word == 'begin':
-            sWhen = 'Before'
-            sExtra = "\t\tFailJobOnError = Yes\n"
-        if word == 'failure':
-            sExtra = "\t\tRunsOnSuccess = No\n"
-            sFail = YES
-        return "\tRun Script {\n\t\tCommand = \"%(s)s\"\n\t\tRunsWhen = %(sWhen)s\n\t\tRunsOnFailure = %(sFail)s\n\t\tRunsOnClient = Yes\n%(sExtra)s\t}\n" % locals()
-
-# }}}
-    # {{{ toggle_enabled(): toggle whether backups are enabled for this client/job
-
-    def toggle_enabled(self):
-        new_value = 0
-        if self[BACULA_ENABLED] == 0: new_value = 1
-        bc = Bacula_Factory()
-        sql = 'update %s set bacula_enabled = %%s where hostid = %%s' % HOSTS
-        bc.safe_do_sql(sql, (new_value, self[HOSTID]))
-        self[BACULA_ENABLED] = new_value
-        return
-
-# }}}
-    # {{{ change(field, value): Update the value of a field
-
-    def change(self, field, value):
-        bc = Bacula_Factory()
-        sql = 'update %s set %s = %%s where hostid = %%s' % (HOSTS, field)
-        bc.safe_do_sql(sql, (value, self[HOSTID]))
-        self[field] = value
-        return
-
-# }}}
-    # {{{ update_service_notes(text, replace=False): Update the value of a field
-
-    def update_service_notes(self, text, replace=False):
-        bc = Bacula_Factory()
-        if replace:
-            if self[SERVICES]: bc.safe_do_sql('DELETE FROM service_notes WHERE service = %s', self[SERVICES])
-            else: bc.safe_do_sql('DELETE FROM service_notes WHERE service IS NULL')
-        if not text: return
-        sql = 'INSERT INTO service_notes (service, notes) VALUES (%s, %s)'
-        for line in text.split('\n'):
-            bc.safe_do_sql(sql, (self[SERVICES], line))
-        return
-
-# }}}
-    # {{{ add_job(args): Add a job instead of updating an existing job.  Default values from the current job
-
-    def add_job(self, args):
-        if args.fileset: self[FILESET] = args.fileset
-        if args.file_retention: self[FILE_RETENTION] = args.file_retention
-        if args.job_retention: self[JOB_RETENTION] = args.job_retention
-        if args.notes: self[NOTES] = args.notes
-        if args.owners: self[OWNERS] = args.owners
-        if args.priority: self[PRIORITY] = args.priority
-        if args.schedule: self[SCHEDULE] = args.schedule
-        if args.service: self[SERVICES] = args.service
-        if args.script_begin: self[BEGIN] = args.script_begin
-        if args.script_end: self[END] = args.script_end
-        if args.script_fail: self[FAILURE] = args.script_fail
-        if args.toggle: self[BACULA_ENABLED] =  1 if self[BACULA_ENABLED] == 0 else 0
-        print( self)
-        bc = Bacula_Factory()
-        sql = '''INSERT INTO bacula_hosts
-                 (hostname, address, storageserver, password, fileset,
-                  bacula_enabled, priority, schedule, os, notes, db, begin,
-                  end, failure, file_retention, job_retention, director,
-                  owners, services)
-                 VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)'''
-        data = [self[HOSTNAME], self[ADDRESS], self[STORAGESERVER],
-                self[PASSWORD], self[FILESET], self[BACULA_ENABLED],
-                self[PRIORITY], self[SCHEDULE], self[OS], self[NOTES],
-                self[DB], self[BEGIN], self[END], self[FAILURE],
-                self[FILE_RETENTION], self[JOB_RETENTION], self[DIRECTOR],
-                self[OWNERS], self[SERVICES]
-                ]
-        try:
-            bc.do_sql(sql, data)
-            print('New job created for', self[HOSTNAME])
-        except:
-            print( 'Unable to create the job')
-            pass             # This will happen under lots of circumstances
-
-        # }}}
-    # {{{ file_daemon_conf(): return the bacula-fd.conf data
-
-    def file_daemon_conf(self):
-        retval = []
-        bc = Bacula_Factory()
-        for d in bc.get_directors():
-            retval.append('''Director {
-	Name = %s
-	Password = "%s"
-}
-''' % (d[HOSTNAME], self[PASSWORD]))
-        self['workdir'] = WORKING_DIR[self[OS]]
-        retval.append('''FileDaemon {
-	Name = %(hostname)s
-	FDport = 9102
-	WorkingDirectory = %(workdir)s
-	Pid Directory = /var/run
-	Maximum Concurrent Jobs = 20
-}
-
-Messages {
-	Name = Standard
-	director = %(director_name)s = all, !skipped, !restored
-}
-''' % self)
-        return '\n'.join(retval)
-
-    # }}}

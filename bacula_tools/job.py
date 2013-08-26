@@ -13,23 +13,27 @@ class Job(DbDict):
     NULL_KEYS = [
         # Enum
         TYPE, LEVEL,
-        # foreign keys
-        DIFFERENTIALPOOL_ID, FILESET_ID, FULLPOOL_ID, CLIENT_ID, ID,
-        INCREMENTALPOOL_ID, MESSAGES_ID, POOL_ID, SCHEDULE_ID, STORAGE_ID, JOB_ID,
-        # Ints
-        MAXIMUMCONCURRENTJOBS, RESCHEDULETIMES, PRIORITY,
-        # True/False
-        ACCURATE, ALLOWDUPLICATEJOBS, ALLOWMIXEDPRIORITY, CANCELLOWERLEVELDUPLICATES,
-        CANCELQUEUEDDUPLICATES, CANCELRUNNINGDUPLICATES, ENABLED, PREFERMOUNTEDVOLUMES,
-        PREFIXLINKS, PRUNEFILES, PRUNEJOBS, PRUNEVOLUMES, RERUNFAILEDLEVELS, RESCHEDULEONERROR,
-        SPOOLATTRIBUTES, SPOOLDATA, WRITEPARTAFTERJOB,
         # Strings
         NOTES, ADDPREFIX, ADDSUFFIX, BASE, BOOTSTRAP, DIFFERENTIALMAXWAITTIME, IDMAXWAITTIME,
         INCREMENTALMAXRUNTIME, MAXFULLINTERVAL, MAXIMUMBANDWIDTH, MAXRUNSCHEDTIME, MAXRUNTIME,
         MAXSTARTDELAY, MAXWAITTIME, REGEXWHERE, RESCHEDULEINTERVAL, RUN, SPOOLSIZE, 
-        STRIPPREFIX, VERIFYJOB, WHERE, WRITEBOOTSTRAP
+        STRIPPREFIX, VERIFYJOB, WHERE, WRITEBOOTSTRAP,
+        # keys with values
+        (REPLACE, 'always'), (NAME, ''),
         ]
-    SETUP_KEYS = [(REPLACE, 'always'), (NAME, ''), (JOBDEF, 0)]
+    REFERENCE_KEYS = [          # foreign keys
+        DIFFERENTIALPOOL_ID, FILESET_ID, FULLPOOL_ID, CLIENT_ID,
+        INCREMENTALPOOL_ID, MESSAGES_ID, POOL_ID, SCHEDULE_ID, STORAGE_ID,
+        ]        
+    INT_KEYS = [MAXIMUMCONCURRENTJOBS, RESCHEDULETIMES, PRIORITY]
+    TRUE_KEYS = [ENABLED, PREFERMOUNTEDVOLUMES]
+    FALSE_KEYS = [
+        ACCURATE, ALLOWDUPLICATEJOBS, ALLOWMIXEDPRIORITY, CANCELLOWERLEVELDUPLICATES,
+        CANCELQUEUEDDUPLICATES, CANCELRUNNINGDUPLICATES, (JOBDEF, 0), 
+        PREFIXLINKS, PRUNEFILES, PRUNEJOBS, PRUNEVOLUMES, RERUNFAILEDLEVELS, RESCHEDULEONERROR,
+        SPOOLATTRIBUTES, SPOOLDATA, WRITEPARTAFTERJOB
+        ]
+    SPECIAL_KEYS = [JOB_ID,]    # These won't be handled en- masse
     table = JOBS
     retlabel = 'Job'
     # {{{ __init__(row={}, string = None):
@@ -175,18 +179,15 @@ class Job(DbDict):
 
     def __str__(self):
         self.output = ['%s {\n  Name = "%s"' % (self.retlabel, self[NAME]),'}']
-        for x in [CLIENT_ID, FILESET_ID, MESSAGES_ID, POOL_ID, SCHEDULE_ID, STORAGE_ID, DIFFERENTIALPOOL_ID, INCREMENTALPOOL_ID, FULLPOOL_ID]:
+        for x in self.NULL_KEYS: self._simple_phrase(x)
+        for x in self.INT_KEYS: self._simple_phrase(x)
+        for x in self.REFERENCE_KEYS:
             if self[x] == None: continue
             self.output.insert(-1,'  %s = "%s"' % (x.replace('_id', '').capitalize(), self._fk_reference(x)[NAME]))
         if self[JOB_ID]: self.output.insert(-1,'  JobDefs = "%s"' % self._fk_reference(JOB_ID)[NAME])
 
-        for x in [ACCURATE, ALLOWDUPLICATEJOBS, ALLOWMIXEDPRIORITY, CANCELLOWERLEVELDUPLICATES,
-                  CANCELQUEUEDDUPLICATES, CANCELRUNNINGDUPLICATES,
-                  PREFIXLINKS, PRUNEFILES, PRUNEJOBS, PRUNEVOLUMES, RERUNFAILEDLEVELS, RESCHEDULEONERROR,
-                  SPOOLATTRIBUTES, SPOOLDATA, WRITEPARTAFTERJOB]:
-            self._yesno_phrase(x, onlytrue=True)
-        for x in [ENABLED, PREFERMOUNTEDVOLUMES]:
-            self._yesno_phrase(x, onlyfalse=True)
+        for x in self.FALSE_KEYS: self._yesno_phrase(x, onlytrue=True)
+        for x in self.TRUE_KEYS: self._yesno_phrase(x, onlyfalse=True)
         for x in self.scripts: self.output.insert(-1, str(x))
         return '\n'.join(self.output)
 
@@ -247,6 +248,7 @@ class Job(DbDict):
         return
 
     # }}}
+    # {{{ _parse_script_full(tokens):
 
     def _parse_script_full(self, tokens):
         s = Script()
@@ -257,6 +259,8 @@ class Job(DbDict):
             s[k.lower()] = v
         self._add_script(s.search())
         return
+
+# }}}
 
 class JobDef(Job):
     SETUP_KEYS = [(REPLACE, 'always'), (NAME, ''), (JOBDEF, 1)]

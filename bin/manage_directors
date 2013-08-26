@@ -66,8 +66,7 @@ for key in keylist:
     try: s._set(key, value)
     except: pass
 if not args.monitor == None: s._set(MONITOR, args.monitor, True)
-if args.messages: s._set_messages(args.messages)
-try: dc = 'Director config\n' + s + '\n'
-except: dc = ''
-print(dc, 'File Daemon config\n', s.fd())
+if args.messages: s._set(MESSAGE_ID, args.messages, dereference=True)
+print('Director config', s, '','', sep='\n')
+print('File Daemon config', s.fd(), '', sep='\n')
 exit()

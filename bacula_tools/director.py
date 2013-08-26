@@ -2,30 +2,13 @@ from . import *
 keylist = []
 
 class Director(DbDict):
-    NULL_KEYS = [ID, ADDRESS, DIRADDRESSES,MONITOR,
+    NULL_KEYS = [ADDRESS, DIRADDRESSES,MONITOR,
                  FD_CONNECT_TIMEOUT, HEARTBEATINTERVAL, MAXIMUMCONSOLECONNECTIONS,
                  MAXIMUMCONCURRENTJOBS, PASSWORD, PIDDIRECTORY, QUERYFILE,
                  SCRIPTS_DIRECTORY, SD_CONNECT_TIMEOUT, SOURCEADDRESS, STATISTICS_RETENTION,
                  VERID, WORKINGDIRECTORY, MESSAGE_ID]
     SETUP_KEYS = [(PORT, 9101),(NAME, ''),]
     table = DIRECTORS
-    # {{{ _set_messages(string):
-
-    def _set_messages(self, string):
-        m = Messages()
-        m.search(string.strip())
-        if not m[ID]: m._set_name(string.strip())
-        self._set(MESSAGE_ID, m[ID])
-
-        # }}}
-    # {{{ _get_messages(string):
-
-    def _get_messages(self):
-        sql = 'select %s from %s where id = %%s' % (NAME,MESSAGES)
-        row = self.bc.do_sql(sql, self[MESSAGE_ID])[0]
-        return row[0]
-
-        # }}}
     # {{{ parse_string(string): Entry point for a recursive descent parser
 
     def parse_string(self, string):
@@ -74,7 +57,7 @@ class Director(DbDict):
         gr_source = np(('source address', 'sourceaddress'), action=self._parse_setter(SOURCEADDRESS))
         gr_stats = np(('statistics retention', 'statisticsretention'), action=self._parse_setter(STATISTICS_RETENTION))
         gr_verid = np((VERID,), action=self._parse_setter(VERID))
-        gr_messages = np((MESSAGES,), action=lambda x:self._set_messages(x[2]))
+        gr_messages = np((MESSAGES,), action=lambda x:self._parse_setter(MESSAGE_ID, dereference=True))
         gr_work_dir = np((WORKINGDIRECTORY, 'working directory'), action=self._parse_setter(WORKINGDIRECTORY))
         gr_port = np(('dirport', 'dir port'), gr_number, self._parse_setter(PORT, True))
         gr_monitor = np((MONITOR,), gr_yn, action=self._parse_setter(MONITOR))
@@ -95,7 +78,7 @@ class Director(DbDict):
     def __str__(self):
         self.output = ['Director {\n  Name = "%(name)s"' % self,'}']
         self._simple_phrase(PORT)
-        self.output.insert(-1, '  %s = "%s"' % (MESSAGES.capitalize(), self._get_messages()))
+        self.output.insert(-1, '  %s = "%s"' % (MESSAGES.capitalize(), self._fk_reference(MESSAGE_ID)[NAME]))
         if self[DIRADDRESSES]:
             self.output.insert(-1, '  %s {' % DIRADDRESSES.capitalize())
             self.output.insert(-1,  self[DIRADDRESSES])
@@ -106,7 +89,7 @@ class Director(DbDict):
         return '\n'.join(self.output)
 
 # }}}
-# {{{ fd(): return the string that describes the filedaemon configuration
+    # {{{ fd(): return the string that describes the filedaemon configuration
 
     def fd(self):
         '''This is what we'll call to dump out the config for the file daemon'''

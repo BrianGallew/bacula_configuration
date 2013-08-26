@@ -38,7 +38,7 @@ _INTERNED = [
     'maxrunschedtime', 'maxruntime', 'maxstartdelay', 'maxwaittime', 'regexwhere',
     'rescheduleinterval', 'spoolsize', 'stripprefix', 'verifyjob', 'where', 'writebootstrap',
     'replace', 'jobdef', 'jobs', 'job', 'storage_id', 'command', 'runsonsuccess', 'runsonfailure',
-    'runsonclient', 'runswhen', 'failjobonerror', 'scripts'
+    'runsonclient', 'runswhen', 'failjobonerror', 'scripts', 'message'
     ]
 
 for w in _INTERNED: locals()[w.upper()] = w
@@ -183,6 +183,7 @@ _DISPATCHER = {
     FILESET: Fileset,
     SCHEDULE: Schedule,
     MESSAGES: Messages,
+    MESSAGE: Messages,
     DIRECTOR: Director,
     CATALOG.lower(): Catalog,
     CONSOLE: Console,

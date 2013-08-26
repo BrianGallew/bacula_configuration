@@ -3,7 +3,7 @@ keylist = []
 
 class Catalog(DbDict):
     NULL_KEYS = [
-        ID, DBADDRESS, DBNAME, DBPORT, DBSOCKET, PASSWORD, USER, DIRECTOR_ID
+        DBADDRESS, DBNAME, DBPORT, DBSOCKET, PASSWORD, USER, DIRECTOR_ID
         ]
     SETUP_KEYS = [(NAME, ''),]
     table = CATALOGS

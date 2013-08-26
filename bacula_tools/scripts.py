@@ -2,7 +2,7 @@ from __future__ import print_function
 from . import *
 
 class Script(DbDict):
-    NULL_KEYS = [ID, COMMAND, CONSOLE]
+    NULL_KEYS = [COMMAND, CONSOLE]
     SETUP_KEYS = [(RUNSONSUCCESS, 1), (RUNSONFAILURE, 0), (RUNSONCLIENT, 1), (FAILJOBONERROR, 1), (RUNSWHEN, 'Never')]
     table = SCRIPTS
     prefix = '    '

@@ -1,9 +1,88 @@
 Bacula Configuration
-======
+====================
 
 Scripts for Bacula configuration management
 
-DEPENDENCIES:
+MOTIVATION
+----------
+
+Bacula's worst weakness is configuration.  Adding one more host to your
+current setup involves the following steps:
+
+1. Install the client software
+2. Create a bacula-fd.conf.  It needs:
+ - Director stanza, with new passwords, for each director
+ - Messages stanza
+ - FileDaemon/Client stanza
+3. Update your director(s) configuration:
+ - Client entry (with the name and password from bacula-fd.conf)
+ - One or more Job entries
+ - (Optional) Storage/Pool entries.
+ - (Optional) Create new Fileset/Schedule entries
+4. (Optional) Update your storage(s) configuration:
+ - Pool
+ - Storage
+ - Device
+
+All that data has to mesh together perfectly, or Bacula won't work.
+Admittedly, you can short-circuit some of this by using the same passwords
+everywhere and a standard set of directors and only one Message
+configuration, and all hosts share the same storage pool and devices.
+
+Then there's auditing.  *You* know perfectly well what hosts are backed up
+with which scheuldes, and the filesets involved.  But do your coworkers?
+What about your boss?  Do you answer all the questions about which hosts
+are backed up, and how, or do you want to delegate all of that to your
+front-line support?  How about the possibility of giving your install team
+an easy tool for setting up new backups?
+
+Finally, there's maintenance.  Storage servers are taken (temporarily)
+offline.  Clients are decommissioned (which means all the jobs left in the
+catalog at that point will never be pruned) or change roles.  Directors are
+replaced.  New Filesets (and associated Jobs) need to be added to groups of
+Clients.  All of these events require tedious, error prone, manual updates.
+
+WHAT IT DOES
+------------
+
+CLI tool to import an existing configuration
+
+CLI tools to create/delete/edit all of the resources used by Bacula
+
+CLI tools designed to drop into cron that will keep the director(s) and
+storage daemon(s) configuration up-to-date, with appropriate activity
+checks around restarts.
+
+Web interface that yields an appropriate bacula-fd.conf like this:
+`wget -O /etc/bacula/bacula-fd.conf http://director.example.com/cgi-bin/fd`
+
+CLI tool for updating Confluence with live documentation.  This will
+include service and host notes, as well as schedules and filesets (where
+possible: filesets that use < syntax will be incomplete).
+
+CURRENT STATUS
+--------------
+
+The import tool works on my decidedly non-trivial installation for director
+and client configurations.  The CLI tools work and are *mostly* complete
+for all currently implemented resources (I tend to add the tools at the
+same time I built the resource class).
+
+The next steps, in no particular order:
+
+- Storage daemon resources
+- Association of SDs, pools, and devices (this is the most difficult
+piece)
+- Convenience functions/scripts (e.g. move all clients from one SD to
+another)
+- Web CGI (trivial)
+- Configuration extraction tools (mostly simple, needs the association
+piece above before it'll actuall work on the SDs)
+- Wiki updater (this may be too site-specific to be useful, but we'll see)
+
+
+DEPENDENCIES
+-------------
 
 If you do not have mysql-python installed, setuptools will install it as a
 dependency.  If you would rather have it installed from an OS package, you
@@ -14,12 +93,17 @@ configuration.  Otherwise, it's unneeded.  I should note that this is
 making DRY code difficult, as adding the parsing bits to the base class
 would make pyparsing required everywhere, which is really not desirable.
 
-DATABASE:
+DATABASE
+---------
 
 You'll need to create the database schema using
 bacula_tools/data/bacula_configuration.schema 
 
-OS SETUP:
+Today, we are MySQL-only.  Adding support for PostgreSQL shouldn't be
+difficult, but I'd have to see a desire for that before doing the work.
+
+OS SETUP
+---------
 
 Finally, you will need to customize several values, whose defaults are in
 bacula_tools/__init__.py.  The easiest way to do so is to drop value
@@ -38,24 +122,24 @@ MYSQL_PASS
 
 Here is an example script that will set it all up for you:
 
-#! /bin/sh
-
-python setup.py install
-mysql -u root -p <<EOF
-create schema baculacfg;
-grant all on baculacfg.* to baculacfg identified by 'baculacfg';
-use baculacfg
-\. bacula_tools/data/bacula_configuration.schema
-EOF
-
-cat > /usr/local/etc/bacula.conf <<EOF
-MYSQL_DB='baculacfg'
-MYSQL_HOST='localhost'
-MYSQL_USER='baculacfg'
-MYSQL_PASS='baculacfg'
-EOF
-
-# import the current configuration
-./bin/import_configuration /etc/bacula/*.conf
-
-exit
+	#! /bin/sh
+	
+	python setup.py install
+	mysql -u root -p <<EOF
+	create schema baculacfg;
+	grant all on baculacfg.* to baculacfg identified by 'baculacfg';
+	use baculacfg
+	\. bacula_tools/data/bacula_configuration.schema
+	EOF
+	
+	cat > /usr/local/etc/bacula.conf <<EOF
+	MYSQL_DB='baculacfg'
+	MYSQL_HOST='localhost'
+	MYSQL_USER='baculacfg'
+	MYSQL_PASS='baculacfg'
+	EOF
+	
+	# import the current configuration
+	./bin/import_configuration /etc/bacula/*.conf
+	
+	exit

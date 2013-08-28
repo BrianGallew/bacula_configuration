@@ -3,12 +3,14 @@ keylist = []
 
 class Pool(DbDict):
     NULL_KEYS = [
-        MAXIMUMVOLUMES, STORAGE, USEVOLUMEONCE, MAXIMUMVOLUMEJOBS, MAXIMUMVOLUMEFILES,
-        MAXIMUMVOLUMEBYTES, VOLUMEUSEDURATION, CATALOGFILES, AUTOPRUNE, VOLUMERETENTION,
-        ACTIONONPURGE, SCRATCHPOOL, RECYCLEPOOL, RECYCLE, RECYCLEOLDESTVOLUME,
-        RECYCLECURRENTVOLUME, PURGEOLDESTVOLUME, FILERETENTION, JOBRETENTION, CLEANINGPREFIX,
+        MAXIMUMVOLUMES, STORAGE, MAXIMUMVOLUMEJOBS, MAXIMUMVOLUMEFILES,
+        MAXIMUMVOLUMEBYTES, VOLUMEUSEDURATION, VOLUMERETENTION,
+        ACTIONONPURGE, SCRATCHPOOL, RECYCLEPOOL,
+        FILERETENTION, JOBRETENTION, CLEANINGPREFIX,
         LABELFORMAT
         ]
+    TRUE_KEYS = [(AUTOPRUNE, 1), (CATALOGFILES, 1), (RECYCLE, 1)]
+    FALSE_KEYS = [(USEVOLUMEONCE, 0), (RECYCLEOLDESTVOLUME, 0), (RECYCLECURRENTVOLUME, 0), (PURGEOLDESTVOLUME, 0)]
     SETUP_KEYS = [(NAME, ''), (POOLTYPE, 'Backup')]
     table = POOLS
     # {{{ parse_string(string): Entry point for a recursive descent parser
@@ -35,28 +37,28 @@ class Pool(DbDict):
             return p
 
         gr_line = np((NAME,), action=lambda x: self._set_name(x[2]))
-        gr_line = gr_line | np((POOLTYPE, 'pool type'), action=self._parse_setter(POOLTYPE))
-        gr_line = gr_line | np((MAXIMUMVOLUMES,'maximum volumes'), action=self._parse_setter(MAXIMUMVOLUMES))
+        gr_line = gr_line | np(PList('pool type'), action=self._parse_setter(POOLTYPE))
+        gr_line = gr_line | np(PList('maximum volumes'), action=self._parse_setter(MAXIMUMVOLUMES))
         gr_line = gr_line | np((STORAGE,), action=self._parse_setter(STORAGE))
-        gr_line = gr_line | np((USEVOLUMEONCE, 'use volume once', 'usevolume once', 'use volumeonce'), gr_yn, action=self._parse_setter(USEVOLUMEONCE))
-        gr_line = gr_line | np((CATALOGFILES, 'catalog files'), gr_yn, action=self._parse_setter(CATALOGFILES))
-        gr_line = gr_line | np((AUTOPRUNE, 'auto prune'), gr_yn, action=self._parse_setter(AUTOPRUNE))
+        gr_line = gr_line | np(PList('use volume once'), gr_yn, action=self._parse_setter(USEVOLUMEONCE))
+        gr_line = gr_line | np(PList('catalog files'), gr_yn, action=self._parse_setter(CATALOGFILES))
+        gr_line = gr_line | np(PList('auto prune'), gr_yn, action=self._parse_setter(AUTOPRUNE))
         gr_line = gr_line | np((RECYCLE,), gr_yn, action=self._parse_setter(RECYCLE))
-        gr_line = gr_line | np((RECYCLEOLDESTVOLUME, 'recycle oldest volume', 'recycle oldestvolume', 'recycleoldest volume'), gr_yn, action=self._parse_setter(RECYCLEOLDESTVOLUME))
-        gr_line = gr_line | np((RECYCLECURRENTVOLUME, 'recycle current volume', 'recycle currentvolume', 'recyclecurrent volume'), gr_yn, action=self._parse_setter(RECYCLECURRENTVOLUME))
-        gr_line = gr_line | np((PURGEOLDESTVOLUME, 'purge oldest volume', 'purge oldestvolume', 'purgeoldest volume'), gr_yn, action=self._parse_setter(PURGEOLDESTVOLUME))
-        gr_line = gr_line | np((MAXIMUMVOLUMEJOBS, 'maximum volume jobs', 'maximum volumejobs', 'maximumvolume jobs'), gr_number, action=self._parse_setter(MAXIMUMVOLUMEJOBS))
-        gr_line = gr_line | np((MAXIMUMVOLUMEFILES, 'maximum volume files', 'maximum volumefiles', 'maximumvolume files'), gr_number, action=self._parse_setter(MAXIMUMVOLUMEFILES))
-        gr_line = gr_line | np((MAXIMUMVOLUMEBYTES, 'maximum volume bytes', 'maximum volumebytes', 'maximumvolume bytes'), action=self._parse_setter(MAXIMUMVOLUMEBYTES))
-        gr_line = gr_line | np((VOLUMEUSEDURATION, 'volume use duration', 'volume useduration', 'volumeuse duration'), action=self._parse_setter(VOLUMEUSEDURATION))
-        gr_line = gr_line | np((VOLUMERETENTION, 'volume retention'), action=self._parse_setter(VOLUMERETENTION))
-        gr_line = gr_line | np((ACTIONONPURGE, 'action on purge', 'action onpurge', 'actionon purge'), action=self._parse_setter(ACTIONONPURGE))
-        gr_line = gr_line | np((SCRATCHPOOL, 'scratch pool'), action=self._parse_setter(SCRATCHPOOL))
-        gr_line = gr_line | np((RECYCLEPOOL, 'recycle pool'), action=self._parse_setter(RECYCLEPOOL))
-        gr_line = gr_line | np((FILERETENTION, 'file retention'), action=self._parse_setter(FILERETENTION))
-        gr_line = gr_line | np((JOBRETENTION, 'job retention'), action=self._parse_setter(JOBRETENTION))
-        gr_line = gr_line | np((CLEANINGPREFIX, 'cleaning prefix'), action=self._parse_setter(CLEANINGPREFIX))
-        gr_line = gr_line | np((LABELFORMAT, 'label format'), action=self._parse_setter(LABELFORMAT))
+        gr_line = gr_line | np(PList('recycle oldest volume'), gr_yn, action=self._parse_setter(RECYCLEOLDESTVOLUME))
+        gr_line = gr_line | np(PList('recycle current volume'), gr_yn, action=self._parse_setter(RECYCLECURRENTVOLUME))
+        gr_line = gr_line | np(PList('purge oldest volume'), gr_yn, action=self._parse_setter(PURGEOLDESTVOLUME))
+        gr_line = gr_line | np(PList('maximum volume jobs'), gr_number, action=self._parse_setter(MAXIMUMVOLUMEJOBS))
+        gr_line = gr_line | np(PList('maximum volume files'), gr_number, action=self._parse_setter(MAXIMUMVOLUMEFILES))
+        gr_line = gr_line | np(PList('maximum volume bytes'), action=self._parse_setter(MAXIMUMVOLUMEBYTES))
+        gr_line = gr_line | np(PList('volume use duration'), action=self._parse_setter(VOLUMEUSEDURATION))
+        gr_line = gr_line | np(PList('volume retention'), action=self._parse_setter(VOLUMERETENTION))
+        gr_line = gr_line | np(PList('action on purge'), action=self._parse_setter(ACTIONONPURGE))
+        gr_line = gr_line | np(PList('scratch pool'), action=self._parse_setter(SCRATCHPOOL))
+        gr_line = gr_line | np(PList('recycle pool'), action=self._parse_setter(RECYCLEPOOL))
+        gr_line = gr_line | np(PList('file retention'), action=self._parse_setter(FILERETENTION))
+        gr_line = gr_line | np(PList('job retention'), action=self._parse_setter(JOBRETENTION))
+        gr_line = gr_line | np(PList('cleaning prefix'), action=self._parse_setter(CLEANINGPREFIX))
+        gr_line = gr_line | np(PList('label format'), action=self._parse_setter(LABELFORMAT))
 
         gr_res = OneOrMore(gr_line)
         result = gr_res.parseString(string, parseAll=True)
@@ -67,17 +69,11 @@ class Pool(DbDict):
 
     def __str__(self):
         self.output = ['Pool {\n  Name = "%(name)s"' % self,'}']
-        
-        for key in self.NULL_KEYS:
-            if key in [ID, USEVOLUMEONCE, CATALOGFILES, AUTOPRUNE, RECYCLE, RECYCLEOLDESTVOLUME, RECYCLECURRENTVOLUME, PURGEOLDESTVOLUME]: continue
-            self._simple_phrase(key)
-        self._yesno_phrase(USEVOLUMEONCE, onlytrue=True)
-        self._yesno_phrase(CATALOGFILES, onlyfalse=True)
-        self._yesno_phrase(AUTOPRUNE, onlyfalse=True)
-        self._yesno_phrase(RECYCLE, onlyfalse=True)
-        self._yesno_phrase(RECYCLEOLDESTVOLUME, onlytrue=True)
-        self._yesno_phrase(RECYCLECURRENTVOLUME, onlytrue=True)
-        self._yesno_phrase(PURGEOLDESTVOLUME, onlytrue=True)
+        self._simple_phrase(POOLTYPE)
+        for key in self.NULL_KEYS: self._simple_phrase(key)
+        for key in self.TRUE_KEYS: self._yesno_phrase(key[0], onlyfalse=True)
+        for key in self.FALSE_KEYS: self._yesno_phrase(key[0], onlytrue=True)
+
         return '\n'.join(self.output)
 
 # }}}

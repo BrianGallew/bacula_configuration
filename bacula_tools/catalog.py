@@ -1,11 +1,10 @@
 from . import *
-keylist = []
 
 class Catalog(DbDict):
     NULL_KEYS = [
-        DBADDRESS, DBNAME, DBPORT, DBSOCKET, PASSWORD, USER, DIRECTOR_ID
+        DBADDRESS, DBNAME, DBPORT, DBSOCKET, PASSWORD, USER, 
         ]
-    SETUP_KEYS = [(NAME, ''),]
+    SPECIAL_KEYS = [DIRECTOR_ID, (NAME, '')]
     table = CATALOGS
     # {{{ parse_string(string): Entry point for a recursive descent parser
 
@@ -32,10 +31,10 @@ class Catalog(DbDict):
         gr_line = np((NAME,), action=lambda x: self._set_name(x[2]))
         gr_line = gr_line | np((USER, 'dbuser', 'db user'), action=self._parse_setter(USER))
         gr_line = gr_line | np((PASSWORD, 'dbpassword', 'db password'), action=self._parse_setter(PASSWORD))
-        gr_line = gr_line | np((DBSOCKET,), action=self._parse_setter(DBSOCKET))
-        gr_line = gr_line | np((DBPORT,), gr_number, action=self._parse_setter(DBPORT))
-        gr_line = gr_line | np((DBNAME, 'db name'), action=self._parse_setter(DBNAME))
-        gr_line = gr_line | np((DBADDRESS,'db address'), action=self._parse_setter(DBADDRESS))
+        gr_line = gr_line | np(PList(DBSOCKET), action=self._parse_setter(DBSOCKET))
+        gr_line = gr_line | np(PList(DBPORT), gr_number, action=self._parse_setter(DBPORT))
+        gr_line = gr_line | np(PList('db name'), action=self._parse_setter(DBNAME))
+        gr_line = gr_line | np(PList('db address'), action=self._parse_setter(DBADDRESS))
 
         gr_res = OneOrMore(gr_line)
         result = gr_res.parseString(string, parseAll=True)
@@ -48,7 +47,6 @@ class Catalog(DbDict):
         self.output = ['Catalog {\n  Name = "%(name)s"' % self,'}']
         
         for key in self.NULL_KEYS:
-            if key in [ID, DIRECTOR_ID]: continue
             self._simple_phrase(key)
         return '\n'.join(self.output)
 

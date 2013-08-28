@@ -22,9 +22,9 @@ group = optparse.OptionGroup(parser, "Setters",
                              "You should be aware that no sanity checking is done here, so it is quite possible "
                              "to break your configuration while using them.  Caveat emptor."
                              )
-keylist = [x for x in Script.NULL_KEYS if not x == ID] + [x[0] for x in Script.SETUP_KEYS] 
-truefalse = [RUNSONSUCCESS, RUNSONFAILURE, RUNSONCLIENT, FAILJOBONERROR]
-for key in keylist: group.add_option('--' + key)
+
+for key in Script.NULL_KEYS: group.add_option('--' + key)
+for key in Script.SETUP_KEYS + Script.TRUE_KEYS + Script.FALSE_KEYS: group.add_option('--' + key[0])
 
 parser.add_option_group(group)
 
@@ -65,18 +65,26 @@ if args.delete:
     print('Deleted script:', script_arg[0])
     exit()                      # Nothing to print out now
     
-for key in keylist:
-    if key in truefalse: continue
+for key in Script.NULL_KEYS:
     value = getattr(args, key)
     if value == None: continue
     if value == '': value = None
     try: s._set(key, value)
     except: pass
-
-if not args.runsonsuccess == None: s._set(RUNSONSUCCESS, args.runsonsuccess, True)
-if not args.runsonfailure == None: s._set(RUNSONFAILURE, args.runsonfailure, True)
-if not args.runsonclient == None: s._set(RUNSONCLIENT, args.runsonclient, True)
-if not args.failjobonerror == None: s._set(FAILJOBONERROR, args.failjobonerror, True)
+    
+for key in Script.SETUP_KEYS:
+    value = getattr(args, key[0])
+    if value == None: continue
+    if value == '': value = None
+    try: s._set(key[0], value)
+    except: pass
+    
+for key in Script.TRUE_KEYS + Script.TRUE_KEYS:
+    value = getattr(args, key[0])
+    if value == None: continue
+    if value == '': value = None
+    try: s._set(key[0], value, True)
+    except: pass
 
 
 print('Director config\n', s, '\n')

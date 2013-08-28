@@ -45,7 +45,6 @@ class Console(DbDict):
         self.output = ['Console {\n  Name = "%(name)s"' % self, '}']
         
         for key in self.NULL_KEYS:
-            if key == ID: continue
             self._simple_phrase(key)
         return '\n'.join(self.output)
 

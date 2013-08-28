@@ -24,10 +24,11 @@ group = optparse.OptionGroup(parser, "Setters",
                              "You should be aware that no sanity checking is done here, so it is quite possible "
                              "to break your configuration while using them.  Caveat emptor."
                              )
-keylist = [x for x in Pool.NULL_KEYS if not x == ID]
-for key in keylist: group.add_option('--' + key)
-group.add_option('--' + POOLTYPE)
 
+for key in Pool.NULL_KEYS: group.add_option('--' + key)
+for key in Pool.TRUE_KEYS: group.add_option('--' + key[0])
+for key in Pool.FALSE_KEYS: group.add_option('--' + key[0])
+group.add_option('--' + POOLTYPE)
 
 parser.add_option_group(group)
 
@@ -61,20 +62,19 @@ if args.delete:
     exit()                      # Nothing to print out now
     
 if args.rename: s.change_name(args.rename)
-for key in keylist:
-    if key in [AUTOPRUNE, USEVOLUMEONCE, CATALOGFILES, RECYCLE, RECYCLEOLDESTVOLUME, RECYCLECURRENTVOLUME, PURGEOLDESTVOLUME]: continue
+for key in Pool.NULL_KEYS:
     value = getattr(args, key)
     if value == None: continue
+    if value == '': value = None
     try: s._set(key, value)
     except: pass
-if not args.autoprune == None: s._set(AUTOPRUNE, args.autoprune, True)
-if not args.usevolumeonce == None: s._set(USEVOLUMEONCE, args.usevolumeonce, True)
-if not args.catalogfiles == None: s._set(CATALOGFILES, args.catalogfiles, True)
-if not args.recycle == None: s._set(RECYCLE, args.recycle, True)
-if not args.recycleoldestvolume == None: s._set(RECYCLEOLDESTVOLUME, args.recycleoldestvolume, True)
-if not args.recyclecurrentvolume == None: s._set(RECYCLECURRENTVOLUME, args.recyclecurrentvolume, True)
-if not args.purgeoldestvolume == None: s._set(PURGEOLDESTVOLUME, args.purgeoldestvolume, True)
-
+for key in Pool.TRUE_KEYS + Pool.FALSE_KEYS:
+    value = getattr(args, key[0])
+    if value == None: continue
+    if value == '': value = None
+    try: s._set(key[0], value, bool=True)
+    except: pass
+if not args.pooltype == None: s._set(POOLTYPE, args.pooltype)
 
 print('Director config\n', s, '\n')
 exit()

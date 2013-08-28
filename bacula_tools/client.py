@@ -48,27 +48,21 @@ class Client(DbDict):
         gr_line = gr_line | np((ADDRESS,), action=self._parse_setter(ADDRESS))
         gr_line = gr_line | np((CATALOG,), action=self._parse_setter(CATALOG_ID, dereference=True))
         gr_line = gr_line | np((PASSWORD,), action=self._parse_setter(PASSWORD))
-        gr_line = gr_line | np((FILERETENTION,'file retention'), action=self._parse_setter(FILERETENTION))
-        gr_line = gr_line | np((JOBRETENTION,'job retention'), action=self._parse_setter(JOBRETENTION))
+        gr_line = gr_line | np(PList('file retention'), action=self._parse_setter(FILERETENTION))
+        gr_line = gr_line | np(PList('job retention'), action=self._parse_setter(JOBRETENTION))
         gr_line = gr_line | np((PRIORITY,), gr_number, action=self._parse_setter(PRIORITY))
-        gr_line = gr_line | np((WORKINGDIRECTORY,'working directory'), action=self._parse_setter(WORKINGDIRECTORY))
-        gr_line = gr_line | np((PIDDIRECTORY,'pid directory'), action=self._parse_setter(PIDDIRECTORY))
-        gr_line = gr_line | np((HEARTBEATINTERVAL, 'heartbeat interval', 'heart beat interval',),
-                               action=self._parse_setter(HEARTBEATINTERVAL))
-        gr_line = gr_line | np((FDADDRESS,'fd address'), action=self._parse_setter(FDADDRESS))
-        gr_line = gr_line | np((FDSOURCEADDRESS, 'fd source address', 'fdsource address', 'fd sourceaddress',),
-                               action=self._parse_setter(FDSOURCEADDRESS))
-        gr_line = gr_line | np((PKIKEYPAIR, 'pki key pair','pkikey pair','pki keypair',),
-                               action=self._parse_setter(PKIKEYPAIR))
-        gr_line = gr_line | np((PKIMASTERKEY, 'pki master key', 'pkimaster key', 'pki masterkey',),
-                               action=self._parse_setter(PKIMASTERKEY))
-        gr_line = gr_line | np((FDPORT,'fd port'), gr_number, action=self._parse_setter(FDPORT))
-        gr_line = gr_line | np((AUTOPRUNE,'auto prune'), gr_yn, action=self._parse_setter(AUTOPRUNE))
-        gr_line = gr_line | np((MAXIMUMCONCURRENTJOBS, 'maximum concurrent jobs', 'maximumconcurrent jobs', 'maximum concurrentjobs',),
-                               gr_number, action=self._parse_setter(FDPORT))
-        gr_line = gr_line | np((PKIENCRYPTION, 'pki encryption',), gr_yn, action=self._parse_setter(PKIENCRYPTION))
-        gr_line = gr_line | np((PKISIGNATURES, 'pki signatures',),
-                               gr_yn, action=self._parse_setter(PKISIGNATURES))
+        gr_line = gr_line | np(PList('working directory'), action=self._parse_setter(WORKINGDIRECTORY))
+        gr_line = gr_line | np(PList('pid directory'), action=self._parse_setter(PIDDIRECTORY))
+        gr_line = gr_line | np(PList('heart beat interval'), action=self._parse_setter(HEARTBEATINTERVAL))
+        gr_line = gr_line | np(PList('fd address'), action=self._parse_setter(FDADDRESS))
+        gr_line = gr_line | np(PList('fd source address'), action=self._parse_setter(FDSOURCEADDRESS))
+        gr_line = gr_line | np(PList('pki key pair'), action=self._parse_setter(PKIKEYPAIR))
+        gr_line = gr_line | np(PList('pki master key'), action=self._parse_setter(PKIMASTERKEY))
+        gr_line = gr_line | np(PList('fd port'), gr_number, action=self._parse_setter(FDPORT))
+        gr_line = gr_line | np(PList('auto prune'), gr_yn, action=self._parse_setter(AUTOPRUNE))
+        gr_line = gr_line | np(PList('maximum concurrent jobs'), gr_number, action=self._parse_setter(FDPORT))
+        gr_line = gr_line | np(PList('pki encryption'), gr_yn, action=self._parse_setter(PKIENCRYPTION))
+        gr_line = gr_line | np(PList('pki signatures'), gr_yn, action=self._parse_setter(PKISIGNATURES))
 
         # This is a complicated one
         da_addr = np(('Addr','Port'), Word(printables), lambda x,y,z: ' '.join(z))
@@ -87,12 +81,12 @@ class Client(DbDict):
         self.output = ['Client {\n  Name = "%(name)s"' % self,'}']
         self.output.insert(-1, '  %s = "%s"' % (CATALOG.capitalize(), self._fk_reference(CATALOG_ID)[NAME]))
         
-        for key in [NAME, ADDRESS, FDPORT, PASSWORD, FILERETENTION,
+        for key in [ADDRESS, FDPORT, PASSWORD, FILERETENTION,
                     JOBRETENTION, MAXIMUMCONCURRENTJOBS,
                     MAXIMUMBANDWIDTHPERJOB, PRIORITY
                     ]:
             self._simple_phrase(key)
-        self._yesno_phrase(AUTOPRUNE)
+        self._yesno_phrase(AUTOPRUNE, onlyfalse=True)
         return '\n'.join(self.output)
 
 # }}}
@@ -111,8 +105,8 @@ class Client(DbDict):
             self.output.insert(-1, '  %s {' % FDADDRESSES.capitalize())
             self.output.insert(-1,  self[FDADDRESSES])
             self.output.insert(-1, '  }')
-        self._yesno_phrase(PKIENCRYPTION, True)
-        self._yesno_phrase(PKISIGNATURES, True)
+        self._yesno_phrase(PKIENCRYPTION, onlytrue=True)
+        self._yesno_phrase(PKISIGNATURES, onlytrue=True)
         return '\n'.join(self.output)
 
     # }}}

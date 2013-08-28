@@ -2,8 +2,11 @@ from . import *
 
 class Storage(DbDict):
     NULL_KEYS = [
-        SDPORT, ADDRESS, PASSWORD, DEVICE, MEDIATYPE, AUTOCHANGER, MAXIMUMCONCURRENTJOBS,
-        ALLOWCOMPRESSION, HEARTBEATINTERVAL
+        SDPORT, ADDRESS, PASSWORD, DEVICE, MEDIATYPE, MAXIMUMCONCURRENTJOBS,
+        HEARTBEATINTERVAL
+        ]
+    BOOL_KEYS = [
+        (AUTOCHANGER, 0), (ALLOWCOMPRESSION, 1)
         ]
     SETUP_KEYS = [(NAME, ''),]
     table = STORAGE
@@ -31,15 +34,15 @@ class Storage(DbDict):
             return p
 
         gr_line = np((NAME,), action=lambda x: self._set_name(x[2]))
-        gr_line = gr_line | np((SDPORT, 'sd port'), gr_number, action=self._parse_setter(SDPORT))
+        gr_line = gr_line | np(PList('sd port'), gr_number, action=self._parse_setter(SDPORT))
         gr_line = gr_line | np((ADDRESS,), action=self._parse_setter(ADDRESS))
         gr_line = gr_line | np((PASSWORD,), action=self._parse_setter(PASSWORD))
         gr_line = gr_line | np((DEVICE,), action=self._parse_setter(DEVICE))
-        gr_line = gr_line | np((MEDIATYPE, 'media type'), action=self._parse_setter(MEDIATYPE))
-        gr_line = gr_line | np((AUTOCHANGER, 'auto changer'), gr_yn, action=self._parse_setter(AUTOCHANGER))
-        gr_line = gr_line | np((MAXIMUMCONCURRENTJOBS, 'maximum concurrent jobs', 'maximum concurrentjobs', 'maximumconcurrent jobs'), gr_number, action=self._parse_setter(MAXIMUMCONCURRENTJOBS))
-        gr_line = gr_line | np((ALLOWCOMPRESSION, 'allow compression'), gr_yn, action=self._parse_setter(ALLOWCOMPRESSION))
-        gr_line = gr_line | np((HEARTBEATINTERVAL, 'heartbeat interval'), action=self._parse_setter(HEARTBEATINTERVAL))
+        gr_line = gr_line | np(PList('media type'), action=self._parse_setter(MEDIATYPE))
+        gr_line = gr_line | np(PList('auto changer'), gr_yn, action=self._parse_setter(AUTOCHANGER))
+        gr_line = gr_line | np(PList('maximum concurrent jobs'), gr_number, action=self._parse_setter(MAXIMUMCONCURRENTJOBS))
+        gr_line = gr_line | np(PList('allow compression'), gr_yn, action=self._parse_setter(ALLOWCOMPRESSION))
+        gr_line = gr_line | np(PList('heartbeat interval'), action=self._parse_setter(HEARTBEATINTERVAL))
 
         gr_res = OneOrMore(gr_line)
         result = gr_res.parseString(string, parseAll=True)
@@ -52,7 +55,6 @@ class Storage(DbDict):
         self.output = ['Storage {\n  Name = "%(name)s"' % self,'}']
         
         for key in self.NULL_KEYS:
-            if key in [ID, AUTOCHANGER, ALLOWCOMPRESSION]: continue
             self._simple_phrase(key)
         self._yesno_phrase(AUTOCHANGER, onlytrue=True)
         self._yesno_phrase(ALLOWCOMPRESSION, onlyfalse=True)

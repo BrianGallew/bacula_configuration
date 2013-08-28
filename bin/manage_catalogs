@@ -24,8 +24,8 @@ group = optparse.OptionGroup(parser, "Setters",
                              "You should be aware that no sanity checking is done here, so it is quite possible "
                              "to break your configuration while using them.  Caveat emptor."
                              )
-keylist = [x for x in Catalog.NULL_KEYS if not x in [ID, DIRECTOR_ID]]
-for key in keylist: group.add_option('--' + key)
+
+for key in Catalog.NULL_KEYS: group.add_option('--' + key)
 group.add_option('--director')
 parser.add_option_group(group)
 
@@ -59,9 +59,10 @@ if args.delete:
     exit()                      # Nothing to print out now
     
 if args.rename: s.change_name(args.rename)
-for key in keylist:
+for key in Catalog.NULL_KEYS:
     value = getattr(args, key)
     if value == None: continue
+    if value == '': value = None
     try: s._set(key, value)
     except: pass
 if args.director:

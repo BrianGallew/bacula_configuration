@@ -3,20 +3,19 @@ from . import *
 
 class Script(DbDict):
     NULL_KEYS = [COMMAND, CONSOLE]
-    SETUP_KEYS = [(RUNSONSUCCESS, 1), (RUNSONFAILURE, 0), (RUNSONCLIENT, 1), (FAILJOBONERROR, 1), (RUNSWHEN, 'Never')]
+    SETUP_KEYS = [(RUNSWHEN, 'Never'),]
+    TRUE_KEYS = [(RUNSONSUCCESS, 1), (RUNSONCLIENT, 1), (FAILJOBONERROR, 1)]
+    FALSE_KEYS = [(RUNSONFAILURE, 0),]
     table = SCRIPTS
     prefix = '    '
     # {{{ __str__(): 
 
     def __str__(self):
         self.output = ['  RunScript {  # Script ID: %d' % self[ID],'  }']
-        self._simple_phrase(COMMAND)
-        self._simple_phrase(CONSOLE)
-        self._simple_phrase(RUNSWHEN)
-        self._yesno_phrase(RUNSONSUCCESS, onlyfalse=True)
-        self._yesno_phrase(RUNSONCLIENT, onlyfalse=True)
-        self._yesno_phrase(FAILJOBONERROR, onlyfalse=True)
-        self._yesno_phrase(RUNSONFAILURE, onlytrue=True)
+        for key in self.NULL_KEYS: self._simple_phrase(key)
+        for key in self.SETUP_KEYS: self._simple_phrase(key[0])
+        for key in self.TRUE_KEYS: self._yesno_phrase(key[0], onlyfalse=True)
+        for key in self.FALSE_KEYS: self._yesno_phrase(key[0], onlytrue=True)
         return '\n'.join(self.output)
 
     # }}}

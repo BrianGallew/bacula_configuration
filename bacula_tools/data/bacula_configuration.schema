@@ -137,6 +137,10 @@ CREATE TABLE `storage` (
   `maximumconcurrentjobs` int(11),
   `allowcompression` tinyint(1) NOT NULL DEFAULT 0,
   `heartbeatinterval` varchar(255),
+  `workingdirectory` varchar(255),
+  `piddirectory` varchar(255),
+  `clientconnectwait` varchar(255),
+  `sdaddresses` varchar(255),
   PRIMARY KEY `id` (`id`),
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

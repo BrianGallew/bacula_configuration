@@ -5,6 +5,7 @@ from __future__ import print_function
 import sys, os
 import optparse
 from bacula_tools import *
+from bacula_tools.util import generic_option_processor
 
 # {{{ Parser configuration and sanity checking.  Also, "bacula" is instantiated in here
 
@@ -26,6 +27,7 @@ group = optparse.OptionGroup(parser, "Setters",
                              )
 
 for key in Storage.NULL_KEYS: group.add_option('--' + key)
+for key in Storage.SD_KEYS: group.add_option('--' + key)
 for key in Storage.BOOL_KEYS: group.add_option('--' + key[0])
 
 parser.add_option_group(group)
@@ -61,15 +63,11 @@ if args.delete:
     
 if args.rename: s.change_name(args.rename)
 
-for key in Storage.NULL_KEYS:
-    value = getattr(args, key)
-    if value == None: continue
-    if value == '': value = None
-    try: s._set(key, value)
-    except: pass
+generic_option_processor(s, args, Storage.NULL_KEYS + Storage.SD_KEYS)
+
 if not args.autochanger == None: s._set(AUTOCHANGER, args.autochanger, True)
 if not args.allowcompression == None: s._set(ALLOWCOMPRESSION, args.allowcompression, True)
 
 
-print('Director config\n', s, '\n')
+print('Director config', s, '', '', 'SD config', s.sd(), '', sep='\n')
 exit()

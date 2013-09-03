@@ -67,6 +67,7 @@ class Schedule(DbDict):
     # {{{ _load_runs(): helper for loading self from the database
 
     def _load_runs(self):
+        if not self[ID]: return
         self[RUN] = list(self.bc.do_sql('''SELECT b.id AS id, b.data AS data FROM schedule_link a, schedule_time b
                                            WHERE a.scheduleid = %s AND a.timeid = b.id''', (self[ID],)))
         return self

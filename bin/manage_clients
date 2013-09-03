@@ -5,6 +5,7 @@ from __future__ import print_function
 import sys, os
 import optparse
 from bacula_tools import *
+from bacula_tools.util import generic_option_processor
 
 # {{{ Parser configuration and sanity checking.  Also, "bacula" is instantiated in here
 
@@ -24,8 +25,8 @@ group = optparse.OptionGroup(parser, "Setters",
                              "You should be aware that no sanity checking is done here, so it is quite possible "
                              "to break your configuration while using them.  Caveat emptor."
                              )
-keylist = [x for x in Client.NULL_KEYS if not x == ID]
-for key in keylist: group.add_option('--' + key)
+
+for key in Client.NULL_KEYS: group.add_option('--' + key)
 group.add_option('--' + FDPORT)
 group.add_option('--' + AUTOPRUNE)
 group.add_option('--' + MAXIMUMCONCURRENTJOBS)
@@ -65,12 +66,11 @@ if args.delete:
     exit()                      # Nothing to print out now
     
 if args.rename: s.change_name(args.rename)
-for key in keylist:
-    if key in [AUTOPRUNE, PKIENCRYPTION, PKISIGNATURES]: continue
-    value = getattr(args, key)
-    if value == None: continue
-    try: s._set(key, value)
-    except: pass
+
+generic_option_processor(s,
+                         args,
+                         [x for x in Client.NULL_KEYS if not x in [AUTOPRUNE, PKIENCRYPTION, PKISIGNATURES]])
+
 if not args.autoprune == None: s._set(AUTOPRUNE, args.autoprune, True)
 if not args.pkisignatures == None: s._set(PKISIGNATURES, args.pkisignatures, True)
 if not args.pkiencryption == None: s._set(PKIENCRYPTION, args.pkiencryption, True)

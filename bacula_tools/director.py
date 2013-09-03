@@ -96,7 +96,7 @@ class Director(DbDict):
         self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
         
         self._simple_phrase(PASSWORD)
-        self._yesno_phrase(MONITOR)
+        self._yesno_phrase(MONITOR, onlytrue=True)
         return '\n'.join(self.output)
 
     # }}}

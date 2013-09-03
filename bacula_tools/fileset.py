@@ -14,6 +14,7 @@ class Fileset(DbDict):
     # {{{ _load_parts(): helper for loading self from the database
 
     def _load_parts(self):
+        if not self[ID]: return
         sql = '''SELECT b.id AS id, b.name AS name, b.option, a.exclude
                  FROM fileset_link a, fileset_files b
                  WHERE a.file_id = b.id AND a.fileset_id = %s'''

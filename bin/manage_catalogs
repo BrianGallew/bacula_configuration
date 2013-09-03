@@ -5,6 +5,7 @@ from __future__ import print_function
 import sys, os
 import optparse
 from bacula_tools import Catalog, Bacula_Factory, CATALOGS, ID, DIRECTOR_ID, Director
+from bacula_tools.util import generic_option_processor
 
 # {{{ Parser configuration and sanity checking.  Also, "bacula" is instantiated in here
 
@@ -59,12 +60,9 @@ if args.delete:
     exit()                      # Nothing to print out now
     
 if args.rename: s.change_name(args.rename)
-for key in Catalog.NULL_KEYS:
-    value = getattr(args, key)
-    if value == None: continue
-    if value == '': value = None
-    try: s._set(key, value)
-    except: pass
+
+generic_option_processor(s, args, Catalog.NULL_KEYS)
+
 if args.director:
     d = Director()
     d.search(args.director)

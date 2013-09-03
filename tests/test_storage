@@ -34,6 +34,12 @@ test_cases = ['''    Name = File
   Device = "DVD Writer"
   MediaType = "DVD"
 ''',
+              '''  Name = outbidoverdrive.gallew.org-sd
+  SDPort = 9103
+  WorkingDirectory = "/usr/local/Cellar/bacula/5.2.13/opt/bacula/working"
+  Pid Directory = "/var/run"
+  Maximum Concurrent Jobs = 20''',
+              
 ]
 for string in test_cases:
     c = bacula_tools.Storage()
@@ -41,3 +47,4 @@ for string in test_cases:
 
     print c
     print c.fd()
+    print c.sd()

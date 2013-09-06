@@ -58,11 +58,7 @@ if args.delete:
     exit()                      # Nothing to print out now
     
 if args.rename: s.change_name(args.rename)
-for key in keylist:
-    value = getattr(args, key)
-    if value == None: continue
-    try: s._set(key, value)
-    except: pass
+generic_option_processor(s, args, keylist)
 
 print(s)
 exit()

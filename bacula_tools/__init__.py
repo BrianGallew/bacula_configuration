@@ -39,7 +39,18 @@ _INTERNED = [
     'rescheduleinterval', 'spoolsize', 'stripprefix', 'verifyjob', 'where', 'writebootstrap',
     'replace', 'jobdef', 'jobs', 'job', 'storage_id', 'command', 'runsonsuccess', 'runsonfailure',
     'runsonclient', 'runswhen', 'failjobonerror', 'scripts', 'message', 'script_id', 'jobdefs',
-    'clientconnectwait', 'sdaddresses', 'sdaddress'
+    'clientconnectwait', 'sdaddresses', 'sdaddress',
+
+    'archivedevice', 'devicetype', 'changerdevice', 'changercommand', 'alertcommand',
+    'driveindex', 'maximumchangerwait', 'maximumrewindwait',
+    'maximumopenwait', 'volumepollinterval', 'mountpoint', 'mountcommand', 'unmountcommand',
+    'minimumblocksize', 'maximumblocksize', 'maximumvolumesize', 'maximumfilesize',
+    'maximumnetworkbuffersize', 'maximumspoolsize', 'maximumjobspoolsize', 'spooldirectory',
+    'maximumpartsize', 'autoselect', 'alwaysopen', 'closeonpoll', 'removablemedia',
+    'randomaccess', 'blockchecksum', 'hardwareendofmedium', 'fastforwardspacefile', 'usemtiocget',
+    'bsfateom', 'twoeof', 'backwardspacerecord', 'backwardspacefile', 'forwardspacerecord',
+    'forwardspacefile', 'offlineonunmount', 'blockpositioning', 'labelmedia', 'automaticmount',
+
     ]
 
 for w in _INTERNED: locals()[w.upper()] = w
@@ -177,6 +188,7 @@ from pool import Pool
 from storage import Storage
 from job import Job, JobDef
 from scripts import Script
+from device import Device
 
 import util
 
@@ -195,4 +207,5 @@ _DISPATCHER = {
     JOB: Job,
     JOBDEF: JobDef,
     JOBDEFS: JobDef,
+    DEVICE: Device,
     }

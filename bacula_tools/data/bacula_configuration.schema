@@ -1,6 +1,7 @@
 -- -*- sql -*-
 -- select 'Creating table templates';
 -- Order matters!
+DROP TABLE IF EXISTS `device` ;
 DROP TABLE IF EXISTS `job_scripts` ;
 DROP TABLE IF EXISTS `service_link` ;
 DROP TABLE IF EXISTS `schedule_link` ;
@@ -20,7 +21,60 @@ DROP TABLE IF EXISTS `filesets` ;
 DROP TABLE IF EXISTS `consoles`;
 DROP TABLE IF EXISTS `pools`;
 
--- select 'Creating table pools (complete)';
+-- select 'Creating table device';
+CREATE TABLE `device` 
+ (
+  `id` int(11) NOT NULL auto_increment,
+  `name` varchar(255) NOT NULL,
+  `archivedevice` varchar(255),
+  `devicetype` varchar(255),
+  `mediatype` varchar(255),
+  `changerdevice` varchar(255),
+  `changercommand` varchar(255),
+  `alertcommand` varchar(255),
+  `driveindex` int(11),
+  `maximumconcurrentjobs` int(11),
+  `maximumchangerwait` varchar(255),
+  `maximumrewindwait` varchar(255),
+  `maximumopenwait` varchar(255),
+  `volumepollinterval` varchar(255),
+  `mountpoint` varchar(255),
+  `mountcommand` varchar(255),
+  `unmountcommand` varchar(255),
+  `minimumblocksize` varchar(255),
+  `maximumblocksize` varchar(255),
+  `maximumvolumesize` varchar(255),
+  `maximumfilesize` varchar(255),
+  `maximumnetworkbuffersize` varchar(255),
+  `maximumspoolsize` varchar(255),
+  `maximumjobspoolsize` varchar(255),
+  `spooldirectory` varchar(255),
+  `maximumpartsize` varchar(255),
+  `autochanger` tinyint(1) NOT NULL default 0,
+  `autoselect` tinyint(1) NOT NULL default 1,
+  `automaticmount` tinyint(1) NOT NULL default 1,
+  `alwaysopen` tinyint(1) NOT NULL default 0,
+  `closeonpoll` tinyint(1) NOT NULL default 0,
+  `removablemedia` tinyint(1) NOT NULL default 1,
+  `randomaccess` tinyint(1) NOT NULL default 0,
+  `blockchecksum` tinyint(1) NOT NULL default 1,
+  `hardwareendofmedium` tinyint(1) NOT NULL default 1,
+  `fastforwardspacefile` tinyint(1) NOT NULL default 1,
+  `usemtiocget` tinyint(1) NOT NULL default 1,
+  `labelmedia` tinyint(1) NOT NULL default 0,
+  `bsfateom` tinyint(1) NOT NULL default 0,
+  `twoeof` tinyint(1) NOT NULL default 0,
+  `backwardspacerecord` tinyint(1) NOT NULL default 1,
+  `backwardspacefile` tinyint(1) NOT NULL default 1,
+  `forwardspacerecord` tinyint(1) NOT NULL default 1,
+  `forwardspacefile` tinyint(1) NOT NULL default 1,
+  `offlineonunmount` tinyint(1) NOT NULL default 0,
+  `blockpositioning` tinyint(1) NOT NULL default 1,
+  PRIMARY KEY `PRIMARY` (`id`),
+  UNIQUE KEY `name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- select 'Creating table pools';
 CREATE TABLE `pools` 
  (
   `id` int(11) NOT NULL auto_increment,
@@ -51,7 +105,7 @@ CREATE TABLE `pools`
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table consoles (complete)';
+-- select 'Creating table consoles';
 CREATE TABLE `consoles` 
  (
   `id` int(11) NOT NULL auto_increment,
@@ -70,7 +124,7 @@ CREATE TABLE `consoles`
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table messages (complete)';
+-- select 'Creating table messages';
 CREATE TABLE `messages` 
  (
   `id` int(11) NOT NULL auto_increment,
@@ -80,7 +134,7 @@ CREATE TABLE `messages`
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table directors (complete)';
+-- select 'Creating table directors';
 CREATE TABLE `directors` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
@@ -107,7 +161,7 @@ CREATE TABLE `directors` (
   CONSTRAINT `fk_message` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table catalogs (complete)';
+-- select 'Creating table catalogs';
 CREATE TABLE `catalogs` 
  (
   `id` int(11) NOT NULL auto_increment,
@@ -145,7 +199,7 @@ CREATE TABLE `storage` (
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table schedule_time (complete)';
+-- select 'Creating table schedule_time';
 CREATE TABLE `schedule_time` (
   `id` int(11) NOT NULL auto_increment,
   `data` varchar(255) NOT NULL,
@@ -153,7 +207,7 @@ CREATE TABLE `schedule_time` (
   UNIQUE KEY `u_schedule_time` (`data`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table schedules (complete)';
+-- select 'Creating table schedules';
 CREATE TABLE `schedules` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
@@ -169,7 +223,7 @@ CREATE TABLE `services` (
   PRIMARY KEY  (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table fileset_files (complete)';
+-- select 'Creating table fileset_files';
 CREATE TABLE `fileset_files` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
@@ -178,7 +232,7 @@ CREATE TABLE `fileset_files` (
   UNIQUE KEY `name_UNIQUE` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table filesets (complete)';
+-- select 'Creating table filesets';
 CREATE TABLE `filesets` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
@@ -329,7 +383,7 @@ CREATE TABLE `job_scripts` (
   CONSTRAINT `js_job` FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table service_link (complete)';
+-- select 'Creating table service_link';
 CREATE TABLE `service_link` (
   `id` int(11) NOT NULL auto_increment,
   `serviceid` int(11) NOT NULL,
@@ -339,7 +393,7 @@ CREATE TABLE `service_link` (
   CONSTRAINT `fk_job` FOREIGN KEY (`jobid`) REFERENCES `jobs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table schedule_link (complete)';
+-- select 'Creating table schedule_link';
 CREATE TABLE `schedule_link` (
   `id` int(11) NOT NULL auto_increment,
   `scheduleid` int(11) NOT NULL,
@@ -349,7 +403,7 @@ CREATE TABLE `schedule_link` (
   CONSTRAINT `fk_time_id` FOREIGN KEY (`timeid`) REFERENCES `schedule_time` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table fileset_files (complete)';
+-- select 'Creating table fileset_files';
 CREATE TABLE `fileset_link` (
   `id` int(11) NOT NULL auto_increment,
   `fileset_id` int(11) NOT NULL,

@@ -94,7 +94,7 @@ for key in Job.TRUE_KEYS + Job.FALSE_KEYS:
     if not type(key) == str: key=key[0]
     value = getattr(args, key)
     if value == None: continue
-    try: s._set(key, value, bool=True)
+    try: s._set(key, value, boolean=True)
     except: pass
 
 if args.add_runscript:

@@ -1,0 +1,34 @@
+#! /usr/bin/env python
+
+import os, sys, pprint
+sys.path.insert(0, '..')
+sys.path.insert(0, '.')
+import bacula_tools
+from pyparsing import ParserElement
+ParserElement.enablePackrat()
+
+test_cases = ['''  Name = FileStorage
+''',
+
+              '''  Name = FileStorage2
+  AlwaysOpen = no
+''',
+
+              '''  Name = FileStorage3
+  Drive Index=1
+  Archive Device = /tmp
+  AlwaysOpen = no
+  AutomaticMount = yes
+  LabelMedia = yes
+  Media Type = File
+  Random Access = Yes
+  RemovableMedia = no
+''',
+
+              
+]
+for string in test_cases:
+    c = bacula_tools.Device()
+    c.parse_string(string)
+
+    print c

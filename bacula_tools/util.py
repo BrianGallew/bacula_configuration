@@ -43,12 +43,13 @@ def guess_schedule_and_filesets(hostname, os):
     return results or _default_rules
 
 # }}}
-def generic_option_processor(obj, args, items):
+def generic_option_processor(obj, args, items, boolean=False, dereference=False):
     for key in items:
+        if not type(key) == str: key = key[0]
         value = getattr(args, key)
         if value == None: continue
         if value == '': value = None
-        try: obj._set(key, value)
+        try: obj._set(key, value, boolean, dereference)
         except: pass
     return
     
@@ -145,11 +146,11 @@ class DbDict(dict):             # base class for all of the things derived from 
         return
 
     # }}}
-    # {{{ _set(field, value, bool=False, dereference=False): handy shortcut for setting and saving values
+    # {{{ _set(field, value, boolean=False, dereference=False): handy shortcut for setting and saving values
 
-    def _set(self, field, value, bool=False, dereference=False):
+    def _set(self, field, value, boolean=False, dereference=False):
         debug_print('setting', field, 'to', value, 'bool', bool, 'dereference', dereference)
-        if bool:
+        if boolean:
             if value in ['0', 'no', 'No', 'NO', 'off', 'Off', 'OFF']: value = 0
             else: value = 1
         if dereference:

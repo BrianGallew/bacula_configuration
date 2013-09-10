@@ -4,7 +4,7 @@ from __future__ import print_function
 
 import sys, os
 import optparse
-from bacula_tools import Director, Bacula_Factory, DIRECTORS, ID, MESSAGE_ID, MESSAGES, MONITOR
+from bacula_tools import *
 
 # {{{ Parser configuration and sanity checking.  Also, "bacula" is instantiated in here
 
@@ -24,9 +24,11 @@ group = optparse.OptionGroup(parser, "Setters",
                              "You should be aware that no sanity checking is done here, so it is quite possible "
                              "to break your configuration while using them.  Caveat emptor."
                              )
-keylist = [x for x in Director.NULL_KEYS if not x in (MESSAGE_ID, ID)]
-for key in keylist: group.add_option('--' + key)
-group.add_option('--' + MESSAGES, help='The name of a message resource')
+keylist = Director.NULL_KEYS  + [MONITOR, DIRADDRESSES]
+for key in keylist:
+    if not type(key) == str: key = key[0]
+    group.add_option('--' + key)
+group.add_option('--' + MESSAGE, help='The name of a message resource')
 parser.add_option_group(group)
 
 (args, director_arg) = parser.parse_args()
@@ -59,14 +61,10 @@ if args.delete:
     exit()                      # Nothing to print out now
     
 if args.rename: s.change_name(args.rename)
-for key in keylist:
-    if key == MONITOR: continue
-    value = getattr(args, key)
-    if value == None: continue
-    try: s._set(key, value)
-    except: pass
-if not args.monitor == None: s._set(MONITOR, args.monitor, True)
-if args.messages: s._set(MESSAGE_ID, args.messages, dereference=True)
+generic_option_processor(s, args, Director.NULL_KEYS)
+generic_option_processor(s, args, [MONITOR,], boolean=True)
+generic_option_processor(s, args, [MESSAGE,], dereference=True)
+
 print('Director config', s, '','', sep='\n')
 print('File Daemon config', s.fd(), '', sep='\n')
 exit()

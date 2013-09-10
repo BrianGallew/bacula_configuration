@@ -31,6 +31,7 @@ CREATE TABLE `device`
   `mediatype` varchar(255),
   `changerdevice` varchar(255),
   `changercommand` varchar(255),
+  `clientconnectwait` varchar(255),
   `alertcommand` varchar(255),
   `driveindex` int(11),
   `maximumconcurrentjobs` int(11),

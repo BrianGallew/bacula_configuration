@@ -7,7 +7,7 @@ class Device(DbDict):
         MAXIMUMOPENWAIT, VOLUMEPOLLINTERVAL, MOUNTPOINT, MOUNTCOMMAND, UNMOUNTCOMMAND,
         MINIMUMBLOCKSIZE, MAXIMUMBLOCKSIZE, MAXIMUMVOLUMESIZE, MAXIMUMFILESIZE,
         MAXIMUMNETWORKBUFFERSIZE, MAXIMUMSPOOLSIZE, MAXIMUMJOBSPOOLSIZE, SPOOLDIRECTORY,
-        MAXIMUMPARTSIZE, 
+        MAXIMUMPARTSIZE, CLIENTCONNECTWAIT,
         ]
     TRUE_KEYS = [
         (AUTOSELECT, 1), (REMOVABLEMEDIA, 1), (BLOCKCHECKSUM, 1), (HARDWAREENDOFMEDIUM, 1),
@@ -53,6 +53,7 @@ class Device(DbDict):
         gr_line = gr_line | np(PList('archive device'), action=self._parse_setter(ARCHIVEDEVICE))
         gr_line = gr_line | np(PList('changer command'), action=self._parse_setter(CHANGERCOMMAND))
         gr_line = gr_line | np(PList('changer device'), action=self._parse_setter(CHANGERDEVICE))
+        gr_line = gr_line | np(PList('client connect wait'), action=self._parse_setter(CLIENTCONNECTWAIT))
         gr_line = gr_line | np(PList('device type'), action=self._parse_setter(DEVICETYPE))
         gr_line = gr_line | np(PList('drive index'), gr_number, action=self._parse_setter(DRIVEINDEX, c_int=True))
         gr_line = gr_line | np(PList('maximum block size'), action=self._parse_setter(MAXIMUMBLOCKSIZE))

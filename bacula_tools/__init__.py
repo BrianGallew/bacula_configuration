@@ -50,7 +50,7 @@ _INTERNED = [
     'randomaccess', 'blockchecksum', 'hardwareendofmedium', 'fastforwardspacefile', 'usemtiocget',
     'bsfateom', 'twoeof', 'backwardspacerecord', 'backwardspacefile', 'forwardspacerecord',
     'forwardspacefile', 'offlineonunmount', 'blockpositioning', 'labelmedia', 'automaticmount',
-
+    'clientconnectwait',
     ]
 
 for w in _INTERNED: locals()[w.upper()] = w

@@ -21,7 +21,6 @@ class Bacula_Config:
     '''
     # {{{ Various class constants
 
-    DEBUG = 0
     CONNECTIONS = {}
     CURRENT_CONNECTION = None
     BOOTSTRAPDIR = "/var/db/bacula"

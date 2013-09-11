@@ -59,9 +59,9 @@ class Fileset(DbDict):
         gr_phrase = Group(OneOrMore(gr_stripped_string | Word(alphanums)) + gr_eq + gr_opt_quoted_string)
 
         def np(words, fn = gr_opt_quoted_string, action=print):
-            p = Keyword(words[0], caseless=True)
+            p = Keyword(words[0], caseless=True).setDebug(bacula_tools.DEBUG)
             for w in words[1:]:
-                p = p | Keyword(w, caseless=True)
+                p = p | Keyword(w, caseless=True).setDebug(bacula_tools.DEBUG)
             p = p + gr_eq + fn
             p.setParseAction(action)
             return p

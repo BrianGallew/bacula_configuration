@@ -7,7 +7,7 @@ class Director(DbDict):
                  MAXIMUMCONCURRENTJOBS, PASSWORD, PIDDIRECTORY, QUERYFILE,
                  SCRIPTS_DIRECTORY, SD_CONNECT_TIMEOUT, SOURCEADDRESS, STATISTICS_RETENTION,
                  VERID, WORKINGDIRECTORY,]
-    SETUP_KEYS = [(NAME, ''), MESSAGE_ID, DIRADDRESSES, MONITOR]
+    SETUP_KEYS = [(NAME, ''), MESSAGES_ID, DIRADDRESSES, MONITOR]
     table = DIRECTORS
     # {{{ parse_string(string): Entry point for a recursive descent parser
 
@@ -35,9 +35,9 @@ class Director(DbDict):
             return
 
         def np(words, fn = gr_opt_quoted_string, action=None):
-            p = Keyword(words[0], caseless=True)
+            p = Keyword(words[0], caseless=True).setDebug(bacula_tools.DEBUG)
             for w in words[1:]:
-                p = p | Keyword(w, caseless=True)
+                p = p | Keyword(w, caseless=True).setDebug(bacula_tools.DEBUG)
             p = p + gr_eq + fn
             p.setParseAction(action)
             return p
@@ -57,7 +57,7 @@ class Director(DbDict):
         gr_source = np(PList('source address'), action=self._parse_setter(SOURCEADDRESS))
         gr_stats = np(PList('statistics retention'), action=self._parse_setter(STATISTICS_RETENTION))
         gr_verid = np((VERID,), action=self._parse_setter(VERID))
-        gr_messages = np((MESSAGES,), action=lambda x:self._parse_setter(MESSAGE_ID, dereference=True))
+        gr_messages = np((MESSAGES,), action=self._parse_setter(MESSAGES_ID, dereference=True))
         gr_work_dir = np(PList('working directory'), action=self._parse_setter(WORKINGDIRECTORY))
         gr_port = np(PList('dir port'), gr_number, self._parse_setter(PORT, True))
         gr_monitor = np((MONITOR,), gr_yn, action=self._parse_setter(MONITOR))
@@ -77,11 +77,10 @@ class Director(DbDict):
 
     def __str__(self):
         self.output = ['Director {\n  Name = "%(name)s"' % self,'}']
-        for key in self.NULL_KEYS:
-            if not type(key) == str: key = key[0]
-            self._simple_phrase(key)
+        for key in self.NULL_KEYS: self._simple_phrase(key)
         # set the messages
-        self.output.insert(-1, '  %s = "%s"' % (MESSAGES.capitalize(), self._fk_reference(MESSAGE_ID)[NAME]))
+        m = self._fk_reference(MESSAGES_ID)
+        self.output.insert(-1, '  %s = "%s"' % (MESSAGES.capitalize(), m[NAME]))
         if self[DIRADDRESSES]:
             self.output.insert(-1, '  %s {' % DIRADDRESSES.capitalize())
             self.output.insert(-1,  self[DIRADDRESSES])

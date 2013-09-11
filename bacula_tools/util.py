@@ -124,7 +124,10 @@ class DbDict(dict):             # base class for all of the things derived from 
         if string:
             new_me = self.bc.value_check(self.table, NAME, string, asdict=True)
         elif not id == None:
+            debug_print('tracking down id %s', id)
             new_me = self.bc.value_check(self.table, ID, id, asdict=True)
+        else:
+            new_me = self.bc.value_check(self.table, NAME, self[NAME], asdict=True)
         try: self.update(new_me[0])
         except Exception as e: pass
         [getattr(self, x)() for x in dir(self) if '_load_' in x]
@@ -149,7 +152,7 @@ class DbDict(dict):             # base class for all of the things derived from 
     # {{{ _set(field, value, boolean=False, dereference=False): handy shortcut for setting and saving values
 
     def _set(self, field, value, boolean=False, dereference=False):
-        debug_print('setting', field, 'to', value, 'bool', bool, 'dereference', dereference)
+        debug_print('setting %s to %s, boolean=%s, dereference=%s', field, value, boolean, dereference)
         if boolean:
             if value in ['0', 'no', 'No', 'NO', 'off', 'Off', 'OFF']: value = 0
             else: value = 1
@@ -236,6 +239,7 @@ class DbDict(dict):             # base class for all of the things derived from 
     # {{{ _fk_reference(fk, string=None): Set/get fk-references
 
     def _fk_reference(self, fk, string=None):
+        debug_print('_fk_reference %s: %s, %s' % (fk, string, self[fk]))
         obj = bacula_tools._DISPATCHER[fk.replace('_id','')]()
         if string:
             obj.search(string.strip())

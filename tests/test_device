@@ -5,7 +5,7 @@ sys.path.insert(0, '..')
 sys.path.insert(0, '.')
 import bacula_tools
 from pyparsing import ParserElement
-ParserElement.enablePackrat()
+#ParserElement.enablePackrat()
 
 test_cases = ['''  Name = FileStorage
 ''',

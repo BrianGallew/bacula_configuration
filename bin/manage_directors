@@ -28,7 +28,7 @@ keylist = Director.NULL_KEYS  + [MONITOR, DIRADDRESSES]
 for key in keylist:
     if not type(key) == str: key = key[0]
     group.add_option('--' + key)
-group.add_option('--' + MESSAGE, help='The name of a message resource')
+group.add_option('--' + MESSAGES, help='The name of a message resource')
 parser.add_option_group(group)
 
 (args, director_arg) = parser.parse_args()
@@ -63,7 +63,7 @@ if args.delete:
 if args.rename: s.change_name(args.rename)
 generic_option_processor(s, args, Director.NULL_KEYS)
 generic_option_processor(s, args, [MONITOR,], boolean=True)
-generic_option_processor(s, args, [MESSAGE,], dereference=True)
+generic_option_processor(s, args, [MESSAGES,], dereference=True)
 
 print('Director config', s, '','', sep='\n')
 print('File Daemon config', s.fd(), '', sep='\n')

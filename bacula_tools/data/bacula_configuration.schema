@@ -140,7 +140,7 @@ CREATE TABLE `directors` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
   `password` varchar(255),
-  `message_id` int(11),
+  `messages_id` int(11),
   `workingdirectory` varchar(255),
   `piddirectory` varchar(255),
   `scripts_directory` varchar(255),
@@ -159,7 +159,7 @@ CREATE TABLE `directors` (
   `port` int(11) NOT NULL DEFAULT 9101,
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `name` (`name`),
-  CONSTRAINT `fk_message` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+  CONSTRAINT `fk_message` FOREIGN KEY (`messages_id`) REFERENCES `messages` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table catalogs';

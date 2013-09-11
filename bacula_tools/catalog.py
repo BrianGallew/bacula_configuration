@@ -21,9 +21,9 @@ class Catalog(DbDict):
         gr_number = Word(nums)
 
         def np(words, fn = gr_opt_quoted_string, action=None):
-            p = Keyword(words[0], caseless=True)
+            p = Keyword(words[0], caseless=True).setDebug(bacula_tools.DEBUG)
             for w in words[1:]:
-                p = p | Keyword(w, caseless=True)
+                p = p | Keyword(w, caseless=True).setDebug(bacula_tools.DEBUG)
             p = p + gr_eq + fn
             p.setParseAction(action)
             return p
@@ -35,8 +35,8 @@ class Catalog(DbDict):
         gr_line = gr_line | np(PList(DBPORT), gr_number, action=self._parse_setter(DBPORT))
         gr_line = gr_line | np(PList('db name'), action=self._parse_setter(DBNAME))
         gr_line = gr_line | np(PList('db address'), action=self._parse_setter(DBADDRESS))
-
         gr_res = OneOrMore(gr_line)
+
         result = gr_res.parseString(string, parseAll=True)
         return 'Catalog: ' + self[NAME]
 
@@ -51,3 +51,15 @@ class Catalog(DbDict):
         return '\n'.join(self.output)
 
 # }}}
+    # {{{ search(string=None, id=None):
+
+    def search(self, string=None, id=None):
+        DbDict.search(self, string, id)
+        if self[ID]: return self
+        new_me = self.bc.value_check(self.table, DIRECTOR_ID, self[DIRECTOR_ID], asdict=True)
+        try: self.update(new_me[0])
+        except Exception as e: pass
+        [getattr(self, x)() for x in dir(self) if '_load_' in x]
+        return self
+
+    # }}}

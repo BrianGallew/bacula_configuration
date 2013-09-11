@@ -4,6 +4,9 @@ Configuration is at the *end* of this file.'''
 from __future__ import print_function
 import re, shlex, sys, os
 
+# Just a placeholder, it gets overridden later
+DEBUG=False
+
 _INTERNED = [
     'Append', 'Available', 'Catalog', 'Cleaning', 'Error', 'Full', 'Purged', 'Recycle', 'Used',
     'actiononpurge', 'address', 'autoprune', 'autoprune', 'bacula_enabled', 'begin', 'catalog_id',
@@ -17,7 +20,7 @@ _INTERNED = [
     'ignorechanges', 'includes', 'job_retention', 'jobacl', 'jobretention', 'labelformat',
     'lastupdated', 'maximumconcurrentjobs', 'maximumbandwidthperjob', 'maximumconcurrentjobs',
     'maximumconsoleconnections', 'maximumconsoleconnections', 'maximumnetworkbuffersize',
-    'maximumvolumebytes', 'maximumvolumefiles', 'maximumvolumejobs', 'maximumvolumes', 'message_id',
+    'maximumvolumebytes', 'maximumvolumefiles', 'maximumvolumejobs', 'maximumvolumes', 'messages_id',
     'messages', 'monitor', 'name', 'no', 'notes', 'option', 'options', 'os', 'owners', 'password',
     'piddirectory', 'pkiencryption', 'pkikeypair', 'pkimasterkey', 'pkisignatures', 'pool',
     'poolacl', 'pools', 'pooltype', 'port', 'primary_dir', 'priority', 'purgeoldestvolume',
@@ -28,7 +31,7 @@ _INTERNED = [
     'storageserver', 'storageserveraddress', 'timespan', 'user', 'usevolumeonce', 'verid',
     'volumeretention', 'volumeuseduration', 'vssenabled', 'whereacl', 'workingdirectory', 'yes',
     'device', 'mediatype', 'autochanger', 'allowcompression', 'type', 'level', 'differentialpool_id',
-    'fileset_id', 'fullpool_id', 'incrementalpool_id', 'client_id', 'messages_id', 'pool_id',
+    'fileset_id', 'fullpool_id', 'incrementalpool_id', 'client_id', 'pool_id',
     'schedule_id', 'job_id', 'rescheduletimes', 'accurate', 'allowduplicatejobs',
     'allowmixedpriority', 'cancellowerlevelduplicates', 'cancelqueuedduplicates',
     'cancelrunningduplicates', 'prefermountedvolumes', 'prefixlinks', 'prunefiles', 'prunejobs',
@@ -50,7 +53,7 @@ _INTERNED = [
     'randomaccess', 'blockchecksum', 'hardwareendofmedium', 'fastforwardspacefile', 'usemtiocget',
     'bsfateom', 'twoeof', 'backwardspacerecord', 'backwardspacefile', 'forwardspacerecord',
     'forwardspacefile', 'offlineonunmount', 'blockpositioning', 'labelmedia', 'automaticmount',
-    'clientconnectwait',
+    'clientconnectwait','fd','sd'
     ]
 
 for w in _INTERNED: locals()[w.upper()] = w
@@ -61,6 +64,12 @@ STATUS = [FULL, USED, APPEND, CLEANING, ERROR, PURGED, RECYCLE, AVAILABLE]
 BACULA_DIR_PORT = 9101
 BACULA_FD_PORT = 9102
 BACULA_SD_PORT = 9103
+
+# Configuration files
+BACULA_DIR_CONF = '/etc/bacula/bacula-dir.conf'
+BACULA_FD_CONF = '/etc/bacula/bacula-fd.conf'
+BACULA_SD_CONF = '/etc/bacula/bacula-sd.conf'
+BCONSOLE_CONF = '/etc/bacula/bconsole.conf'
 
 WORKING_DIR = {
     'Linux': "/var/lib/bacula",

@@ -9,9 +9,9 @@ class Director(DbDict):
                  VERID, WORKINGDIRECTORY,]
     SETUP_KEYS = [(NAME, ''), MESSAGES_ID, DIRADDRESSES, MONITOR]
     table = DIRECTORS
-    # {{{ parse_string(string): Entry point for a recursive descent parser
+    # {{{ parse_string(string, director_config): Entry point for a recursive descent parser
 
-    def parse_string(self, string):
+    def parse_string(self, string, director_config):
         '''Populate a new object from a string.
         
         Parsing is hard, so we're going to call out to the pyparsing
@@ -49,7 +49,6 @@ class Director(DbDict):
         gr_max_con = np(PList('maximum console connections'),
                         gr_number, self._parse_setter(MAXIMUMCONSOLECONNECTIONS, True))
         gr_max_jobs = np(PList('maximum concurrent jobs'), gr_number, action=self._parse_setter(MAXIMUMCONCURRENTJOBS, True))
-        gr_pass = np((PASSWORD,), action=self._parse_setter(PASSWORD))
         gr_pid = np(PList('pid directory'), action=self._parse_setter(PIDDIRECTORY))
         gr_query = np(PList('query file'), action=self._parse_setter(QUERYFILE))
         gr_scripts = np(PList('scripts directory'), action=self._parse_setter(SCRIPTS_DIRECTORY))
@@ -66,6 +65,10 @@ class Director(DbDict):
         da_addr = np(('Addr','Port'), Word(printables), lambda x,y,z: ' '.join(z))
         da_ip = np(('IPv4','IPv6','IP'), nestedExpr('{','}', OneOrMore(da_addr).setParseAction(lambda x,y,z: ' ; '.join(z)))).setParseAction(_handle_ip)
         da_addresses = np(PList('dir addresses'), nestedExpr('{','}', OneOrMore(da_ip)), _handle_diraddr)
+
+        # if this isn't a director, then we ignore the password
+        if director_config: gr_pass = np((PASSWORD,), action=self._parse_setter(PASSWORD))
+        else: gr_pass = np((PASSWORD,), action=lambda x: x)
 
         gr_res = OneOrMore(gr_name | gr_address | gr_fd_conn | gr_heart | gr_max_con | gr_max_jobs | gr_pass | gr_pid | gr_query | gr_scripts | gr_sd_conn | gr_source | gr_stats | gr_verid | gr_messages | gr_work_dir | gr_port | gr_monitor | da_addresses)
 

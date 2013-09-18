@@ -7,6 +7,25 @@ import re, shlex, sys, os
 # Just a placeholder, it gets overridden later
 DEBUG=False
 
+# Bacula CONFIG DB bits that are less easily interned
+BACULA_DIR_PORT = 9101
+BACULA_FD_PORT = 9102
+BACULA_SD_PORT = 9103
+
+# Configuration files
+BACULA_DIR_CONF = '/etc/bacula/bacula-dir.conf'
+BACULA_FD_CONF = '/etc/bacula/bacula-fd.conf'
+BACULA_SD_CONF = '/etc/bacula/bacula-sd.conf'
+BCONSOLE_CONF = '/etc/bacula/bconsole.conf'
+
+# MySQL credentials for the Bacula configuration database. They should be
+# overridden in one of the configuration files (see below for the config
+# files that are checked).
+MYSQL_DB = 'OVERRIDE ME'
+MYSQL_HOST = 'OVERRIDE ME'
+MYSQL_USER = 'OVERRIDE ME'
+MYSQL_PASS = 'OVERRIDE ME'
+
 _INTERNED = [
     'Append', 'Available', 'Catalog', 'Cleaning', 'Error', 'Full', 'Purged', 'Recycle', 'Used',
     'actiononpurge', 'address', 'autoprune', 'autoprune', 'bacula_enabled', 'begin', 'catalog_id',
@@ -53,23 +72,12 @@ _INTERNED = [
     'randomaccess', 'blockchecksum', 'hardwareendofmedium', 'fastforwardspacefile', 'usemtiocget',
     'bsfateom', 'twoeof', 'backwardspacerecord', 'backwardspacefile', 'forwardspacerecord',
     'forwardspacefile', 'offlineonunmount', 'blockpositioning', 'labelmedia', 'automaticmount',
-    'clientconnectwait','fd','sd'
+    'clientconnectwait','fd','sd', 'bconsole'
     ]
 
 for w in _INTERNED: locals()[w.upper()] = w
 
 STATUS = [FULL, USED, APPEND, CLEANING, ERROR, PURGED, RECYCLE, AVAILABLE]
-
-# Bacula CONFIG DB bits that are less easily interned
-BACULA_DIR_PORT = 9101
-BACULA_FD_PORT = 9102
-BACULA_SD_PORT = 9103
-
-# Configuration files
-BACULA_DIR_CONF = '/etc/bacula/bacula-dir.conf'
-BACULA_FD_CONF = '/etc/bacula/bacula-fd.conf'
-BACULA_SD_CONF = '/etc/bacula/bacula-sd.conf'
-BCONSOLE_CONF = '/etc/bacula/bconsole.conf'
 
 WORKING_DIR = {
     'Linux': "/var/lib/bacula",
@@ -89,18 +97,27 @@ def parser(string, output=print):
     comment_re = re.compile(r'#.*', re.MULTILINE)
     semicolon_re = re.compile(r';', re.MULTILINE)
     blankline_re = re.compile(r'^\s+$', re.MULTILINE)
-    string = blankline_re.sub('', comment_re.sub('', string)) # Strip the comments out
+    # Strip the comments  and blank lines out
+    string = blankline_re.sub('', comment_re.sub('', string))
 
+    # Do a quick pass through the string looking for file imports.  If/When
+    # you find any, replace the file import statement with the contents of
+    # the file to be imported.  Repeat until there are no more file import statements.
     groups = file_re.search(string)
     while groups:
         filename = groups.group(1)
-        string = blankline_re.sub('', string.replace(groups.group(),
-                                                     '\n' + comment_re.sub('', open(filename).read()) + '\n'))
+        string = blankline_re.sub('', string.replace(groups.group(), comment_re.sub('', open(filename).read())))
         groups = file_re.search(string)
 
+    # It should be observed that this statement causes scripts with
+    # embedded semi-colons to break parsing.
     string = semicolon_re.sub('\n',  string).replace('\\\n','').replace('\n\n', '\n')
+    
     parts = string.split(RB)
+    parse_queue = {}
     parsed = []
+
+    # Split it up into parts
     while parts:
         current = parts.pop(0)
         while current.count(RB) < (current.count(LB) - 1): current += RB + parts.pop(0)
@@ -109,15 +126,31 @@ def parser(string, output=print):
             output(current)
             raise
         name = name.strip().lower()
-        try:
-            obj = _DISPATCHER[name]()
-            parsed.append(obj)
-            result = obj.parse_string(body.strip())
-            output(result)
-        except Exception as e:
-            msg = '%s: Unable to handle %s at this time:\n%s' % (name.capitalize(), e,body.strip())
-            output(msg)
+        parse_queue.setdefault(name, []).append(body.strip())
         while parts and parts[0] == '\n': del parts[0]
+
+    # Determine what kind of config this is.  Right now, we only care if
+    # it's a director, but that may change.
+    director_config = False
+    sd_config = False
+    fd_config = False
+    if 'catalog' in parse_queue: director_config = True
+    elif 'device' in parse_queue: sd_config = True
+    else: fd_config = True
+
+    # Actually parse the various parts
+    for name in parse_queue.keys():
+        for body in parse_queue[name]:
+            try:
+                obj = _DISPATCHER[name]()
+                parsed.append(obj)
+                if name == DIRECTOR: result = obj.parse_string(body, director_config)
+                else: result = obj.parse_string(body)
+                output(result)
+            except Exception as e:
+                msg = '%s: Unable to handle %s at this time:\n%s' % (name.capitalize(), e,body.strip())
+                output(msg)
+
     return parsed
     
 
@@ -142,16 +175,6 @@ def set_bool_values(key, value, obj, okey):
         if 0 ^ obj[okey]: obj._set(okey, 0)
         return
     raise Exception('%s takes a boolean value, and I was unable to translate %s' % (key, value))
-
-# Configuration block
-
-# MySQL credentials for the Bacula configuration database. They should be
-# overridden in one of the configuration files (see below for the config
-# files that are checked).
-MYSQL_DB = 'OVERRIDE ME'
-MYSQL_HOST = 'OVERRIDE ME'
-MYSQL_USER = 'OVERRIDE ME'
-MYSQL_PASS = 'OVERRIDE ME'
 
 # These rules will be used to determine what fileset(s) and schedule(s)
 # will be applied to new jobs that are generated in an automated fashion.
@@ -198,6 +221,12 @@ from storage import Storage
 from job import Job, JobDef
 from scripts import Script
 from device import Device
+
+# bconsole/daemon bits
+from fd import FDaemon
+from sd import SDaemon
+from bacula_director import BDirector
+
 
 import util
 

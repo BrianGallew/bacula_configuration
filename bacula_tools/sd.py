@@ -1,8 +1,8 @@
-from base import BSock
-from .. import BACULA_SD_PORT
+from . import *
+
 # client for interacting with a storage daemon
 
-class StorageDaemon(BSock):
+class SDaemon(BSock):
     '''Client for communicating directly with a storage daemon.
     '''
 # {{{ __init__(address, password, myname, port=BACULA_SD_PORT, debug=False, timeout=5):

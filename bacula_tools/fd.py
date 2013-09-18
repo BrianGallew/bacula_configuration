@@ -1,8 +1,7 @@
-from base import BSock
-from .. import BACULA_FD_PORT
+from . import *
 # client for interacting with a file daemon
 
-class FileDaemon(BSock):
+class FDaemon(BSock):
     '''Client for communicating directly with a file daemon.
     '''
 # {{{ __init__(address, password, myname, port=BACULA_FD_PORT, debug=False, timeout=5):

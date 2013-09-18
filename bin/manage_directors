@@ -60,7 +60,7 @@ if args.delete:
     print('Deleted director:', director_arg[0])
     exit()                      # Nothing to print out now
     
-if args.rename: s.change_name(args.rename)
+if args.rename: s._set(NAME, args.rename)
 generic_option_processor(s, args, Director.NULL_KEYS)
 generic_option_processor(s, args, [MONITOR,], boolean=True)
 generic_option_processor(s, args, [MESSAGES,], dereference=True)

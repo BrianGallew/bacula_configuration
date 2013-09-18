@@ -50,7 +50,7 @@ if args.delete:
     print('Deleted schedule:', schedule_arg[0])
     exit()                      # Nothing to print out now
     
-if args.rename: s.change_name(args.rename)
+if args.rename: s._set(NAME, args.rename)
 for line in args.add: s._add_run(line)
 for line in args.remove: s._delete_run(line)
 

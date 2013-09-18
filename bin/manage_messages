@@ -49,7 +49,7 @@ if args.delete:
     print('Deleted messages:', messages_arg[0])
     exit()                      # Nothing to print out now
     
-if args.rename: s.change_name(args.rename)
+if args.rename: s._set(NAME, args.rename)
 if args.set: s._set(DATA, args.set)
 print(s)
 exit()

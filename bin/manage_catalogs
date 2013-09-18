@@ -59,7 +59,7 @@ if args.delete:
     print('Deleted catalog:', catalog_arg[0])
     exit()                      # Nothing to print out now
     
-if args.rename: s.change_name(args.rename)
+if args.rename: s._set(NAME, args.rename)
 
 generic_option_processor(s, args, Catalog.NULL_KEYS)
 

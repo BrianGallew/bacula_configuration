@@ -57,7 +57,7 @@ if args.delete:
     print('Deleted console:', console_arg[0])
     exit()                      # Nothing to print out now
     
-if args.rename: s.change_name(args.rename)
+if args.rename: s._set(NAME, args.rename)
 generic_option_processor(s, args, keylist)
 
 print(s)

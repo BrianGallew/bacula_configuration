@@ -146,14 +146,6 @@ class DbDict(dict):             # base class for all of the things derived from 
         return
 
 # }}}
-    # {{{ change_name(name): set my name
-
-    def change_name(self, name):
-        self[NAME] = name
-        row = self.bc.do_sql('update %s set name = %%s where id = %%s' % self.table, (name, self[ID]))
-        return
-
-    # }}}
     # {{{ _set(field, value, boolean=False, dereference=False): handy shortcut for setting and saving values
 
     def _set(self, field, value, boolean=False, dereference=False):
@@ -299,8 +291,9 @@ class PList(list):
 class BSock:
     '''Sometimes, you want to talk to various Bacula daemons without the
     overhead of firing up bconsole, particularly since that will involve
-    shell interaction as well fun parsing foo.  This can make it a bit
-    easier.
+    shell interaction as well fun parsing foo.  This will make it a bit
+    easier, not to mention making dealing with timeouts a lot more
+    mangeable.
     '''
 # {{{ __init__(address, password, myname, port, debug=False, timeout=5):
     def __init__(self, address, password, myname, port, timeout=5):

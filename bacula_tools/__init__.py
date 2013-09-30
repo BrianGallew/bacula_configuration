@@ -150,7 +150,10 @@ def parser(string, output=print):
             except Exception as e:
                 msg = '%s: Unable to handle %s at this time:\n%s' % (name.capitalize(), e,body.strip())
                 output(msg)
-
+    if director_config:
+        this_director = [x for x in parsed if type(x) == Director][0]
+        for x in parsed:
+            if type(x) == Catalog: x._set(DIRECTOR_ID, this_director[ID])
     return parsed
     
 

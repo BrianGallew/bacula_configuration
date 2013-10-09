@@ -1,3 +1,4 @@
+from __future__ import print_function
 from . import *
 
 class Catalog(DbDict):
@@ -56,6 +57,7 @@ class Catalog(DbDict):
     def search(self, string=None, id=None):
         DbDict.search(self, string, id)
         if self[ID]: return self
+        if not self[DIRECTOR_ID]: return self # can't look myself up if I don't have any attributes
         new_me = self.bc.value_check(self.table, DIRECTOR_ID, self[DIRECTOR_ID], asdict=True)
         try: self.update(new_me[0])
         except Exception as e: pass

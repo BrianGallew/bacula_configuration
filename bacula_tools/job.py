@@ -15,12 +15,16 @@ class Job(DbDict):
         # Enum
         TYPE, LEVEL,
         # Strings
-        NOTES, ADDPREFIX, ADDSUFFIX, BASE, BOOTSTRAP, DIFFERENTIALMAXWAITTIME, IDMAXWAITTIME,
-        INCREMENTALMAXRUNTIME, MAXFULLINTERVAL, MAXIMUMBANDWIDTH, MAXRUNSCHEDTIME, MAXRUNTIME,
-        MAXSTARTDELAY, MAXWAITTIME, REGEXWHERE, RESCHEDULEINTERVAL, RUN, SPOOLSIZE, 
+        NOTES, ADDPREFIX, ADDSUFFIX, BASE, BOOTSTRAP, 
+        MAXIMUMBANDWIDTH,
+        MAXSTARTDELAY, REGEXWHERE, RUN, SPOOLSIZE, 
         STRIPPREFIX, VERIFYJOB, WHERE, WRITEBOOTSTRAP,
         # keys with values
         (REPLACE, 'always'), 
+        ]
+    TIME_KEYS = [
+        DIFFERENTIALMAXWAITTIME, IDMAXWAITTIME, INCREMENTALMAXRUNTIME, MAXRUNSCHEDTIME,
+        MAXRUNTIME, MAXWAITTIME, MAXFULLINTERVAL, RESCHEDULEINTERVAL, 
         ]
     REFERENCE_KEYS = [          # foreign keys
         DIFFERENTIALPOOL_ID, FILESET_ID, FULLPOOL_ID, CLIENT_ID,
@@ -30,7 +34,7 @@ class Job(DbDict):
     TRUE_KEYS = [ENABLED, PREFERMOUNTEDVOLUMES]
     FALSE_KEYS = [
         ACCURATE, ALLOWDUPLICATEJOBS, ALLOWMIXEDPRIORITY, CANCELLOWERLEVELDUPLICATES,
-        CANCELQUEUEDDUPLICATES, CANCELRUNNINGDUPLICATES, (JOBDEF, 0), 
+        CANCELQUEUEDDUPLICATES, CANCELRUNNINGDUPLICATES, JOBDEF, 
         PREFIXLINKS, PRUNEFILES, PRUNEJOBS, PRUNEVOLUMES, RERUNFAILEDLEVELS, RESCHEDULEONERROR,
         SPOOLATTRIBUTES, SPOOLDATA, WRITEPARTAFTERJOB
         ]
@@ -185,13 +189,16 @@ class Job(DbDict):
     def __str__(self):
         self.output = ['%s {' % self.retlabel,'}']
         for x in self.NULL_KEYS: self._simple_phrase(x)
+        for x in self.TIME_KEYS: self._simple_phrase(x, False)
         for x in self.INT_KEYS: self._simple_phrase(x)
         for x in self.REFERENCE_KEYS:
             if self[x] == None: continue
             self.output.insert(-1,'  %s = "%s"' % (x.replace('_id', '').capitalize(), self._fk_reference(x)[NAME]))
         if self[JOB_ID]: self.output.insert(-1,'  JobDefs = "%s"' % self._fk_reference(JOB_ID)[NAME])
 
-        for x in self.FALSE_KEYS: self._yesno_phrase(x, onlytrue=True)
+        for x in self.FALSE_KEYS:
+            if x == JOBDEF: continue
+            self._yesno_phrase(x, onlytrue=True)
         for x in self.TRUE_KEYS: self._yesno_phrase(x, onlyfalse=True)
         for x in self.scripts: self.output.insert(-1, str(x))
         return '\n'.join(self.output)
@@ -269,6 +276,8 @@ class Job(DbDict):
 # }}}
 
 class JobDef(Job):
-    SETUP_KEYS = [(REPLACE, 'always'), (NAME, ''), (JOBDEF, 1)]
-    retlabel = 'JobDef'
+    retlabel = 'JobDefs'
     
+    def _save(self):
+        self[JOBDEF] = 1
+        return Job._save(self)

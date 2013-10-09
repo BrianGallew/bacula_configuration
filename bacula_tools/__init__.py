@@ -36,7 +36,7 @@ _INTERNED = [
     'fd_connect_timeout', 'fdaddress', 'fdaddresses', 'fdport', 'fdsourceaddress', 'file_retention',
     'filedaemon', 'fileretention', 'fileset', 'fileset_files', 'filesetacl', 'filesets',
     'heartbeatinterval', 'hostid', 'hostname', 'hostnames', 'hosts', 'id',
-    'ignorechanges', 'includes', 'job_retention', 'jobacl', 'jobretention', 'labelformat',
+    'ignorefilesetchanges', 'includes', 'job_retention', 'jobacl', 'jobretention', 'labelformat',
     'lastupdated', 'maximumconcurrentjobs', 'maximumbandwidthperjob', 'maximumconcurrentjobs',
     'maximumconsoleconnections', 'maximumconsoleconnections', 'maximumnetworkbuffersize',
     'maximumvolumebytes', 'maximumvolumefiles', 'maximumvolumejobs', 'maximumvolumes', 'messages_id',
@@ -48,7 +48,7 @@ _INTERNED = [
     'scripts_directory', 'sd_connect_timeout', 'sdconnecttimeout', 'service', 'services',
     'sourceaddress', 'statistics_retention', 'storage', 'storageacl', 'storagepassword',
     'storageserver', 'storageserveraddress', 'timespan', 'user', 'usevolumeonce', 'verid',
-    'volumeretention', 'volumeuseduration', 'vssenabled', 'whereacl', 'workingdirectory', 'yes',
+    'volumeretention', 'volumeuseduration', 'enablevss', 'whereacl', 'workingdirectory', 'yes',
     'device', 'mediatype', 'autochanger', 'allowcompression', 'type', 'level', 'differentialpool_id',
     'fileset_id', 'fullpool_id', 'incrementalpool_id', 'client_id', 'pool_id',
     'schedule_id', 'job_id', 'rescheduletimes', 'accurate', 'allowduplicatejobs',
@@ -72,7 +72,7 @@ _INTERNED = [
     'randomaccess', 'blockchecksum', 'hardwareendofmedium', 'fastforwardspacefile', 'usemtiocget',
     'bsfateom', 'twoeof', 'backwardspacerecord', 'backwardspacefile', 'forwardspacerecord',
     'forwardspacefile', 'offlineonunmount', 'blockpositioning', 'labelmedia', 'automaticmount',
-    'clientconnectwait','fd','sd', 'bconsole'
+    'clientconnectwait','fd','sd', 'bconsole', 'dirport'
     ]
 
 for w in _INTERNED: locals()[w.upper()] = w

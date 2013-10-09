@@ -156,7 +156,7 @@ CREATE TABLE `directors` (
   `monitor` tinyint(1) NOT NULL DEFAULT 0,
   `address` varchar(255),
   `sourceaddress` varchar(255),
-  `port` int(11) NOT NULL DEFAULT 9101,
+  `dirport` int(11) NOT NULL DEFAULT 9101,
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `name` (`name`),
   CONSTRAINT `fk_message` FOREIGN KEY (`messages_id`) REFERENCES `messages` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
@@ -237,7 +237,7 @@ CREATE TABLE `fileset_files` (
 CREATE TABLE `filesets` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
-  `vssenabled` tinyint(1)  NOT NULL DEFAULT 1,
+  `enablevss` tinyint(1)  NOT NULL DEFAULT 1,
   `ignorechanges` tinyint(1)  NOT NULL DEFAULT 0,
   PRIMARY KEY `id` (`id`),
   UNIQUE KEY `name_UNIQUE` (`name`)

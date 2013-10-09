@@ -74,18 +74,18 @@ if args.director:
     # First, the basics
     cf = ConfigFile(BACULA_DIR_CONF)
     d = Director().search(hostname)
-    cf.write(d)
+    cf.write(d, '\n')
     c = Catalog({DIRECTOR_ID: d[ID]}).search()
-    cf.write(c)
-    m = Messages().search(id=d[MESSAGES_ID])
-    cf.write(m)
+    cf.write(c, '\n')
+    for id in d.bc.do_sql('SELECT id FROM messages ORDER BY name'): cf.write( Messages().search(id=id), '\n')
     # Now, for a little more interesting stuff (and we're cheating hard)
     for id in d.bc.do_sql('SELECT id FROM filesets ORDER BY name'): cf.write( Fileset().search(id=id), '\n')
     for id in d.bc.do_sql('SELECT id FROM schedules ORDER BY name'): cf.write( Schedule().search(id=id), '\n')
     # clients
     for id in d.bc.do_sql('SELECT id FROM clients ORDER BY name'): cf.write( Client().search(id=id), '\n')
     # jobs
-    for id in d.bc.do_sql('SELECT id FROM jobs ORDER BY name'): cf.write( Job().search(id=id), '\n')
+    for id in d.bc.do_sql('SELECT id FROM jobs WHERE jobdef=1 ORDER BY name'): cf.write( JobDef().search(id=id), '\n')
+    for id in d.bc.do_sql('SELECT id FROM jobs WHERE NOT jobdef=1 ORDER BY name'): cf.write( Job().search(id=id), '\n')
     # storage
     for id in d.bc.do_sql('SELECT id FROM storage ORDER BY name'): cf.write( Storage().search(id=id), '\n')
     # Pools

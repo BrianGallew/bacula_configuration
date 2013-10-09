@@ -4,8 +4,8 @@ from re import compile, MULTILINE, IGNORECASE, DOTALL
 
 class Fileset(DbDict):
     table = FILESETS
-    SETUP_KEYS = [(VSSENABLED, 1),
-                  (IGNORECHANGES, 0),
+    SETUP_KEYS = [(ENABLEVSS, 1),
+                  (IGNOREFILESETCHANGES, 0),
         ]
     def __init__(self, row={}, string=None):
         DbDict.__init__(self, row, string)
@@ -66,8 +66,8 @@ class Fileset(DbDict):
             p.setParseAction(action)
             return p
         
-        gr_ifsc = np(PList('Ignore File Set Changes'), gr_yn, action=self._parse_setter(IGNORECHANGES))
-        gr_evss = np(PList('Enable VSS'), gr_yn, action=self._parse_setter(VSSENABLED))
+        gr_ifsc = np(PList('Ignore File Set Changes'), gr_yn, action=self._parse_setter(IGNOREFILESETCHANGES))
+        gr_evss = np(PList('Enable VSS'), gr_yn, action=self._parse_setter(ENABLEVSS))
 
         gr_i_option = Group(Keyword(OPTIONS, caseless=True) + nestedExpr('{','}', Regex('[^\}]+', re.MULTILINE)))
         gr_e_option = gr_i_option.copy()
@@ -124,8 +124,8 @@ class Fileset(DbDict):
 
     def __str__(self):
         self.output = ['Fileset {','  Name = "%(name)s"' % self, '}']
-        self._yesno_phrase(VSSENABLED)
-        self._yesno_phrase(IGNORECHANGES)
+        self._yesno_phrase(ENABLEVSS)
+        self._yesno_phrase(IGNOREFILESETCHANGES)
         for test,phrase in ([0,'Include'],[1,'Exclude']):
             subset =  [x for x in self.entries if x[3] == test]
             if subset:              # We have includes

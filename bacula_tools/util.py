@@ -204,15 +204,20 @@ class DbDict(dict):             # base class for all of the things derived from 
         return rv
 
 # }}}
-    # {{{ _simple_phrase(key):
+    # {{{ _simple_phrase(key, quoted=True):
 
-    def _simple_phrase(self, key):
+    def _simple_phrase(self, key, quoted=True):
         if not type(key) == str: key = key[0]
         if self[key] == None: return
+        if 'retention' in key: quoted = False
+        if 'size' in key: quoted = False
+        if 'bytes' in key: quoted = False
         try:
             int(self[key])
             value = self[key]
-        except: value = '"' + self[key] + '"'
+        except:
+            if quoted: value = '"' + self[key] + '"'
+            else: value = self[key]
         self.output.insert(-1,'%s%s = %s' % (self.prefix, key.capitalize(), value))
         return
 

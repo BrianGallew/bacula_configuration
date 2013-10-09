@@ -2,7 +2,7 @@ from . import *
 keylist = []
 
 class Director(DbDict):
-    NULL_KEYS = [ADDRESS, (PORT, 9101),
+    NULL_KEYS = [ADDRESS, (DIRPORT, 9101),
                  FD_CONNECT_TIMEOUT, HEARTBEATINTERVAL, MAXIMUMCONSOLECONNECTIONS,
                  MAXIMUMCONCURRENTJOBS, PASSWORD, PIDDIRECTORY, QUERYFILE,
                  SCRIPTS_DIRECTORY, SD_CONNECT_TIMEOUT, SOURCEADDRESS, STATISTICS_RETENTION,
@@ -58,7 +58,7 @@ class Director(DbDict):
         gr_verid = np((VERID,), action=self._parse_setter(VERID))
         gr_messages = np((MESSAGES,), action=self._parse_setter(MESSAGES_ID, dereference=True))
         gr_work_dir = np(PList('working directory'), action=self._parse_setter(WORKINGDIRECTORY))
-        gr_port = np(PList('dir port'), gr_number, self._parse_setter(PORT, True))
+        gr_port = np(PList('dir port'), gr_number, self._parse_setter(DIRPORT, True))
         gr_monitor = np((MONITOR,), gr_yn, action=self._parse_setter(MONITOR))
 
         # This is a complicated one

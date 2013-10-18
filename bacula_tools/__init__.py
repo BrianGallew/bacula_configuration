@@ -85,78 +85,7 @@ WORKING_DIR = {
     'FreeBSD': "/var/db/bacula",
     'Windows': "/bacula/working",
     }
-
-def parser(string, output=print):
-    '''parse a string out into top-level resource items and pass them off to the relevant classes.'''
-    # strip out comments, and turn semi-colons into newlines
-    # NB: if you have embedded semi-colons in any values (e.g. runscripts),
-    # You will lose here.
-    RB = '}'
-    LB = '{'
-    file_re = re.compile(r'\s@(.*)\s+', re.MULTILINE)
-    comment_re = re.compile(r'#.*', re.MULTILINE)
-    semicolon_re = re.compile(r';', re.MULTILINE)
-    blankline_re = re.compile(r'^\s+$', re.MULTILINE)
-    # Strip the comments  and blank lines out
-    string = blankline_re.sub('', comment_re.sub('', string))
-
-    # Do a quick pass through the string looking for file imports.  If/When
-    # you find any, replace the file import statement with the contents of
-    # the file to be imported.  Repeat until there are no more file import statements.
-    groups = file_re.search(string)
-    while groups:
-        filename = groups.group(1)
-        string = blankline_re.sub('', string.replace(groups.group(), comment_re.sub('', open(filename).read())))
-        groups = file_re.search(string)
-
-    # It should be observed that this statement causes scripts with
-    # embedded semi-colons to break parsing.
-    string = semicolon_re.sub('\n',  string).replace('\\\n','').replace('\n\n', '\n')
     
-    parts = string.split(RB)
-    parse_queue = {}
-    parsed = []
-
-    # Split it up into parts
-    while parts:
-        current = parts.pop(0)
-        while current.count(RB) < (current.count(LB) - 1): current += RB + parts.pop(0)
-        try: name, body = current.split(LB,1)
-        except:
-            output(current)
-            raise
-        name = name.strip().lower()
-        parse_queue.setdefault(name, []).append(body.strip())
-        while parts and parts[0] == '\n': del parts[0]
-
-    # Determine what kind of config this is.  Right now, we only care if
-    # it's a director, but that may change.
-    director_config = False
-    sd_config = False
-    fd_config = False
-    if 'catalog' in parse_queue: director_config = True
-    elif 'device' in parse_queue: sd_config = True
-    else: fd_config = True
-
-    # Actually parse the various parts
-    for name in parse_queue.keys():
-        for body in parse_queue[name]:
-            try:
-                obj = _DISPATCHER[name]()
-                parsed.append(obj)
-                if name == DIRECTOR: result = obj.parse_string(body, director_config)
-                else: result = obj.parse_string(body)
-                output(result)
-            except Exception as e:
-                msg = '%s: Unable to handle %s at this time:\n%s' % (name.capitalize(), e,body.strip())
-                output(msg)
-    if director_config:
-        this_director = [x for x in parsed if type(x) == Director][0]
-        for x in parsed:
-            if type(x) == Catalog: x._set(DIRECTOR_ID, this_director[ID])
-    return parsed
-    
-
 def debug_print(msg, *args):
     global DEBUG
     if DEBUG: print(msg % args, file=sys.stderr)

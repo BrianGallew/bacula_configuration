@@ -1,3 +1,4 @@
+from __future__ import print_function
 from . import *
 keylist = []
 
@@ -7,11 +8,11 @@ class Director(DbDict):
                  MAXIMUMCONCURRENTJOBS, PASSWORD, PIDDIRECTORY, QUERYFILE,
                  SCRIPTS_DIRECTORY, SD_CONNECT_TIMEOUT, SOURCEADDRESS, STATISTICS_RETENTION,
                  VERID, WORKINGDIRECTORY,]
-    SETUP_KEYS = [(NAME, ''), MESSAGES_ID, DIRADDRESSES, MONITOR]
+    SETUP_KEYS = [(NAME, ''), MESSAGES_ID, DIRADDRESSES]
     table = DIRECTORS
-    # {{{ parse_string(string, director_config): Entry point for a recursive descent parser
+    # {{{ parse_string(string, director_config, obj): Entry point for a recursive descent parser
 
-    def parse_string(self, string, director_config):
+    def parse_string(self, string, director_config, obj):
         '''Populate a new object from a string.
         
         Parsing is hard, so we're going to call out to the pyparsing
@@ -24,6 +25,23 @@ class Director(DbDict):
         gr_opt_quoted_string = gr_stripped_string | restOfLine
         gr_number = Word(nums)
         gr_yn = Keyword('yes', caseless=True).setParseAction(replaceWith('1')) | Keyword('no', caseless=True).setParseAction(replaceWith('0'))
+
+        def _handle_password(*x):
+            a,b,c =  x[2]
+            if type(obj) == bacula_tools.Client: klass = PasswordStore
+            elif type(obj) == bacula_tools.Storage: klass = StoragePasswordStore
+            else: print("WTH is a", type(obj), "being passed in?", director_config)
+            a = klass(obj[ID], self[ID])
+            a.password = c
+            a.store()
+            return
+
+        def _handle_monitor(*x):
+            a,b,c =  x[2]
+            a = PasswordStore(obj[ID], self[ID])
+            a.monitor = c
+            a.store()
+            return
 
         def _handle_ip(*x):
             a,b,c =  x[2]
@@ -59,7 +77,7 @@ class Director(DbDict):
         gr_messages = np((MESSAGES,), action=self._parse_setter(MESSAGES_ID, dereference=True))
         gr_work_dir = np(PList('working directory'), action=self._parse_setter(WORKINGDIRECTORY))
         gr_port = np(PList('dir port'), gr_number, self._parse_setter(DIRPORT, True))
-        gr_monitor = np((MONITOR,), gr_yn, action=self._parse_setter(MONITOR))
+        gr_monitor = np((MONITOR,), gr_yn, action=_handle_monitor)
 
         # This is a complicated one
         da_addr = np(('Addr','Port'), Word(printables), lambda x,y,z: ' '.join(z))
@@ -68,7 +86,7 @@ class Director(DbDict):
 
         # if this isn't a director, then we ignore the password
         if director_config: gr_pass = np((PASSWORD,), action=self._parse_setter(PASSWORD))
-        else: gr_pass = np((PASSWORD,), action=lambda x: x)
+        else: gr_pass = np((PASSWORD,), action=_handle_password)
 
         gr_res = OneOrMore(gr_name | gr_address | gr_fd_conn | gr_heart | gr_max_con | gr_max_jobs | gr_pass | gr_pid | gr_query | gr_scripts | gr_sd_conn | gr_source | gr_stats | gr_verid | gr_messages | gr_work_dir | gr_port | gr_monitor | da_addresses)
 
@@ -98,7 +116,7 @@ class Director(DbDict):
         self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
         
         self._simple_phrase(PASSWORD)
-        self._yesno_phrase(MONITOR, onlytrue=True)
+        #self._yesno_phrase(MONITOR, onlytrue=True)
         return '\n'.join(self.output)
 
     # }}}

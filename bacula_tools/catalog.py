@@ -9,7 +9,7 @@ class Catalog(DbDict):
     table = CATALOGS
     # {{{ parse_string(string): Entry point for a recursive descent parser
 
-    def parse_string(self, string):
+    def parse_string(self, string, director):
         '''Populate a new object from a string.
         
         Parsing is hard, so we're going to call out to the pyparsing
@@ -39,6 +39,7 @@ class Catalog(DbDict):
         gr_res = OneOrMore(gr_line)
 
         result = gr_res.parseString(string, parseAll=True)
+        self._set(DIRECTOR_ID, director[ID])
         return 'Catalog: ' + self[NAME]
 
     # }}}

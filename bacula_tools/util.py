@@ -97,7 +97,61 @@ class ConfigFile(object):       # easy config file management
         return
 
 # }}}
-    
+
+class PasswordStore(object):
+    bc = bacula_tools.Bacula_Factory()
+    column1 = 'client_id'
+    table = 'client_pwords'
+    _select = 'SELECT * FROM %s where %s = %%s and %s = %%s'
+    _insert = 'INSERT INTO %s (%s, director_id, password %s) values (%%s, %%s, %%s %s)'
+    _update = 'UPDATE %s set password=%%s %s where %s=%%s and director_id=%%s'
+    # {{{ __init__(id1, director_id):
+
+    def __init__(self, id1, director_id):
+        self.id = id1
+        self.director_id = director_id
+        self.load()
+        return
+
+        # }}}
+    # {{{ load():
+
+    def load(self):
+        sql = self._select % (self.table, self.column1, DIRECTOR_ID)
+        value = self.bc.do_sql(sql, (self.id, self.director_id), asdict=True)
+        if len(value) == 1:
+            value = value[0]
+            self.password = value[PASSWORD]
+            if value.has_key(MONITOR): self.monitor = value[MONITOR]
+        return
+
+        # }}}
+    # {{{ store():
+
+    def store(self):
+        if hasattr(self, MONITOR):
+            values = (self.password, self.monitor)
+            m = ", monitor=%s"
+            n = ', monitor'
+            i = ', %s'
+        else:
+            values = (self.password,)
+            m = ""
+            n = ""
+            i = ''
+        try:
+            sql = self._insert % (self.table, self.column1, n, i)
+            self.bc.do_sql(sql, (self.id, self.director_id) + values)
+        except Exception as e:
+            self.bc.do_sql(self._update % (self.table, m, self.column1), values + (self.id, self.director_id))
+        return
+
+        # }}}
+
+class StoragePasswordStore(PasswordStore):
+    column1 = 'storage_id'
+    table = 'storage_pwords'
+        
 class DbDict(dict):             # base class for all of the things derived from database rows
     brace_re = re.compile(r'\s*(.*?)\s*\{\s*(.*)\s*\}\s*', re.MULTILINE|re.DOTALL)
     name_re = re.compile(r'^\s*name\s*=\s*(.*)', re.MULTILINE|re.IGNORECASE)

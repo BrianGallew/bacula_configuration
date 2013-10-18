@@ -1,0 +1,10 @@
+#! /usr/bin/env python
+
+import os, sys, pprint
+sys.path.insert(0, '..')
+
+import bacula_tools
+from bacula_tools import parser_support
+retval= parser_support.parser(open('/usr/local/etc/bacula-dir.conf').read())
+print len(retval)
+pprint.pprint(retval)

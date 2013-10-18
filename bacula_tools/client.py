@@ -3,7 +3,7 @@ keylist = []
 
 class Client(DbDict):
     NULL_KEYS = [
-        ADDRESS, CATALOG_ID, PASSWORD, FILERETENTION, JOBRETENTION, PRIORITY,
+        ADDRESS, CATALOG_ID, FILERETENTION, JOBRETENTION, PRIORITY,
         WORKINGDIRECTORY, SDCONNECTTIMEOUT, MAXIMUMNETWORKBUFFERSIZE,
         PIDDIRECTORY, HEARTBEATINTERVAL, FDADDRESSES, FDADDRESS,
         FDSOURCEADDRESS, MAXIMUMBANDWIDTHPERJOB, PKIKEYPAIR, PKIMASTERKEY,
@@ -47,7 +47,7 @@ class Client(DbDict):
         gr_line = np((NAME,), action=lambda x: self._set_name(x[2]))
         gr_line = gr_line | np((ADDRESS,), action=self._parse_setter(ADDRESS))
         gr_line = gr_line | np((CATALOG,), action=self._parse_setter(CATALOG_ID, dereference=True))
-        gr_line = gr_line | np((PASSWORD,), action=self._parse_setter(PASSWORD))
+        gr_line = gr_line | np((PASSWORD,), action=lambda x: x) # Discard the password here!
         gr_line = gr_line | np(PList('file retention'), action=self._parse_setter(FILERETENTION))
         gr_line = gr_line | np(PList('job retention'), action=self._parse_setter(JOBRETENTION))
         gr_line = gr_line | np((PRIORITY,), gr_number, action=self._parse_setter(PRIORITY))
@@ -75,13 +75,15 @@ class Client(DbDict):
 
 
     # }}}
-    # {{{ __str__(): 
+    # {{{ __str__(director_id): 
 
-    def __str__(self):
+    def __str__(self, director_id = None):
         self.output = ['Client {\n  Name = "%(name)s"' % self,'}']
         self.output.insert(-1, '  %s = "%s"' % (CATALOG.capitalize(), self._fk_reference(CATALOG_ID)[NAME]))
-        
-        for key in [ADDRESS, FDPORT, PASSWORD, FILERETENTION,
+        if director_id:
+            a = PasswordStore(self[ID], director_id)
+            self.output.append('  Password = ""' % a.password)
+        for key in [ADDRESS, FDPORT, FILERETENTION,
                     JOBRETENTION, MAXIMUMCONCURRENTJOBS,
                     MAXIMUMBANDWIDTHPERJOB, PRIORITY
                     ]:

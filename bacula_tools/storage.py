@@ -2,7 +2,7 @@ from . import *
 
 class Storage(DbDict):
     NULL_KEYS = [
-        SDPORT, ADDRESS, PASSWORD, DEVICE, MEDIATYPE, MAXIMUMCONCURRENTJOBS,
+        SDPORT, ADDRESS, DEVICE, MEDIATYPE, MAXIMUMCONCURRENTJOBS,
         HEARTBEATINTERVAL
         ]
     SD_KEYS = [WORKINGDIRECTORY, PIDDIRECTORY, CLIENTCONNECTWAIT, SDADDRESSES]
@@ -46,7 +46,7 @@ class Storage(DbDict):
         gr_line = np((NAME,), action=lambda x: self._set_name(x[2]))
         gr_line = gr_line | np(PList('sd port'), gr_number, action=self._parse_setter(SDPORT))
         gr_line = gr_line | np((ADDRESS,'sd address', SDADDRESS), action=self._parse_setter(ADDRESS))
-        gr_line = gr_line | np((PASSWORD,), action=self._parse_setter(PASSWORD))
+        gr_line = gr_line | np((PASSWORD,), action=lambda x: x)
         gr_line = gr_line | np((DEVICE,), action=self._parse_setter(DEVICE))
         gr_line = gr_line | np(PList('media type'), action=self._parse_setter(MEDIATYPE))
         gr_line = gr_line | np(PList('auto changer'), gr_yn, action=self._parse_setter(AUTOCHANGER))

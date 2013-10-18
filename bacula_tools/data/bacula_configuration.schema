@@ -7,6 +7,8 @@ DROP TABLE IF EXISTS `service_link` ;
 DROP TABLE IF EXISTS `schedule_link` ;
 DROP TABLE IF EXISTS `jobs` ;
 DROP TABLE IF EXISTS `scripts` ;
+DROP TABLE IF EXISTS `storage_pwords` ;
+DROP TABLE IF EXISTS `client_pwords` ;
 DROP TABLE IF EXISTS `clients` ;
 DROP TABLE IF EXISTS `storage` ;
 DROP TABLE IF EXISTS `catalogs`;
@@ -153,13 +155,12 @@ CREATE TABLE `directors` (
   `statistics_retention` varchar(255),
   `verid` varchar(255),
   `maximumconsoleconnections` int(11),
-  `monitor` tinyint(1) NOT NULL DEFAULT 0,
   `address` varchar(255),
   `sourceaddress` varchar(255),
   `dirport` int(11) NOT NULL DEFAULT 9101,
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `name` (`name`),
-  CONSTRAINT `fk_message` FOREIGN KEY (`messages_id`) REFERENCES `messages` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+  CONSTRAINT `directors_fk_messages_id` FOREIGN KEY (`messages_id`) REFERENCES `messages` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table catalogs';
@@ -176,7 +177,7 @@ CREATE TABLE `catalogs`
   `director_id` int(11) DEFAULT NULL,
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `name` (`name`),
-  CONSTRAINT `fk_dir_id` FOREIGN KEY (`director_id`) REFERENCES `directors` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+  CONSTRAINT `catalogs_fk_director_id` FOREIGN KEY (`director_id`) REFERENCES `directors` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table storage';
@@ -252,7 +253,6 @@ CREATE TABLE `clients` (
   -- director configuration
   `address` varchar(255),
   `catalog_id` int(11),
-  `password` varchar(255),
   `fileretention` varchar(255),
   `jobretention` varchar(255),
   `autoprune` tinyint(1) NOT NULL default 1,
@@ -279,7 +279,32 @@ CREATE TABLE `clients` (
   `lastupdated` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `hostname` (`name`),
-  CONSTRAINT `fk_catalog` FOREIGN KEY (`catalog_id`) REFERENCES `catalogs` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+  CONSTRAINT `clients_fk_catalog_id` FOREIGN KEY (`catalog_id`) REFERENCES `catalogs` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- select 'Creating table client_pwords';
+CREATE TABLE `client_pwords` (
+  `id` int(11) NOT NULL auto_increment,
+  `client_id` int(11) NOT NULL,
+  `director_id` int(11) NOT NULL,
+  `password` varchar(255),
+  `monitor` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY `PRIMARY` (`id`),
+  UNIQUE KEY `client_pwords_cid_did` (`client_id`, `director_id`),
+  CONSTRAINT `client_pwords_fk_client_id` FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `client_pwords_fk_director_id` FOREIGN KEY (`director_id`) REFERENCES `directors` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- select 'Creating table storage_pwords';
+CREATE TABLE `storage_pwords` (
+  `id` int(11) NOT NULL auto_increment,
+  `storage_id` int(11) NOT NULL,
+  `director_id` int(11) NOT NULL,
+  `password` varchar(255),
+  PRIMARY KEY `PRIMARY` (`id`),
+  UNIQUE KEY `storage_pwords_cid_did` (`storage_id`, `director_id`),
+  CONSTRAINT `storage_pwords_fk_storage_id` FOREIGN KEY (`storage_id`) REFERENCES `storage` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `storage_pwords_fk_director_id` FOREIGN KEY (`director_id`) REFERENCES `directors` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table scripts';
@@ -362,16 +387,16 @@ CREATE TABLE `jobs` (
   `notes` text,
 
   PRIMARY KEY `PRIMARY` (`id`),
-  CONSTRAINT `fk_messages1` FOREIGN KEY (`messages_id`) REFERENCES `messages` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `fk_fileset1` FOREIGN KEY (`fileset_id`) REFERENCES `filesets` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `fk_schedule1` FOREIGN KEY (`schedule_id`) REFERENCES `schedules` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `fk_storage1` FOREIGN KEY (`storage_id`) REFERENCES `storage` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `fk_hostid1` FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_poolid1` FOREIGN KEY (`pool_id`) REFERENCES `pools` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_jobid1` FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_fullpoolid1` FOREIGN KEY (`fullpool_id`) REFERENCES `pools` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_diffpoolid1` FOREIGN KEY (`differentialpool_id`) REFERENCES `pools` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_incpoolid` FOREIGN KEY (`incrementalpool_id`) REFERENCES `pools` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `jobs_fk_messages_id` FOREIGN KEY (`messages_id`) REFERENCES `messages` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `jobs_fk_fileset_id` FOREIGN KEY (`fileset_id`) REFERENCES `filesets` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `jobs_fk_schedule_id` FOREIGN KEY (`schedule_id`) REFERENCES `schedules` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `jobs_fk_storage_id` FOREIGN KEY (`storage_id`) REFERENCES `storage` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `jobs_fk_client_id` FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `jobs_fk_pool_id` FOREIGN KEY (`pool_id`) REFERENCES `pools` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `jobs_fk_job_id` FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `jobs_fk_fullpool_id` FOREIGN KEY (`fullpool_id`) REFERENCES `pools` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `jobs_fk_diffpool_id` FOREIGN KEY (`differentialpool_id`) REFERENCES `pools` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `jobs_fk_incrementalpool_id` FOREIGN KEY (`incrementalpool_id`) REFERENCES `pools` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table job_scripts';
@@ -380,8 +405,8 @@ CREATE TABLE `job_scripts` (
   `job_id` int(11) NOT NULL,
   `script_id` int(11) NOT NULL,
   PRIMARY KEY `PRIMARY` (`id`),
-  CONSTRAINT `js_script` FOREIGN KEY (`script_id`) REFERENCES `scripts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `js_job` FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `job_scripts_fk_script_id` FOREIGN KEY (`script_id`) REFERENCES `scripts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `job_scripts_fk_job_id` FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table service_link';
@@ -390,8 +415,8 @@ CREATE TABLE `service_link` (
   `serviceid` int(11) NOT NULL,
   `jobid` int(11) NOT NULL,
   PRIMARY KEY `PRIMARY` (`id`),
-  CONSTRAINT `fk_service` FOREIGN KEY (`serviceid`) REFERENCES `services` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_job` FOREIGN KEY (`jobid`) REFERENCES `jobs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `service_link_fk_serviceid` FOREIGN KEY (`serviceid`) REFERENCES `services` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `service_link_fk_jobid` FOREIGN KEY (`jobid`) REFERENCES `jobs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table schedule_link';
@@ -400,8 +425,8 @@ CREATE TABLE `schedule_link` (
   `scheduleid` int(11) NOT NULL,
   `timeid` int(11) NOT NULL,
   PRIMARY KEY `PRIMARY` (`id`),
-  CONSTRAINT `fk_schedule_id` FOREIGN KEY (`scheduleid`) REFERENCES `schedules` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_time_id` FOREIGN KEY (`timeid`) REFERENCES `schedule_time` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `schedule_link_fk_schedule_id` FOREIGN KEY (`scheduleid`) REFERENCES `schedules` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `schedule_link_fk_time_id` FOREIGN KEY (`timeid`) REFERENCES `schedule_time` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table fileset_files';
@@ -412,6 +437,6 @@ CREATE TABLE `fileset_link` (
   `exclude` tinyint(1) NOT NULL default '0',
   PRIMARY KEY `id` (`id`),
   UNIQUE KEY  (`fileset_id`,`file_id`),
-  CONSTRAINT `fk_fileset_id` FOREIGN KEY (`fileset_id`) REFERENCES `filesets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_files_id` FOREIGN KEY (`file_id`) REFERENCES `fileset_files` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `fileset_link_fk_fileset_id` FOREIGN KEY (`fileset_id`) REFERENCES `filesets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fileset_link_fk_files_id` FOREIGN KEY (`file_id`) REFERENCES `fileset_files` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

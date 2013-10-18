@@ -2,7 +2,7 @@
 from __future__ import print_function
 
 import os, sys, time
-from bacula_tools import parser, Director, Catalog, ID, DIRECTOR_ID
+from bacula_tools import Director, Catalog, ID, DIRECTOR_ID, parser_support
 import curses, curses.wrapper
 from pprint import *
 
@@ -61,7 +61,7 @@ def display_all(stdscreen):
     screen_setup(stdscreen)
     w = Writer(stdscreen)
     for f in sys.argv[1:]:
-        try: stuff = parser(open(f).read(), w)
+        try: stuff = parser_support.parser(open(f).read(), w)
         except: stuff = []
     director = None
     for d in stuff:

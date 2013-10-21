@@ -11,6 +11,15 @@ class Storage(DbDict):
         ]
     SETUP_KEYS = [(NAME, ''),]
     table = STORAGE
+    # {{{ __init__(row={}, string = None, director_id = None):
+
+    def __init__(self, row={}, string = None, director_id = None):
+        # This one needs a little more specialness
+        DbDict.__init__(self, row, string)
+        self.director_id = director_id
+        return
+
+        # }}}
     # {{{ parse_string(string): Entry point for a recursive descent parser
 
     def parse_string(self, string):
@@ -73,6 +82,9 @@ class Storage(DbDict):
 
     def __str__(self):
         self.output = ['Storage {\n  Name = "%(name)s"' % self,'}']
+        if self.director_id:
+            a = StoragePasswordStore(self[ID], self.director_id)
+            self.output.insert(-1,'  Password = "%s"' % a.password)
         
         for key in self.NULL_KEYS:
             self._simple_phrase(key)

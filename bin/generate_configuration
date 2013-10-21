@@ -87,7 +87,7 @@ if args.director:
     for id in d.bc.do_sql('SELECT id FROM jobs WHERE jobdef=1 ORDER BY name'): cf.write( JobDef().search(id=id), '\n')
     for id in d.bc.do_sql('SELECT id FROM jobs WHERE NOT jobdef=1 ORDER BY name'): cf.write( Job().search(id=id), '\n')
     # storage
-    for id in d.bc.do_sql('SELECT id FROM storage ORDER BY name'): cf.write( Storage().search(id=id), '\n')
+    for id in d.bc.do_sql('SELECT id FROM storage ORDER BY name'): cf.write( Storage(director_id = d[ID]).search(id=id), '\n')
     # Pools
     for id in d.bc.do_sql('SELECT id FROM pools ORDER BY name'): cf.write( Pool().search(id=id), '\n')
     if cf.close(): reload_director(d)

@@ -91,7 +91,7 @@ class Client(DbDict):
         self.output.insert(-1, '  %s = "%s"' % (CATALOG.capitalize(), self._fk_reference(CATALOG_ID)[NAME]))
         if self.director_id:
             a = PasswordStore(self[ID], self.director_id)
-            self.output.insert(-1,'  Password = %s""' % a.password)
+            self.output.insert(-1,'  Password = "%s"' % a.password)
         for key in [ADDRESS, FDPORT, FILERETENTION,
                     JOBRETENTION, MAXIMUMCONCURRENTJOBS,
                     MAXIMUMBANDWIDTHPERJOB, PRIORITY

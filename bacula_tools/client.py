@@ -12,6 +12,15 @@ class Client(DbDict):
     SETUP_KEYS = [(NAME, ''),(FDPORT, 9102), (AUTOPRUNE, 1), (MAXIMUMCONCURRENTJOBS, 1),
                   (PKIENCRYPTION, 0), (PKISIGNATURES, 0),]
     table = CLIENTS
+    # {{{ __init__(row={}, string = None, director_id = None):
+
+    def __init__(self, row={}, string = None, director_id = None):
+        # This one needs a little more specialness
+        DbDict.__init__(self, row, string)
+        self.director_id = director_id
+        return
+
+        # }}}
     # {{{ parse_string(string): Entry point for a recursive descent parser
 
     def parse_string(self, string):
@@ -75,14 +84,14 @@ class Client(DbDict):
 
 
     # }}}
-    # {{{ __str__(director_id): 
+    # {{{ __str__(): 
 
-    def __str__(self, director_id = None):
+    def __str__(self):
         self.output = ['Client {\n  Name = "%(name)s"' % self,'}']
         self.output.insert(-1, '  %s = "%s"' % (CATALOG.capitalize(), self._fk_reference(CATALOG_ID)[NAME]))
-        if director_id:
-            a = PasswordStore(self[ID], director_id)
-            self.output.append('  Password = ""' % a.password)
+        if self.director_id:
+            a = PasswordStore(self[ID], self.director_id)
+            self.output.insert(-1,'  Password = %s""' % a.password)
         for key in [ADDRESS, FDPORT, FILERETENTION,
                     JOBRETENTION, MAXIMUMCONCURRENTJOBS,
                     MAXIMUMBANDWIDTHPERJOB, PRIORITY

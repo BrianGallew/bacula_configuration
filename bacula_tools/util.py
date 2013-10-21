@@ -161,7 +161,7 @@ class DbDict(dict):             # base class for all of the things derived from 
     table = 'override me'       # This needs to be overridden in every subclass, before calling __init__
 
     # {{{ __init__(row={}, string=None): pass in a row (as a dict)
-    def __init__(self, row={}, string = None):
+    def __init__(self, row={}, string = None, **kwargs):
         dict.__init__(self)
         self[ID] = None         # Ensure we have an ID
         # This allows flexibility in key setup/declaration, which in turn
@@ -174,6 +174,7 @@ class DbDict(dict):             # base class for all of the things derived from 
                 else: self[key[0]] = key[1]           # Otherwise assume [1] is the desired default  value
         self.update(row)
         if string: self.parse_string(string)
+        for key in kwargs: setattr(self, key, kwargs[key])
         return
 
     # }}}

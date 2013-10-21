@@ -11,15 +11,6 @@ class Storage(DbDict):
         ]
     SETUP_KEYS = [(NAME, ''),]
     table = STORAGE
-    # {{{ __init__(row={}, string = None, director_id = None):
-
-    def __init__(self, row={}, string = None, director_id = None):
-        # This one needs a little more specialness
-        DbDict.__init__(self, row, string)
-        self.director_id = director_id
-        return
-
-        # }}}
     # {{{ parse_string(string): Entry point for a recursive descent parser
 
     def parse_string(self, string):

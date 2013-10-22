@@ -93,5 +93,16 @@ if args.director:
     if cf.close(): reload_director(d)
     
 
-if args.fd: pass
+if args.fd:
+    # First, the basics
+    cf = ConfigFile(BACULA_FD_CONF)
+    cl = Client().search(hostname)
+    cf.write(cl.fd(), '\n')
+
+    for id in cl.bc.do_sql('SELECT director_id FROM client_pwords order by director_id'):
+        cf.write( Director(client_id = cl[ID]).search(id=id).fd(), '\n')
+    
+    #for id in cl.bc.do_sql('SELECT id FROM messages ORDER BY name'): cf.write( Messages().search(id=id), '\n')
+    if cf.close(): pass
+
 if args.sd: pass

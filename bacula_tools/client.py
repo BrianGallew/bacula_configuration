@@ -60,7 +60,7 @@ class Client(DbDict):
         gr_line = gr_line | np(PList('pki master key'), action=self._parse_setter(PKIMASTERKEY))
         gr_line = gr_line | np(PList('fd port'), gr_number, action=self._parse_setter(FDPORT))
         gr_line = gr_line | np(PList('auto prune'), gr_yn, action=self._parse_setter(AUTOPRUNE))
-        gr_line = gr_line | np(PList('maximum concurrent jobs'), gr_number, action=self._parse_setter(FDPORT))
+        gr_line = gr_line | np(PList('maximum concurrent jobs'), gr_number, action=self._parse_setter(MAXIMUMCONCURRENTJOBS))
         gr_line = gr_line | np(PList('pki encryption'), gr_yn, action=self._parse_setter(PKIENCRYPTION))
         gr_line = gr_line | np(PList('pki signatures'), gr_yn, action=self._parse_setter(PKISIGNATURES))
 
@@ -80,7 +80,7 @@ class Client(DbDict):
     def __str__(self):
         self.output = ['Client {\n  Name = "%(name)s"' % self,'}']
         self.output.insert(-1, '  %s = "%s"' % (CATALOG.capitalize(), self._fk_reference(CATALOG_ID)[NAME]))
-        if self.director_id:
+        if getattr(self,DIRECTOR_ID, None):
             a = PasswordStore(self[ID], self.director_id)
             self.output.insert(-1,'  Password = "%s"' % a.password)
         for key in [ADDRESS, FDPORT, FILERETENTION,

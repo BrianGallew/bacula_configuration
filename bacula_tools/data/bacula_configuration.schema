@@ -268,7 +268,7 @@ CREATE TABLE `clients` (
   `fdaddress` varchar(255),
   `fdsourceaddress` varchar(255),
   `sdconnecttimeout` varchar(255),
-  `maximumnetworkbuffersize` int(11) default 65536,
+  `maximumnetworkbuffersize` int(11) default NULL,
   `pkiencryption` tinyint(1) NOT NULL default 0,
   `pkisignatures` tinyint(1) NOT NULL default 0,
   `pkikeypair` varchar(255),

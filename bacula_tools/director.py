@@ -114,9 +114,10 @@ class Director(DbDict):
     def fd(self):
         '''This is what we'll call to dump out the config for the file daemon'''
         self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
-        
-        self._simple_phrase(PASSWORD)
-        #self._yesno_phrase(MONITOR, onlytrue=True)
+        if getattr(self,CLIENT_ID, None):
+            a = PasswordStore(self.client_id, self[ID])
+            self.output.insert(-1,'  Password = "%s"' % a.password)
+            if a.monitor: self.output.insert(-1,'  Monitor = "yes"' )
         return '\n'.join(self.output)
 
     # }}}

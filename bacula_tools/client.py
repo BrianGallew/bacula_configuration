@@ -12,6 +12,7 @@ class Client(DbDict):
     SETUP_KEYS = [(NAME, ''),(FDPORT, 9102), (AUTOPRUNE, 1), (MAXIMUMCONCURRENTJOBS, 1),
                   (PKIENCRYPTION, 0), (PKISIGNATURES, 0),]
     table = CLIENTS
+    IDTAG = 2
     # {{{ parse_string(string): Entry point for a recursive descent parser
 
     def parse_string(self, string):

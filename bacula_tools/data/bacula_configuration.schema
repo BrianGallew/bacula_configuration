@@ -1,6 +1,7 @@
 -- -*- sql -*-
 -- select 'Creating table templates';
 -- Order matters!
+DROP TABLE IF EXISTS `messages_link` ;
 DROP TABLE IF EXISTS `device` ;
 DROP TABLE IF EXISTS `job_scripts` ;
 DROP TABLE IF EXISTS `service_link` ;
@@ -439,4 +440,14 @@ CREATE TABLE `fileset_link` (
   UNIQUE KEY  (`fileset_id`,`file_id`),
   CONSTRAINT `fileset_link_fk_fileset_id` FOREIGN KEY (`fileset_id`) REFERENCES `filesets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fileset_link_fk_files_id` FOREIGN KEY (`file_id`) REFERENCES `fileset_files` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- select 'Creating table messages_link';
+CREATE TABLE `messages_link` (
+  `id` int(11) NOT NULL auto_increment,
+  `messages_id` int(11) NOT NULL,
+  `ref_id` int(11) NOT NULL,
+  `link_type` int(11) NOT NULL,
+  PRIMARY KEY `PRIMARY` (`id`),
+  UNIQUE KEY (`messages_id`, `ref_id`, `link_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

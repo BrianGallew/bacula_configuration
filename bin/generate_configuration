@@ -77,7 +77,7 @@ if args.director:
     cf.write(d, '\n')
     c = Catalog({DIRECTOR_ID: d[ID]}).search()
     cf.write(c, '\n')
-    for id in d.bc.do_sql('SELECT id FROM messages ORDER BY name'): cf.write( Messages().search(id=id), '\n')
+    for id in d.bc.do_sql('SELECT messages_id FROM messages_link where ref_id = %s and link_type = %s', (d[ID], d.IDTAG)): cf.write( Messages().search(id=id), '\n')
     # Now, for a little more interesting stuff (and we're cheating hard)
     for id in d.bc.do_sql('SELECT id FROM filesets ORDER BY name'): cf.write( Fileset().search(id=id), '\n')
     for id in d.bc.do_sql('SELECT id FROM schedules ORDER BY name'): cf.write( Schedule().search(id=id), '\n')
@@ -102,7 +102,7 @@ if args.fd:
     for id in cl.bc.do_sql('SELECT director_id FROM client_pwords order by director_id'):
         cf.write( Director(client_id = cl[ID]).search(id=id).fd(), '\n')
     
-    #for id in cl.bc.do_sql('SELECT id FROM messages ORDER BY name'): cf.write( Messages().search(id=id), '\n')
+    for id in cl.bc.do_sql('SELECT messages_id FROM messages_link where ref_id = %s and link_type = %s', (cl[ID], cl.IDTAG)): cf.write( Messages().search(id=id), '\n')
     if cf.close(): pass
 
 if args.sd: pass

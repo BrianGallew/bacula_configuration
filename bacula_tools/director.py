@@ -10,6 +10,7 @@ class Director(DbDict):
                  VERID, WORKINGDIRECTORY,]
     SETUP_KEYS = [(NAME, ''), MESSAGES_ID, DIRADDRESSES]
     table = DIRECTORS
+    IDTAG = 1
     # {{{ parse_string(string, director_config, obj): Entry point for a recursive descent parser
 
     def parse_string(self, string, director_config, obj):

@@ -11,6 +11,7 @@ class Storage(DbDict):
         ]
     SETUP_KEYS = [(NAME, ''),]
     table = STORAGE
+    IDTAG = 3
     # {{{ parse_string(string): Entry point for a recursive descent parser
 
     def parse_string(self, string):

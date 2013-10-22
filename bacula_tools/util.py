@@ -159,7 +159,7 @@ class DbDict(dict):             # base class for all of the things derived from 
     output = []
     prefix = '  '               # Used for spacing out members when printing
     table = 'override me'       # This needs to be overridden in every subclass, before calling __init__
-
+    IDTAG = 0                   # Only used for director/client/storage objects
     # {{{ __init__(row={}, string=None): pass in a row (as a dict)
     def __init__(self, row={}, string = None, **kwargs):
         dict.__init__(self)

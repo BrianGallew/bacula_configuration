@@ -21,9 +21,10 @@ class Device(DbDict):
         ]
     SETUP_KEYS = [(NAME, ''),]
     table = DEVICE
-    # {{{ parse_string(string): Entry point for a recursive descent parser
+    _insert = 'INSERT INTO device_link (device_id, storage_id) values (%s, %s)'
+    # {{{ parse_string(string, obj=None): Entry point for a recursive descent parser
 
-    def parse_string(self, string):
+    def parse_string(self, string, obj=None):
         # {{{ boilerplate.  Sigh
 
         '''Populate a new object from a string.
@@ -99,6 +100,7 @@ class Device(DbDict):
         gr_res = OneOrMore(gr_line)
 
         result = gr_res.parseString(string, parseAll=True)
+        if obj: self.link(obj)
         return 'Device: ' + self[NAME]
 
     # }}}
@@ -117,3 +119,12 @@ class Device(DbDict):
         return '\n'.join(self.output)
 
 # }}}
+
+    def link(self, obj):
+        try:
+            self.bc.do_sql(self._insert, (self[ID], obj[ID]))
+        except Exception as e:
+            if e.args[0] == 1062: pass # 1062 is what happens when you try to insert a duplicate row
+            else:
+                print(e)
+                raise

@@ -1,6 +1,7 @@
 -- -*- sql -*-
 -- select 'Creating table templates';
 -- Order matters!
+DROP TABLE IF EXISTS `device_link` ;
 DROP TABLE IF EXISTS `messages_link` ;
 DROP TABLE IF EXISTS `device` ;
 DROP TABLE IF EXISTS `job_scripts` ;
@@ -450,4 +451,15 @@ CREATE TABLE `messages_link` (
   `link_type` int(11) NOT NULL,
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY (`messages_id`, `ref_id`, `link_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- select 'Creating table device_link';
+CREATE TABLE `device_link` (
+  `id` int(11) NOT NULL auto_increment,
+  `device_id` int(11) NOT NULL,
+  `storage_id` int(11) NOT NULL,
+  PRIMARY KEY `PRIMARY` (`id`),
+  UNIQUE KEY `device_link_did_sid` (`device_id`, `storage_id`),
+  CONSTRAINT `device_link_fk_device_id` FOREIGN KEY (`device_id`) REFERENCES `device` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `device_link_fk_storage_id` FOREIGN KEY (`storage_id`) REFERENCES `storage` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

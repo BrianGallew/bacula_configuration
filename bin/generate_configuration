@@ -71,6 +71,8 @@ bacula = Bacula_Factory()        # Instantiate our DB connection thingy
 hostname = given_arg[0].strip()
 
 if args.director:
+    # {{{ Director configuration stanzas
+
     # First, the basics
     cf = ConfigFile(BACULA_DIR_CONF)
     d = Director().search(hostname)
@@ -91,18 +93,36 @@ if args.director:
     # Pools
     for id in d.bc.do_sql('SELECT id FROM pools ORDER BY name'): cf.write( Pool().search(id=id), '\n')
     if cf.close(): reload_director(d)
+
+    # }}}
     
 
 if args.fd:
-    # First, the basics
+    # {{{ File Daemon configuration stanzas
+
     cf = ConfigFile(BACULA_FD_CONF)
     cl = Client().search(hostname)
     cf.write(cl.fd(), '\n')
 
-    for id in cl.bc.do_sql('SELECT director_id FROM client_pwords order by director_id'):
+    for id in cl.bc.do_sql('SELECT director_id FROM client_pwords where client_id = %s ORDER BY director_id', cl[ID]):
         cf.write( Director(client_id = cl[ID]).search(id=id).fd(), '\n')
     
-    for id in cl.bc.do_sql('SELECT messages_id FROM messages_link where ref_id = %s and link_type = %s', (cl[ID], cl.IDTAG)): cf.write( Messages().search(id=id), '\n')
+    for id in cl.bc.do_sql('SELECT messages_id FROM messages_link WHERE ref_id = %s AND link_type = %s', (cl[ID], cl.IDTAG)): cf.write( Messages().search(id=id), '\n')
     if cf.close(): pass
 
-if args.sd: pass
+    # }}}
+
+if args.sd:
+    cf = ConfigFile(BACULA_SD_CONF)
+    sd = Storage().search(hostname)
+    cf.write(sd.sd(), '\n')
+
+    for id in sd.bc.do_sql('SELECT director_id FROM storage_pwords where storage_id = %s ORDER BY director_id', sd[ID]):
+        cf.write( Director(client_id = sd[ID]).search(id=id).fd(), '\n')
+    
+    for id in sd.bc.do_sql('SELECT device_id FROM device_link WHERE storage_id = %s', sd[ID]):
+        cf.write( Device().search(id=id), '\n')
+        
+    for id in sd.bc.do_sql('SELECT messages_id FROM messages_link WHERE ref_id = %s AND link_type = %s', (sd[ID], sd.IDTAG)):
+        cf.write( Messages().search(id=id), '\n')
+    if cf.close(): pass

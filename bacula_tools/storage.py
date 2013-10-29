@@ -7,7 +7,7 @@ class Storage(DbDict):
         ]
     SD_KEYS = [WORKINGDIRECTORY, PIDDIRECTORY, CLIENTCONNECTWAIT, SDADDRESSES]
     BOOL_KEYS = [
-        (AUTOCHANGER, 0), (ALLOWCOMPRESSION, 1)
+        AUTOCHANGER, ALLOWCOMPRESSION,
         ]
     SETUP_KEYS = [(NAME, ''),]
     table = STORAGE
@@ -80,8 +80,8 @@ class Storage(DbDict):
         
         for key in self.NULL_KEYS:
             self._simple_phrase(key)
-        self._yesno_phrase(AUTOCHANGER, onlytrue=True)
-        self._yesno_phrase(ALLOWCOMPRESSION, onlyfalse=True)
+        self._yesno_phrase(AUTOCHANGER)
+        self._yesno_phrase(ALLOWCOMPRESSION)
         return '\n'.join(self.output)
 
 # }}}

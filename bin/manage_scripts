@@ -24,7 +24,7 @@ group = optparse.OptionGroup(parser, "Setters",
                              )
 
 for key in Script.NULL_KEYS: group.add_option('--' + key)
-for key in Script.SETUP_KEYS + Script.TRUE_KEYS + Script.FALSE_KEYS: group.add_option('--' + key[0])
+for key in Script.SETUP_KEYS + Script.BOOL_KEYS: group.add_option('--' + key[0])
 
 parser.add_option_group(group)
 
@@ -79,7 +79,7 @@ for key in Script.SETUP_KEYS:
     try: s._set(key[0], value)
     except: pass
     
-for key in Script.TRUE_KEYS + Script.TRUE_KEYS:
+for key in Script.BOOL_KEYS:
     value = getattr(args, key[0])
     if value == None: continue
     if value == '': value = None

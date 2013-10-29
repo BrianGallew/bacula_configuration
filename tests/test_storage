@@ -41,10 +41,11 @@ test_cases = ['''    Name = File
   Maximum Concurrent Jobs = 20''',
               
 ]
+
+# let's hope there's a director
 for string in test_cases:
     c = bacula_tools.Storage()
     c.parse_string(string)
-
-    print c
+    #print c
     print c.fd()
     print c.sd()

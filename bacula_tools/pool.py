@@ -9,8 +9,8 @@ class Pool(DbDict):
         FILERETENTION, JOBRETENTION, CLEANINGPREFIX,
         LABELFORMAT
         ]
-    TRUE_KEYS = [(AUTOPRUNE, 1), (CATALOGFILES, 1), (RECYCLE, 1)]
-    FALSE_KEYS = [(USEVOLUMEONCE, 0), (RECYCLEOLDESTVOLUME, 0), (RECYCLECURRENTVOLUME, 0), (PURGEOLDESTVOLUME, 0)]
+    BOOL_KEYS = [AUTOPRUNE, CATALOGFILES, RECYCLE, USEVOLUMEONCE,
+                 RECYCLEOLDESTVOLUME, RECYCLECURRENTVOLUME, PURGEOLDESTVOLUME]
     SETUP_KEYS = [(NAME, ''), (POOLTYPE, 'Backup')]
     table = POOLS
     # {{{ parse_string(string): Entry point for a recursive descent parser
@@ -71,8 +71,7 @@ class Pool(DbDict):
         self.output = ['Pool {\n  Name = "%(name)s"' % self,'}']
         self._simple_phrase(POOLTYPE)
         for key in self.NULL_KEYS: self._simple_phrase(key)
-        for key in self.TRUE_KEYS: self._yesno_phrase(key[0], onlyfalse=True)
-        for key in self.FALSE_KEYS: self._yesno_phrase(key[0], onlytrue=True)
+        for key in self.BOOL_KEYS: self._yesno_phrase(key)
 
         return '\n'.join(self.output)
 

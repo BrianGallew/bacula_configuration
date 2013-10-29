@@ -26,8 +26,7 @@ group = optparse.OptionGroup(parser, "Setters",
                              )
 
 for key in Pool.NULL_KEYS: group.add_option('--' + key)
-for key in Pool.TRUE_KEYS: group.add_option('--' + key[0])
-for key in Pool.FALSE_KEYS: group.add_option('--' + key[0])
+for key in Pool.BOOL_KEYS: group.add_option('--' + key[0])
 group.add_option('--' + POOLTYPE)
 
 parser.add_option_group(group)
@@ -63,7 +62,7 @@ if args.delete:
     
 if args.rename: s.change_name(args.rename)
 generic_option_processor(s, args, Pool.NULL_KEYS)
-generic_option_processor(s, args, Pool.TRUE_KEYS + Pool.FALSE_KEYS, boolean=True)
+generic_option_processor(s, args, Pool.BOOL_KEYS, boolean=True)
 if not args.pooltype == None: s._set(POOLTYPE, args.pooltype)
 
 print('Director config\n', s, '\n')

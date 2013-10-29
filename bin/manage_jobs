@@ -31,7 +31,7 @@ for key in Job.NULL_KEYS:
 for key in Job.INT_KEYS:
     if not type(key) == str: key=key[0]
     group.add_option('--' + key, type='int', help='takes an integer value')
-for key in Job.TRUE_KEYS + Job.FALSE_KEYS:
+for key in Job.BOOL_KEYS:
     if not type(key) == str: key=key[0]
     group.add_option('--' + key, help='takes a boolean value')
 for key in Job.REFERENCE_KEYS:
@@ -90,7 +90,7 @@ for key in Job.REFERENCE_KEYS:
     try: s._set(key, value, dereference=True)
     except: pass
 
-for key in Job.TRUE_KEYS + Job.FALSE_KEYS:
+for key in Job.BOOL_KEYS:
     if not type(key) == str: key=key[0]
     value = getattr(args, key)
     if value == None: continue

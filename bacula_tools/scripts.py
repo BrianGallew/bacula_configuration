@@ -4,8 +4,7 @@ from . import *
 class Script(DbDict):
     NULL_KEYS = [COMMAND, CONSOLE]
     SETUP_KEYS = [(RUNSWHEN, 'Never'),]
-    TRUE_KEYS = [(RUNSONSUCCESS, 1), (RUNSONCLIENT, 1), (FAILJOBONERROR, 1)]
-    FALSE_KEYS = [(RUNSONFAILURE, 0),]
+    BOOL_KEYS = [RUNSONSUCCESS, RUNSONCLIENT, FAILJOBONERROR, RUNSONFAILURE,]
     table = SCRIPTS
     prefix = '    '
     # {{{ __str__(): 
@@ -13,9 +12,8 @@ class Script(DbDict):
     def __str__(self):
         self.output = ['  RunScript {  # Script ID: %d' % self[ID],'  }']
         for key in self.NULL_KEYS: self._simple_phrase(key)
-        for key in self.SETUP_KEYS: self._simple_phrase(key[0])
-        for key in self.TRUE_KEYS: self._yesno_phrase(key[0], onlyfalse=True)
-        for key in self.FALSE_KEYS: self._yesno_phrase(key[0], onlytrue=True)
+        for key in self.SETUP_KEYS: self._simple_phrase(key)
+        for key in self.BOOL_KEYS: self._yesno_phrase(key)
         return '\n'.join(self.output)
 
     # }}}

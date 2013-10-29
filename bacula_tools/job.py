@@ -31,13 +31,12 @@ class Job(DbDict):
         INCREMENTALPOOL_ID, MESSAGES_ID, POOL_ID, SCHEDULE_ID, STORAGE_ID,
         ]        
     INT_KEYS = [MAXIMUMCONCURRENTJOBS, RESCHEDULETIMES, PRIORITY]
-    TRUE_KEYS = [ENABLED, PREFERMOUNTEDVOLUMES]
-    FALSE_KEYS = [
-        ACCURATE, ALLOWDUPLICATEJOBS, ALLOWMIXEDPRIORITY, CANCELLOWERLEVELDUPLICATES,
-        CANCELQUEUEDDUPLICATES, CANCELRUNNINGDUPLICATES, JOBDEF, 
-        PREFIXLINKS, PRUNEFILES, PRUNEJOBS, PRUNEVOLUMES, RERUNFAILEDLEVELS, RESCHEDULEONERROR,
-        SPOOLATTRIBUTES, SPOOLDATA, WRITEPARTAFTERJOB
-        ]
+    BOOL_KEYS = [ENABLED, PREFERMOUNTEDVOLUMES, ACCURATE, ALLOWDUPLICATEJOBS,
+                 ALLOWMIXEDPRIORITY, CANCELLOWERLEVELDUPLICATES,
+                 CANCELQUEUEDDUPLICATES, CANCELRUNNINGDUPLICATES, JOBDEF, 
+                 PREFIXLINKS, PRUNEFILES, PRUNEJOBS, PRUNEVOLUMES, RERUNFAILEDLEVELS,
+                 RESCHEDULEONERROR, SPOOLATTRIBUTES, SPOOLDATA, WRITEPARTAFTERJOB
+             ]
     SPECIAL_KEYS = [JOB_ID,]    # These won't be handled en- masse
     table = JOBS
     retlabel = 'Job'
@@ -196,10 +195,9 @@ class Job(DbDict):
             self.output.insert(-1,'  %s = "%s"' % (x.replace('_id', '').capitalize(), self._fk_reference(x)[NAME]))
         if self[JOB_ID]: self.output.insert(-1,'  JobDefs = "%s"' % self._fk_reference(JOB_ID)[NAME])
 
-        for x in self.FALSE_KEYS:
+        for x in self.BOOL_KEYS:
             if x == JOBDEF: continue
-            self._yesno_phrase(x, onlytrue=True)
-        for x in self.TRUE_KEYS: self._yesno_phrase(x, onlyfalse=True)
+            self._yesno_phrase(x)
         for x in self.scripts: self.output.insert(-1, str(x))
         return '\n'.join(self.output)
 

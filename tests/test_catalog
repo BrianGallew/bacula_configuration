@@ -19,9 +19,11 @@ test_cases = [
 '''
     ]
 
+# hopefully we have a director already!
+d = bacula_tools.Director().search(id=1)
 for string in test_cases:
     c = bacula_tools.Catalog()
-    c.parse_string(string)
+    c.parse_string(string, d)
 
     print c
     print c.fd()

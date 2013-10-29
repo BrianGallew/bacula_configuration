@@ -9,8 +9,8 @@ class Client(DbDict):
         FDSOURCEADDRESS, MAXIMUMBANDWIDTHPERJOB, PKIKEYPAIR, PKIMASTERKEY,
         NOTES,
         ]
-    SETUP_KEYS = [(NAME, ''),(FDPORT, 9102), (AUTOPRUNE, 1), (MAXIMUMCONCURRENTJOBS, 1),
-                  (PKIENCRYPTION, 0), (PKISIGNATURES, 0),]
+    SETUP_KEYS = [(NAME, ''),(FDPORT, 9102), AUTOPRUNE, (MAXIMUMCONCURRENTJOBS, 1),
+                  PKIENCRYPTION, PKISIGNATURES,]
     table = CLIENTS
     IDTAG = 2
     # {{{ parse_string(string): Entry point for a recursive descent parser
@@ -74,7 +74,6 @@ class Client(DbDict):
         result = gr_res.parseString(string, parseAll=True)
         return 'Client: ' + self[NAME]
 
-
     # }}}
     # {{{ __str__(): 
 
@@ -89,7 +88,7 @@ class Client(DbDict):
                     MAXIMUMBANDWIDTHPERJOB, PRIORITY
                     ]:
             self._simple_phrase(key)
-        self._yesno_phrase(AUTOPRUNE, onlyfalse=True)
+        self._yesno_phrase(AUTOPRUNE)
         return '\n'.join(self.output)
 
 # }}}
@@ -108,8 +107,8 @@ class Client(DbDict):
             self.output.insert(-1, '  %s {' % FDADDRESSES.capitalize())
             self.output.insert(-1,  self[FDADDRESSES])
             self.output.insert(-1, '  }')
-        self._yesno_phrase(PKIENCRYPTION, onlytrue=True)
-        self._yesno_phrase(PKISIGNATURES, onlytrue=True)
+        self._yesno_phrase(PKIENCRYPTION)
+        self._yesno_phrase(PKISIGNATURES)
         return '\n'.join(self.output)
 
     # }}}

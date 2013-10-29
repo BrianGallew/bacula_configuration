@@ -4,9 +4,7 @@ from re import compile, MULTILINE, IGNORECASE, DOTALL
 
 class Fileset(DbDict):
     table = FILESETS
-    SETUP_KEYS = [(ENABLEVSS, 1),
-                  (IGNOREFILESETCHANGES, 0),
-        ]
+    SETUP_KEYS = [ENABLEVSS, IGNOREFILESETCHANGES,]
     def __init__(self, row={}, string=None):
         DbDict.__init__(self, row, string)
         self.entries = []

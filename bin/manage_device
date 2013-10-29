@@ -27,8 +27,7 @@ group = optparse.OptionGroup(parser, "Setters",
                              )
 
 for key in Device.NULL_KEYS: group.add_option('--' + key)
-for key in Device.TRUE_KEYS: group.add_option('--' + key[0])
-for key in Device.FALSE_KEYS: group.add_option('--' + key[0])
+for key in Device.BOOL_KEYS: group.add_option('--' + key[0])
 
 parser.add_option_group(group)
 
@@ -64,7 +63,7 @@ if args.delete:
 if args.rename: s._set(NAME, args.rename)
 
 generic_option_processor(s, args, Device.NULL_KEYS)
-generic_option_processor(s, args, Device.TRUE_KEYS + Device.FALSE_KEYS, boolean=True)
+generic_option_processor(s, args, Device.BOOL_KEYS, boolean=True)
 
 print('',s, '', sep='\n')
 exit()

@@ -277,15 +277,14 @@ class DbDict(dict):             # base class for all of the things derived from 
         return
 
     # }}}
-    # {{{ _yesno_phrase(key, onlytrue=False, onlyfalse=False):
+    # {{{ _yesno_phrase(key):
 
-    def _yesno_phrase(self, key, onlytrue=False, onlyfalse=False):
+    def _yesno_phrase(self, key):
         if not type(key) == str: key = key[0]
         value = self[key]
-        if (not value) or value == '0': value = NO
+        if value == None: return
+        if value == '0': value = NO
         else: value = YES
-        if onlytrue and value == NO: return
-        if onlyfalse and value == YES: return
         self.output.insert(-1,'%s%s = %s' % (self.prefix,key.capitalize(), value))
         return
 

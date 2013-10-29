@@ -9,15 +9,12 @@ class Device(DbDict):
         MAXIMUMNETWORKBUFFERSIZE, MAXIMUMSPOOLSIZE, MAXIMUMJOBSPOOLSIZE, SPOOLDIRECTORY,
         MAXIMUMPARTSIZE, CLIENTCONNECTWAIT,
         ]
-    TRUE_KEYS = [
-        (AUTOSELECT, 1), (REMOVABLEMEDIA, 1), (BLOCKCHECKSUM, 1), (HARDWAREENDOFMEDIUM, 1),
-        (FASTFORWARDSPACEFILE, 1), (USEMTIOCGET, 1), (AUTOMATICMOUNT, 1),
-        (BACKWARDSPACERECORD, 1), (BACKWARDSPACEFILE, 1), (FORWARDSPACERECORD, 1),
-        (FORWARDSPACEFILE, 1), (BLOCKPOSITIONING, 1),
-        ]
-    FALSE_KEYS = [
-        (AUTOCHANGER, 0), (ALWAYSOPEN, 0), (CLOSEONPOLL, 0), (RANDOMACCESS, 0),
-        (BSFATEOM, 0), (TWOEOF, 0), (OFFLINEONUNMOUNT, 0), (LABELMEDIA, 0),
+    BOOL_KEYS = [
+        AUTOSELECT, REMOVABLEMEDIA, BLOCKCHECKSUM, HARDWAREENDOFMEDIUM,
+        FASTFORWARDSPACEFILE, USEMTIOCGET, AUTOMATICMOUNT,
+        BACKWARDSPACERECORD, BACKWARDSPACEFILE, FORWARDSPACERECORD,
+        FORWARDSPACEFILE, BLOCKPOSITIONING, AUTOCHANGER, ALWAYSOPEN, CLOSEONPOLL,
+        RANDOMACCESS, BSFATEOM, TWOEOF, OFFLINEONUNMOUNT, LABELMEDIA,
         ]
     SETUP_KEYS = [(NAME, ''),]
     table = DEVICE
@@ -109,12 +106,8 @@ class Device(DbDict):
     def __str__(self):
         self.output = ['Device {\n  Name = "%(name)s"' % self,'}']
         
-        for key in self.NULL_KEYS:
-            self._simple_phrase(key)
-        for key in self.TRUE_KEYS:
-            self._yesno_phrase(key, onlyfalse=True)
-        for key in self.FALSE_KEYS:
-            self._yesno_phrase(key, onlytrue=True)
+        for key in self.NULL_KEYS: self._simple_phrase(key)
+        for key in self.BOOL_KEYS: self._yesno_phrase(key)
 
         return '\n'.join(self.output)
 

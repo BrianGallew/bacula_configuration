@@ -7,7 +7,7 @@ class Catalog(DbDict):
         ]
     SPECIAL_KEYS = [DIRECTOR_ID, (NAME, '')]
     table = CATALOGS
-    # {{{ parse_string(string): Entry point for a recursive descent parser
+    # {{{ parse_string(string, director): Entry point for a recursive descent parser
 
     def parse_string(self, string, director):
         '''Populate a new object from a string.

@@ -72,9 +72,7 @@ class StringParseSupport:
                 obj = bacula_tools._DISPATCHER[key]()
                 self.parsed.append(obj)
                 if key == DIRECTOR: result = obj.parse_string(body, self.director_config, self.parsed[0])
-                elif key == CATALOG.lower(): result = obj.parse_string(body, self.parsed[0])
-                elif key == MESSAGES: result = obj.parse_string(body, self.parsed[0])
-                elif key == DEVICE: result = obj.parse_string(body, self.parsed[0])
+                elif key in [CATALOG.lower(), MESSAGES, DEVICE]: result = obj.parse_string(body, self.parsed[0])
                 else: result = obj.parse_string(body)
                 self.output(result)
             except Exception as e:

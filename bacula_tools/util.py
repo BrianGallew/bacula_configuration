@@ -219,7 +219,7 @@ class DbDict(dict):             # base class for all of the things derived from 
 
     def _set(self, field, value, boolean=False, dereference=False):
         debug_print('setting %s to %s, boolean=%s, dereference=%s', field, value, boolean, dereference)
-        if boolean:
+        if boolean and value != None:
             if value in ['0', 'no', 'No', 'NO', 'off', 'Off', 'OFF', 'false', 'False', 'FALSE']: value = 0
             else: value = 1
         if dereference:

@@ -1,16 +1,19 @@
-from . import *
-keylist = []
+#! /usr/bin/env python
+
+from __future__ import print_function
+try: from . import *
+except: from bacula_tools import *
 
 class Client(DbDict):
-    NULL_KEYS = [
-        ADDRESS, CATALOG_ID, FILERETENTION, JOBRETENTION, PRIORITY,
+    SETUP_KEYS = [
+        ADDRESS, CATALOG_ID, FILERETENTION, JOBRETENTION, 
         WORKINGDIRECTORY, SDCONNECTTIMEOUT, MAXIMUMNETWORKBUFFERSIZE,
         PIDDIRECTORY, HEARTBEATINTERVAL, FDADDRESSES, FDADDRESS,
         FDSOURCEADDRESS, MAXIMUMBANDWIDTHPERJOB, PKIKEYPAIR, PKIMASTERKEY,
         NOTES,
         ]
-    SETUP_KEYS = [(NAME, ''),(FDPORT, 9102), AUTOPRUNE, (MAXIMUMCONCURRENTJOBS, 1),
-                  PKIENCRYPTION, PKISIGNATURES,]
+    BOOL_KEYS = [AUTOPRUNE, PKIENCRYPTION, PKISIGNATURES]
+    INT_KEYS = [(FDPORT, 9102), (MAXIMUMCONCURRENTJOBS, 1), PRIORITY]
     table = CLIENTS
     IDTAG = 2
     # {{{ parse_string(string): Entry point for a recursive descent parser
@@ -112,3 +115,62 @@ class Client(DbDict):
         return '\n'.join(self.output)
 
     # }}}
+    # {{{ _cli_special_setup(): add in password support
+
+    def _cli_special_setup(self):
+        group = optparse.OptionGroup(self.parser,
+                                     "Password set/change",
+                                     "Passwords are associated with directors, so changing a password requires "
+                                     "that you specify the director to which that password applies.")
+        group.add_option('--password')
+        group.add_option('--director')
+        group.add_option('--monitor', metavar='[yes|no]')
+        self.parser.add_option_group(group)
+        return
+
+    # }}}
+    # {{{ _cli_special_do_parse(args): handle password parsing
+
+    def _cli_special_do_parse(self, args):
+        if (args.password == None) and (args.director == None): return # Nothing to do!
+        if (args.password == None) ^ (args.director == None):
+            print('\n***WARNING***: You must specify both a password and a director to change a password.  Password not changed.\n')
+            return              # Bail on any password changes, but otherwise continue
+        d = bacula_tools.Director()
+        try: d.search(id=args.director)
+        except: d.search(args.director)
+        if not d[ID]:
+            print('\n***WARNING***: Unable to find a director using "%s".  Password not changed\n' % args.director)
+            return
+        password = PasswordStore(self[ID], d[ID])
+        password.password = args.password
+        if args.monitor:
+            if args.monitor in ['1', 'yes', 'Yes', 'YES', 'on', 'On', 'ON', 'true', 'True', 'TRUE']: password.monitor = 1
+            else: password.monitor = 0
+        password.store()
+        return
+
+# }}}
+    # {{{ _cli_special_print(): print out passwords
+
+    def _cli_special_print(self):
+        print('\nPasswords:')
+        sql = 'select director_id from %s where %s = %%s' % (PasswordStore.table, PasswordStore.column1)
+        for row in self.bc.do_sql(sql, self[ID]):
+            password = PasswordStore(self[ID], row[0])
+            d = bacula_tools.Director().search(id=row[0])
+            retval = '%30s: %s' % (d[NAME], password.password)
+            if password.monitor: retval += ' (monitor)'
+            print(retval)
+        return
+
+    # }}}
+
+    def _cli_special_clone(self): pass
+
+if __name__ == "__main__":
+    import sys, os
+
+    s = Client()
+    s.cli()
+    

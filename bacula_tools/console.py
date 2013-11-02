@@ -6,7 +6,6 @@ class Console(DbDict):
         CATALOGACL, CLIENTACL, COMMANDACL, FILESETACL, JOBACL, PASSWORD,
         POOLACL, SCHEDULEACL, STORAGEACL, WHEREACL
         ]
-    SETUP_KEYS = [(NAME, ''),]
     table = CONSOLES
     # {{{ parse_string(string): Entry point for a recursive descent parser
 

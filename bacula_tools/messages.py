@@ -2,7 +2,7 @@ from __future__ import print_function
 from . import *
 
 class Messages(DbDict):
-    SETUP_KEYS = [(NAME, ''), (DATA, '')]
+    SETUP_KEYS = [(DATA, ''),]
     table = MESSAGES
     _insert = 'INSERT INTO messages_link (messages_id, ref_id, link_type) values (%s, %s, %s)'
     # {{{ parse_string(string, obj=None):

@@ -9,7 +9,6 @@ class Storage(DbDict):
     BOOL_KEYS = [
         AUTOCHANGER, ALLOWCOMPRESSION,
         ]
-    SETUP_KEYS = [(NAME, ''),]
     table = STORAGE
     IDTAG = 3
     # {{{ parse_string(string): Entry point for a recursive descent parser
@@ -102,3 +101,41 @@ class Storage(DbDict):
         return '\n'.join(self.output)
 
 # }}}
+
+    def _cli_special_setup(self):
+        self._cli_parser_group(
+            [PASSWORD, (DIRECTOR,None,'Director (name or ID) to associate with a passowrd'), (MONITOR, None, '[yes|no]')],
+            "Password set/change",
+            "Passwords are associated with directors, so changing a password requires "
+            "that you specify the director to which that password applies."
+            )
+        return
+    
+    def _cli_special_do_parse(self, args):
+        if (args.password == None) and (args.director == None): return # Nothing to do!
+        if (args.password == None) ^ (args.director == None):
+            print('\n***WARNING***: You must specify both a password and a director to change a password.  Password not changed.\n')
+            return              # Bail on any password changes, but otherwise continue
+        d = bacula_tools.Director()
+        try: d.search(id=args.director)
+        except: d.search(args.director)
+        if not d[ID]:
+            print('\n***WARNING***: Unable to find a director using "%s".  Password not changed\n' % args.director)
+            return
+        password = StoragePasswordStore(self[ID], d[ID])
+        password.password = args.password
+        password.store()
+        return
+
+    def _cli_special_print(self):
+        print('\nPasswords:')
+        sql = 'select director_id from %s where %s = %%s' % (StoragePasswordStore.table, StoragePasswordStore.column1)
+        for row in self.bc.do_sql(sql, self[ID]):
+            password = StoragePasswordStore(self[ID], row[0])
+            d = bacula_tools.Director().search(id=row[0])
+            retval = '%30s: %s' % (d[NAME], password.password)
+            if password.monitor: retval += ' (monitor)'
+            print(retval)
+        return
+
+    def _cli_special_clone(self): pass

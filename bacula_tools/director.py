@@ -8,7 +8,7 @@ class Director(DbDict):
                  MAXIMUMCONCURRENTJOBS, PASSWORD, PIDDIRECTORY, QUERYFILE,
                  SCRIPTS_DIRECTORY, SD_CONNECT_TIMEOUT, SOURCEADDRESS, STATISTICS_RETENTION,
                  VERID, WORKINGDIRECTORY,]
-    SETUP_KEYS = [(NAME, ''), MESSAGES_ID, DIRADDRESSES]
+    SETUP_KEYS = [MESSAGES_ID, DIRADDRESSES]
     table = DIRECTORS
     IDTAG = 1
     # {{{ parse_string(string, director_config, obj): Entry point for a recursive descent parser

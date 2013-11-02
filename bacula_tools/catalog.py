@@ -5,7 +5,7 @@ class Catalog(DbDict):
     NULL_KEYS = [
         DBADDRESS, DBNAME, DBPORT, DBSOCKET, PASSWORD, USER, 
         ]
-    SPECIAL_KEYS = [DIRECTOR_ID, (NAME, '')]
+    SPECIAL_KEYS = [DIRECTOR_ID,]
     table = CATALOGS
     # {{{ parse_string(string, director): Entry point for a recursive descent parser
 

@@ -11,7 +11,6 @@ CRAJ = PList('Client Run After Job')
 
 class Job(DbDict):
     NULL_KEYS = [
-        (NAME, ''),
         # Enum
         TYPE, LEVEL,
         # Strings

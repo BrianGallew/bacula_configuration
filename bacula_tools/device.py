@@ -16,7 +16,6 @@ class Device(DbDict):
         FORWARDSPACEFILE, BLOCKPOSITIONING, AUTOCHANGER, ALWAYSOPEN, CLOSEONPOLL,
         RANDOMACCESS, BSFATEOM, TWOEOF, OFFLINEONUNMOUNT, LABELMEDIA,
         ]
-    SETUP_KEYS = [(NAME, ''),]
     table = DEVICE
     _insert = 'INSERT INTO device_link (device_id, storage_id) values (%s, %s)'
     # {{{ parse_string(string, obj=None): Entry point for a recursive descent parser

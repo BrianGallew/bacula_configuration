@@ -7,6 +7,14 @@ class Script(DbDict):
     BOOL_KEYS = [RUNSONSUCCESS, RUNSONCLIENT, FAILJOBONERROR, RUNSONFAILURE,]
     table = SCRIPTS
     prefix = '    '
+    # {{{ __init__(self, row={}, string = None, **kwargs):
+
+    def __init__(self, row={}, string = None, **kwargs):
+        DbDict.__init__(self, row, string **kwargs)
+        del self[NAME]          # This doesn't have a name (yet).  Weird
+        return
+
+        # }}}
     # {{{ __str__(): 
 
     def __str__(self):

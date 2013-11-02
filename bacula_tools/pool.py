@@ -11,7 +11,7 @@ class Pool(DbDict):
         ]
     BOOL_KEYS = [AUTOPRUNE, CATALOGFILES, RECYCLE, USEVOLUMEONCE,
                  RECYCLEOLDESTVOLUME, RECYCLECURRENTVOLUME, PURGEOLDESTVOLUME]
-    SETUP_KEYS = [(NAME, ''), (POOLTYPE, 'Backup')]
+    SETUP_KEYS = [(POOLTYPE, 'Backup')]
     table = POOLS
     # {{{ parse_string(string): Entry point for a recursive descent parser
 

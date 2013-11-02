@@ -1,7 +1,7 @@
 from __future__ import print_function
 from . import *
 import bacula_tools
-import re, os, sys, filecmp
+import re, os, sys, filecmp, optparse
 
 # Extra stuff needed for the console/daemon tools
 import socket, hmac, base64, hashlib, time
@@ -105,6 +105,7 @@ class PasswordStore(object):
     _select = 'SELECT * FROM %s where %s = %%s and %s = %%s'
     _insert = 'INSERT INTO %s (%s, director_id, password %s) values (%%s, %%s, %%s %s)'
     _update = 'UPDATE %s set password=%%s %s where %s=%%s and director_id=%%s'
+    _delete = 'DELETE FROM %s where %s=%%s and director_id=%%s'
     # {{{ __init__(id1, director_id):
 
     def __init__(self, id1, director_id):
@@ -129,6 +130,10 @@ class PasswordStore(object):
     # {{{ store():
 
     def store(self):
+        if not self.password:
+            sql = self._delete % (self.table, self.column1)
+            self.bc.do_sql(sql, (self.id, self.director_id))
+            return
         if hasattr(self, MONITOR):
             values = (self.password, self.monitor)
             m = ", monitor=%s"
@@ -151,19 +156,28 @@ class PasswordStore(object):
 class StoragePasswordStore(PasswordStore):
     column1 = 'storage_id'
     table = 'storage_pwords'
+    def __str__(self):
+        d = bacula_tools.Director().search(id=self.director_id)
+        return '%s: %s' % (d[NAME], self.password)
         
 class DbDict(dict):             # base class for all of the things derived from database rows
     brace_re = re.compile(r'\s*(.*?)\s*\{\s*(.*)\s*\}\s*', re.MULTILINE|re.DOTALL)
     name_re = re.compile(r'^\s*name\s*=\s*(.*)', re.MULTILINE|re.IGNORECASE)
     bc = bacula_tools.Bacula_Factory()
     output = []
+    SETUP_KEYS = []
+    INT_KEYS = []
+    BOOL_KEYS = []
     prefix = '  '               # Used for spacing out members when printing
     table = 'override me'       # This needs to be overridden in every subclass, before calling __init__
     IDTAG = 0                   # Only used for director/client/storage objects
-    # {{{ __init__(row={}, string=None): pass in a row (as a dict)
+    # {{{ __init__(row={}, string=None, **kwargs): pass in a row (as a dict)
     def __init__(self, row={}, string = None, **kwargs):
         dict.__init__(self)
+        self.parser = None
+        self.special = None
         self[ID] = None         # Ensure we have an ID
+        self[NAME] = None       # Ensure we have an NAME
         # This allows flexibility in key setup/declaration, which in turn
         # will allow intelligent groupings to make parse/set/get code
         # somewhat simpler (or at least more clear).
@@ -206,7 +220,7 @@ class DbDict(dict):             # base class for all of the things derived from 
     def _set(self, field, value, boolean=False, dereference=False):
         debug_print('setting %s to %s, boolean=%s, dereference=%s', field, value, boolean, dereference)
         if boolean:
-            if value in ['0', 'no', 'No', 'NO', 'off', 'Off', 'OFF']: value = 0
+            if value in ['0', 'no', 'No', 'NO', 'off', 'Off', 'OFF', 'false', 'False', 'FALSE']: value = 0
             else: value = 1
         if dereference:
             value = self._fk_reference(field, value)[ID]
@@ -307,6 +321,147 @@ class DbDict(dict):             # base class for all of the things derived from 
         return obj
 
 # }}}
+
+    # Perhaps i'm overloading this class too much here, but
+    # a) I can never remember how to do mix-ins, and
+    # b) the things I want to do all reference internals.
+    # {{{ cli(): Instantiate an option parser and add all the standard bits to it
+
+    def cli(self):
+        self.word = self.table
+        if self.word[-1] == 's': self.word = self.word[:-1]
+        self.parser = optparse.OptionParser(description='Manage Bacula %ss.' % self.word,
+                                            usage='usage: %%prog [options] [%s]' % self.word)
+        self.parser.add_option('--create', action='store_true',
+                               default=False, help='Create the given %s' % self.word)
+        self.parser.add_option('--delete', action='store_true',
+                               default=False, help='Delete the given %s' % self.word)
+        self.parser.add_option('--rename', metavar='NEW_NAME',
+                               help='Rename the given %s' % self.word)
+        self.parser.add_option('--list', action='store_true',
+                               default=False, help='List the available %ss' % self.word)
+        self.parser.add_option('--clone', metavar='CLONE_NAME',
+                               help='Duplicate the given %s' % self.word)
+
+        # Add in various groups of things to set
+        self._cli_parser_group(self.BOOL_KEYS, "Boolean Setters",
+                               "Set with 0/1/yes/no/true/false or '' (empty string) to unset.",
+                               metavar = '[yes|no]'
+        )
+
+        self._cli_parser_group(self.INT_KEYS, "Integer Setters",
+                               "These accept integers or '' (empty string) to unset.", type='int', metavar='number')
+        
+        self._cli_parser_group(self.SETUP_KEYS, "Setters",
+                               "These options are used for setting various values.  "
+                               "Use an empty string, e.g. '' to unset the value for strings variables.  "
+                               "You should be aware that no sanity checking is done here, so it is quite possible "
+                               "to break your configuration while using them.  Caveat emptor."
+                           )
+        self._cli_special_setup()
+        return self._cli_do_parse()
+
+        # }}}
+    # {{{ _cli_do_parse(): actually parse the CLI and act on it
+
+    def _cli_do_parse(self):
+
+        (args, client_arg) = self.parser.parse_args()
+
+
+        if args.delete and (args.create or args.rename or args.clone):
+            self.bc.die('','If you delete then there is no sense in doing anything else.',
+                              "You didn't think this one out very well, did you?.")
+
+        if args.list:
+            print(self.bc.formatted_query_result('select name from %s order by name' % self.table, infix='\n'))
+            if not client_arg: exit()
+
+        if not client_arg:
+            self.parser.print_help()
+            exit()
+
+        name_or_num = client_arg[0]
+        if args.create: self._set_name(name_or_num)
+
+        try:
+            idnum = int(name_or_num)
+            self.search(id=idnum)
+        except: self.search(name_or_num)
+        
+        if not self[ID]:
+            print('No such %s: %s' % (self.word, name_or_num))
+            exit()
+
+        if args.delete:
+            self.delete()
+            print('Deleted %s' % name_or_num)
+            exit()                      # Nothing to print out now
+
+        if args.rename: self._set(NAME, args.rename)
+
+        if args.clone:
+            del self[ID]
+            self._set_name(args.clone)
+            self._cli_special_clone()
+
+        self._cli_option_processor(args, self.BOOL_KEYS, boolean=True)
+        self._cli_option_processor(args, self.INT_KEYS)
+        self._cli_option_processor(args, self.SETUP_KEYS)
+        self._cli_special_do_parse(args)
+
+        # Now print things out neatly
+        maxlen = 10
+        keylist = []
+        for key in self.BOOL_KEYS + self.INT_KEYS + self.SETUP_KEYS:
+            if not type(key) == str: key = key[0]
+            keylist.append(key)
+        keylist.sort()
+        for key in keylist:
+            if len(key) > maxlen: maxlen = len(key)
+        maxlen += 4
+        fmt = '%' + str(maxlen) + 's: %s'
+        print(fmt % ('ID', str(self[ID])))
+        try: print(fmt % ('NAME', str(self[NAME])))
+        except: pass            # One child class doesn't have a NAME
+        for key in keylist: print(fmt % (key, str(self[key])))
+        self._cli_special_print()
+        return
+
+        # }}}
+    # {{{ _cli_parser_group(keys, label, help_message, **kwargs): add an option group to the CLI parser
+
+    def _cli_parser_group(self, keys, label, help_message, **kwargs):
+        if not keys: return
+        group = optparse.OptionGroup(self.parser, label, help_message)
+        for key in keys:
+            if not type(key) == str:
+                if len(key) > 2: group.add_option('--' + key[0], help=key[2], **kwargs)
+                else: group.add_option('--' + key[0], **kwargs)
+            else: group.add_option('--' + key, **kwargs)
+        self.parser.add_option_group(group)
+
+        # }}}
+    # {{{ _cli_option_processor(args, items, boolean=False, dereference=False):
+
+    def _cli_option_processor(self, args, items, boolean=False, dereference=False):
+        for key in items:
+            if not type(key) == str: key = key[0]
+            value = getattr(args, key)
+            if value == None: continue
+            if value == '': value = None
+            try: self._set(key, value, boolean, dereference)
+            except: pass
+        return
+
+        # }}}
+        
+    # these empty functions provide placeholders for subclasses to call to
+    # enable more complicated behaviors.
+    def _cli_special_setup(self): pass
+    def _cli_special_do_parse(self, args): pass
+    def _cli_special_clone(self): pass
+    def _cli_special_print(self): pass
 
 class PList(list):
     '''This bizarre construct takes a phrase and lazily turns it into a

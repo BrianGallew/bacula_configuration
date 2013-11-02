@@ -1,11 +1,12 @@
-from . import *
-keylist = []
+#! /usr/bin/env python
+
+from __future__ import print_function
+try: from . import *
+except: from bacula_tools import *
 
 class Console(DbDict):
-    NULL_KEYS = [
-        CATALOGACL, CLIENTACL, COMMANDACL, FILESETACL, JOBACL, PASSWORD,
-        POOLACL, SCHEDULEACL, STORAGEACL, WHEREACL
-        ]
+    SETUP_KEYS = [CATALOGACL, CLIENTACL, COMMANDACL, FILESETACL, JOBACL, PASSWORD,
+                  POOLACL, SCHEDULEACL, STORAGEACL, WHEREACL]
     table = CONSOLES
     # {{{ parse_string(string): Entry point for a recursive descent parser
 
@@ -43,10 +44,13 @@ class Console(DbDict):
     def __str__(self):
         self.output = ['Console {\n  Name = "%(name)s"' % self, '}']
         
-        for key in self.NULL_KEYS:
+        for key in self.SETUP_KEYS:
             self._simple_phrase(key)
         return '\n'.join(self.output)
 
 # }}}
         
-  
+
+if __name__ == "__main__":
+    s = Console()
+    s.cli()

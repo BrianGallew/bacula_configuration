@@ -420,6 +420,7 @@ class DbDict(dict):             # base class for all of the things derived from 
         for key in keylist:
             if len(key) > maxlen: maxlen = len(key)
         maxlen += 4
+        self._maxlen = maxlen
         fmt = '%' + str(maxlen) + 's: %s'
         print(fmt % ('ID', str(self[ID])))
         try: print(fmt % ('NAME', str(self[NAME])))

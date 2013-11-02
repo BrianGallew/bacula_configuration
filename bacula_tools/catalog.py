@@ -1,10 +1,11 @@
+#! /usr/bin/env python
+
 from __future__ import print_function
-from . import *
+try: from . import *
+except: from bacula_tools import *
 
 class Catalog(DbDict):
-    NULL_KEYS = [
-        DBADDRESS, DBNAME, DBPORT, DBSOCKET, PASSWORD, USER, 
-        ]
+    SETUP_KEYS = [DBADDRESS, DBNAME, DBPORT, DBSOCKET, PASSWORD, USER]
     SPECIAL_KEYS = [DIRECTOR_ID,]
     table = CATALOGS
     # {{{ parse_string(string, director): Entry point for a recursive descent parser
@@ -48,7 +49,7 @@ class Catalog(DbDict):
     def __str__(self):
         self.output = ['Catalog {\n  Name = "%(name)s"' % self,'}']
         
-        for key in self.NULL_KEYS:
+        for key in self.SETUP_KEYS:
             self._simple_phrase(key)
         return '\n'.join(self.output)
 
@@ -66,3 +67,37 @@ class Catalog(DbDict):
         return self
 
     # }}}
+    # {{{ _cli_special_setup(): add in password support
+
+    def _cli_special_setup(self):
+        self.parser.add_option('--director', help='The name or ID of the director that uses this catalog')
+        return
+
+    # }}}
+    # {{{ _cli_special_do_parse(args): handle password parsing
+
+    def _cli_special_do_parse(self, args):
+        if args.director == None: return # Nothing to do!
+        d = bacula_tools.Director()
+        d.search(id=args.director)
+        if not d[ID]: d.search(args.director)
+        if not d[ID]:
+            print('\n***WARNING***: Unable to find a director using "%s".  Association not changed\n' % args.director)
+            return
+        self._set(DIRECTOR_ID, d[ID])
+        return
+
+# }}}
+    # {{{ _cli_special_print(): print out passwords
+
+    def _cli_special_print(self):
+        d = bacula_tools.Director().search(id=self[DIRECTOR_ID])
+        fmt = '%' + str(self._maxlen) +'s: %s'
+        print(fmt % (DIRECTOR, d[NAME]))
+        return
+
+    # }}}
+
+if __name__ == "__main__":
+    s = Catalog()
+    s.cli()

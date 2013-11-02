@@ -106,7 +106,8 @@ class Storage(DbDict):
         return
 
     # }}}
-    
+    # {{{ _cli_special_do_parse(args): add password support
+
     def _cli_special_do_parse(self, args):
         if (args.password == None) and (args.director == None): return # Nothing to do!
         if (args.password == None) ^ (args.director == None):
@@ -123,6 +124,9 @@ class Storage(DbDict):
         password.store()
         return
 
+    # }}}
+    # {{{ _cli_special_print(): add password support
+
     def _cli_special_print(self):
         print('\nPasswords:')
         sql = 'select director_id from %s where %s = %%s' % (StoragePasswordStore.table, StoragePasswordStore.column1)
@@ -131,6 +135,8 @@ class Storage(DbDict):
             d = bacula_tools.Director().search(id=row[0])
             print('%30s: %s' % (d[NAME], password.password))
         return
+
+    # }}}
 
     def _cli_special_clone(self): pass
 

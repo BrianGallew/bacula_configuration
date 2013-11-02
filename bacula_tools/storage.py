@@ -1,16 +1,18 @@
-from . import *
+#! /usr/bin/env python
+
+from __future__ import print_function
+try: from . import *
+except: from bacula_tools import *
 
 class Storage(DbDict):
-    NULL_KEYS = [
-        SDPORT, ADDRESS, DEVICE, MEDIATYPE, MAXIMUMCONCURRENTJOBS,
-        HEARTBEATINTERVAL
-        ]
-    SD_KEYS = [WORKINGDIRECTORY, PIDDIRECTORY, CLIENTCONNECTWAIT, SDADDRESSES]
-    BOOL_KEYS = [
-        AUTOCHANGER, ALLOWCOMPRESSION,
-        ]
+    SETUP_KEYS = [SDPORT, ADDRESS, DEVICE, MEDIATYPE, MAXIMUMCONCURRENTJOBS, HEARTBEATINTERVAL,
+                 WORKINGDIRECTORY, PIDDIRECTORY, CLIENTCONNECTWAIT, SDADDRESSES]
+    BOOL_KEYS = [AUTOCHANGER, ALLOWCOMPRESSION]
     table = STORAGE
     IDTAG = 3
+    dir_keys = [SDPORT, ADDRESS, DEVICE, MEDIATYPE, MAXIMUMCONCURRENTJOBS, HEARTBEATINTERVAL]
+    sd_keys = [WORKINGDIRECTORY, PIDDIRECTORY, CLIENTCONNECTWAIT, SDADDRESSES,
+               SDPORT, MAXIMUMCONCURRENTJOBS, HEARTBEATINTERVAL]
     # {{{ parse_string(string): Entry point for a recursive descent parser
 
     def parse_string(self, string):
@@ -77,10 +79,8 @@ class Storage(DbDict):
             a = StoragePasswordStore(self[ID], self.director_id)
             self.output.insert(-1,'  Password = "%s"' % a.password)
         
-        for key in self.NULL_KEYS:
-            self._simple_phrase(key)
-        self._yesno_phrase(AUTOCHANGER)
-        self._yesno_phrase(ALLOWCOMPRESSION)
+        for key in self.dir_keys: self._simple_phrase(key)
+        for key in self.BOOL_KEYS: self._simple_phrase(key)
         return '\n'.join(self.output)
 
 # }}}
@@ -88,28 +88,24 @@ class Storage(DbDict):
 
     def sd(self):
         self.output = ['Storage {\n  Name = "%(name)s"' % self,'}']
-        
-        for key in self.SD_KEYS: self._simple_phrase(key)
-        self._simple_phrase(SDPORT)
-        self._simple_phrase(MAXIMUMCONCURRENTJOBS)
-        self._simple_phrase(HEARTBEATINTERVAL)
-
+        for key in self.sd_keys: self._simple_phrase(key)
         # Special keys
         if self[ADDRESS]: self.output.insert(-1,'%sSDAddress = %s' % (self.prefix, '"' + self[ADDRESS] + '"'))
-        self._simple_phrase(SDADDRESSES)
-
         return '\n'.join(self.output)
 
 # }}}
+    # {{{ _cli_special_setup(): add password support
 
     def _cli_special_setup(self):
         self._cli_parser_group(
-            [PASSWORD, (DIRECTOR,None,'Director (name or ID) to associate with a passowrd'), (MONITOR, None, '[yes|no]')],
+            [PASSWORD, (DIRECTOR,None,'Director (name or ID) to associate with a password')],
             "Password set/change",
             "Passwords are associated with directors, so changing a password requires "
             "that you specify the director to which that password applies."
             )
         return
+
+    # }}}
     
     def _cli_special_do_parse(self, args):
         if (args.password == None) and (args.director == None): return # Nothing to do!
@@ -133,9 +129,11 @@ class Storage(DbDict):
         for row in self.bc.do_sql(sql, self[ID]):
             password = StoragePasswordStore(self[ID], row[0])
             d = bacula_tools.Director().search(id=row[0])
-            retval = '%30s: %s' % (d[NAME], password.password)
-            if password.monitor: retval += ' (monitor)'
-            print(retval)
+            print('%30s: %s' % (d[NAME], password.password))
         return
 
     def _cli_special_clone(self): pass
+
+if __name__ == "__main__":
+    s = Storage()
+    s.cli()

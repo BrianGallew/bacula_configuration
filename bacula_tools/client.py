@@ -169,8 +169,5 @@ class Client(DbDict):
     def _cli_special_clone(self): pass
 
 if __name__ == "__main__":
-    import sys, os
-
     s = Client()
     s.cli()
-    

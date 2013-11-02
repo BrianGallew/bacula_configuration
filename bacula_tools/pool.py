@@ -1,17 +1,17 @@
-from . import *
-keylist = []
+#! /usr/bin/env python
+
+from __future__ import print_function
+try: from . import *
+except: from bacula_tools import *
 
 class Pool(DbDict):
-    NULL_KEYS = [
-        MAXIMUMVOLUMES, STORAGE, MAXIMUMVOLUMEJOBS, MAXIMUMVOLUMEFILES,
-        MAXIMUMVOLUMEBYTES, VOLUMEUSEDURATION, VOLUMERETENTION,
-        ACTIONONPURGE, SCRATCHPOOL, RECYCLEPOOL,
-        FILERETENTION, JOBRETENTION, CLEANINGPREFIX,
-        LABELFORMAT
-        ]
     BOOL_KEYS = [AUTOPRUNE, CATALOGFILES, RECYCLE, USEVOLUMEONCE,
                  RECYCLEOLDESTVOLUME, RECYCLECURRENTVOLUME, PURGEOLDESTVOLUME]
-    SETUP_KEYS = [(POOLTYPE, 'Backup')]
+    SETUP_KEYS = [MAXIMUMVOLUMES, STORAGE, MAXIMUMVOLUMEJOBS, MAXIMUMVOLUMEFILES,
+                  MAXIMUMVOLUMEBYTES, VOLUMEUSEDURATION, VOLUMERETENTION,
+                  ACTIONONPURGE, SCRATCHPOOL, RECYCLEPOOL,
+                  FILERETENTION, JOBRETENTION, CLEANINGPREFIX,
+                  LABELFORMAT, (POOLTYPE, 'Backup', "Enum: ['Backup', 'Archive', 'Cloned', 'Migration', 'Copy', 'Save']")]
     table = POOLS
     # {{{ parse_string(string): Entry point for a recursive descent parser
 
@@ -69,10 +69,13 @@ class Pool(DbDict):
 
     def __str__(self):
         self.output = ['Pool {\n  Name = "%(name)s"' % self,'}']
-        self._simple_phrase(POOLTYPE)
-        for key in self.NULL_KEYS: self._simple_phrase(key)
+        for key in self.SETUP_KEYS_KEYS: self._simple_phrase(key)
         for key in self.BOOL_KEYS: self._yesno_phrase(key)
 
         return '\n'.join(self.output)
 
 # }}}
+
+if __name__ == "__main__":
+    s = Pool()
+    s.cli()

@@ -1,7 +1,11 @@
-from . import *
+#! /usr/bin/env python
+
+from __future__ import print_function
+try: from . import *
+except: from bacula_tools import *
 
 class Device(DbDict):
-    NULL_KEYS = [
+    SETUP_KEYS = [
         ARCHIVEDEVICE, DEVICETYPE, MEDIATYPE, CHANGERDEVICE, CHANGERCOMMAND, ALERTCOMMAND,
         DRIVEINDEX, MAXIMUMCONCURRENTJOBS, MAXIMUMCHANGERWAIT, MAXIMUMREWINDWAIT,
         MAXIMUMOPENWAIT, VOLUMEPOLLINTERVAL, MOUNTPOINT, MOUNTCOMMAND, UNMOUNTCOMMAND,
@@ -18,6 +22,8 @@ class Device(DbDict):
         ]
     table = DEVICE
     _insert = 'INSERT INTO device_link (device_id, storage_id) values (%s, %s)'
+    _delete = 'DELETE FROM device_link where device_id = %s and storage_id = %s'
+    _select = 'SELECT storage_id FROM device_link where device_id = %s'
     # {{{ parse_string(string, obj=None): Entry point for a recursive descent parser
 
     def parse_string(self, string, obj=None):
@@ -105,12 +111,13 @@ class Device(DbDict):
     def __str__(self):
         self.output = ['Device {\n  Name = "%(name)s"' % self,'}']
         
-        for key in self.NULL_KEYS: self._simple_phrase(key)
+        for key in self.SETUP_KEYS: self._simple_phrase(key)
         for key in self.BOOL_KEYS: self._yesno_phrase(key)
 
         return '\n'.join(self.output)
 
 # }}}
+    # {{{ link(obj): link the device to a storage daemon
 
     def link(self, obj):
         try:
@@ -120,3 +127,58 @@ class Device(DbDict):
             else:
                 print(e)
                 raise
+
+            # }}}
+    # {{{ unlink(obj): unlink the device from a storage daemon
+
+    def unlink(self, obj):
+        self.bc.do_sql(self._delete, (self[ID], obj[ID]))
+        return
+
+            # }}}
+    # {{{ _cli_special_setup(): add in password support
+
+    def _cli_special_setup(self):
+        group = optparse.OptionGroup(self.parser, "Storage daemon links",
+                                     "A device is associated with one or more storage daemons.")
+        group.add_option('--add-link', metavar='STORAGE_DAEMON')
+        group.add_option('--remove-link', metavar='STORAGE_DAEMON')
+        self.parser.add_option_group(group)
+        return
+
+    # }}}
+    # {{{ _cli_special_do_parse(args): handle password parsing
+
+    def _cli_special_do_parse(self, args):
+        if args.add_link:
+            s = bacula_tools.Storage().search(id=args.add_link)
+            if not s[ID]: s.search(args.add_link)
+            if not s[ID]:
+                print('\n***WARNING***: Unable to find a Storage Daemon identified by "%s".  Not linked.\n' % args.add_link)
+                return
+            self.link(s)
+
+        if args.remove_link:
+            s = bacula_tools.Storage().search(id=args.remove_link)
+            if not s[ID]: s.search(args.remove_link)
+            if not s[ID]:
+                print('\n***WARNING***: Unable to find a Storage Daemon identified by "%s".  Not unlinked.\n' % args.remove_link)
+                return
+            self.unlink(s)
+
+        return
+
+# }}}
+    # {{{ _cli_special_print(): print out passwords
+
+    def _cli_special_print(self):
+        for row in self.bc.do_sql(self._select, self[ID]):
+            s = bacula_tools.Storage().search(id=row[0])
+            print(('%'+ str(self._maxlen) + 's: %s') % ('Storage Daemon', s[NAME]))
+        return
+
+    # }}}
+
+if __name__ == "__main__":
+    s = Device()
+    s.cli()

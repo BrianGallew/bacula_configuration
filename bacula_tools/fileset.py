@@ -1,10 +1,13 @@
+#! /usr/bin/env python
+
 from __future__ import print_function
-from . import *
+try: from . import *
+except: from bacula_tools import *
 from re import compile, MULTILINE, IGNORECASE, DOTALL
 
 class Fileset(DbDict):
     table = FILESETS
-    SETUP_KEYS = [ENABLEVSS, IGNOREFILESETCHANGES,]
+    BOOL_KEYS = [ENABLEVSS, IGNOREFILESETCHANGES,]
     def __init__(self, row={}, string=None):
         DbDict.__init__(self, row, string)
         self.entries = []
@@ -122,8 +125,8 @@ class Fileset(DbDict):
 
     def __str__(self):
         self.output = ['Fileset {','  Name = "%(name)s"' % self, '}']
-        self._yesno_phrase(ENABLEVSS)
-        self._yesno_phrase(IGNOREFILESETCHANGES)
+        for key in self.BOOL_KEYS: self._yesno_phrase(key)
+
         for test,phrase in ([0,'Include'],[1,'Exclude']):
             subset =  [x for x in self.entries if x[3] == test]
             if subset:              # We have includes
@@ -138,5 +141,51 @@ class Fileset(DbDict):
         return '\n'.join(self.output)
 
 # }}}
+    # {{{ _cli_special_setup(): setup the weird phrases that go with filesets
+
+    def _cli_special_setup(self):
+        group = optparse.OptionGroup(self.parser,
+                                     "Stanzas",
+                                     "Handle elements of the Include and Exclude sections")
+        group.add_option('--add-file', action='append', default=[], help='Add a file to the Include section')
+        group.add_option('--add-option', action='append', default=[], help='Add an option to the Include section')
+        group.add_option('--add-exclusion-file', action='append', default=[], help='Add a file to the Exclude section')
+        group.add_option('--add-exclusion-option', action='append', default=[], help='Add an option to the Exclude section')
+        group.add_option('--remove', action='append', default=[], help='Removes exact text match for either an option or a file')
+        self.parser.add_option_group(group)
+        return
+
+    # }}}
+    # {{{ _cli_special_do_parse(args): handle the weird phrases that go with filesets
+
+    def _cli_special_do_parse(self, args):
+        for stanza in args.add_file: self._add_entry(stanza, 0, 0)
+        for stanza in args.add_option: self._add_entry(stanza, 1, 0)
+        for stanza in args.add_exclusion_file: self._add_entry(stanza, 0, 1)
+        for stanza in args.add_exclusion_option: self._add_entry(stanza, 1, 1)
+        for stanza in args.remove: self._delete_entry(stanza)
+        return
+
+# }}}
+    # {{{ _cli_special_print(): print out the weird phrases that go with filesets
+
+    def _cli_special_print(self):
+        fmt = '%' + str(self._maxlen) + 's: %s'
+        for test,phrase in ([0,'Include'],[1,'Exclude']):
+            subset =  [x for x in self.entries if x[3] == test]
+            if subset:              # We have a group!
+                print(phrase)
+                options = [x for x in subset if x[2]]
+                if options:
+                    print(fmt % ('Options', ','.join([x[1] for x in options])))
+                [print(fmt % ('',x[1])) for x in subset if not x[2]]
+                
+    # }}}
+
+    def _cli_special_clone(self): pass
 
         
+
+if __name__ == "__main__":
+    s = Fileset()
+    s.cli()

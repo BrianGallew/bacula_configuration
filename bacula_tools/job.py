@@ -1,7 +1,8 @@
+#! /usr/bin/env python
+
 from __future__ import print_function
-from bacula_tools import *
-from bacula_tools.scripts import Script
-import bacula_tools
+try: from . import *
+except: from bacula_tools import *
 
 RBJ = PList('Run Before Job')
 RAJ = PList('Run After Job')
@@ -10,7 +11,7 @@ CRBJ = PList('Client Run Before Job')
 CRAJ = PList('Client Run After Job')
 
 class Job(DbDict):
-    NULL_KEYS = [
+    SETUP_KEYS = [
         # Enum
         TYPE, LEVEL,
         # Strings
@@ -20,15 +21,10 @@ class Job(DbDict):
         STRIPPREFIX, VERIFYJOB, WHERE, WRITEBOOTSTRAP,
         # keys with values
         (REPLACE, 'always'), 
-        ]
-    TIME_KEYS = [
+        # Times
         DIFFERENTIALMAXWAITTIME, IDMAXWAITTIME, INCREMENTALMAXRUNTIME, MAXRUNSCHEDTIME,
         MAXRUNTIME, MAXWAITTIME, MAXFULLINTERVAL, RESCHEDULEINTERVAL, 
         ]
-    REFERENCE_KEYS = [          # foreign keys
-        DIFFERENTIALPOOL_ID, FILESET_ID, FULLPOOL_ID, CLIENT_ID,
-        INCREMENTALPOOL_ID, MESSAGES_ID, POOL_ID, SCHEDULE_ID, STORAGE_ID,
-        ]        
     INT_KEYS = [MAXIMUMCONCURRENTJOBS, RESCHEDULETIMES, PRIORITY]
     BOOL_KEYS = [ENABLED, PREFERMOUNTEDVOLUMES, ACCURATE, ALLOWDUPLICATEJOBS,
                  ALLOWMIXEDPRIORITY, CANCELLOWERLEVELDUPLICATES,
@@ -36,6 +32,10 @@ class Job(DbDict):
                  PREFIXLINKS, PRUNEFILES, PRUNEJOBS, PRUNEVOLUMES, RERUNFAILEDLEVELS,
                  RESCHEDULEONERROR, SPOOLATTRIBUTES, SPOOLDATA, WRITEPARTAFTERJOB
              ]
+    REFERENCE_KEYS = [          # foreign keys
+        DIFFERENTIALPOOL_ID, FILESET_ID, FULLPOOL_ID, CLIENT_ID,
+        INCREMENTALPOOL_ID, MESSAGES_ID, POOL_ID, SCHEDULE_ID, STORAGE_ID,
+        ]        
     SPECIAL_KEYS = [JOB_ID,]    # These won't be handled en- masse
     table = JOBS
     retlabel = 'Job'
@@ -186,8 +186,7 @@ class Job(DbDict):
 
     def __str__(self):
         self.output = ['%s {' % self.retlabel,'}']
-        for x in self.NULL_KEYS: self._simple_phrase(x)
-        for x in self.TIME_KEYS: self._simple_phrase(x, False)
+        for x in self.SETUP_KEYS: self._simple_phrase(x)
         for x in self.INT_KEYS: self._simple_phrase(x)
         for x in self.REFERENCE_KEYS:
             if self[x] == None: continue
@@ -211,7 +210,7 @@ class Job(DbDict):
             obj.search(string.strip())
             if not obj[ID]: obj._set_name(string.strip())
             if not self[fk] == obj[ID]: self._set(fk, obj[ID])
-        else: obj.search(None, id=self[fk])
+        else: obj.search(self[fk])
         return obj
 
 # }}}
@@ -271,6 +270,62 @@ class Job(DbDict):
         return
 
 # }}}
+    # {{{ _cli_special_setup(): setup the weird phrases that go with filesets
+
+    def _cli_special_setup(self):
+        group = optparse.OptionGroup(self.parser,
+                                     "Object Setters",
+                                     "Various objects associated with a Job")
+        group.add_option('--pool', help='Use this pool for all backups unless overridden by a more specific pool')
+        group.add_option('--differential-pool', help='Use this pool for differential backups instead of the standard pool')
+        group.add_option('--full-pool', help='Use this pool for full backups instead of the standard pool')
+        group.add_option('--incremental-pool', help='Use this pool for incremental backups instead of the standard pool')
+        group.add_option('--fileset')
+        group.add_option('--client')
+        group.add_option('--message-set')
+        group.add_option('--schedule')
+        group.add_option('--storage')
+        group.add_option('--default-job', help='The job which will supply default values for those otherwise unset on this one')
+        self.parser.add_option_group(group)
+        return
+
+    # }}}
+    # {{{ _cli_special_do_parse(args): handle the weird phrases that go with filesets
+
+    def _cli_special_do_parse(self, args):
+        self._cli_deref_helper(POOL_ID, args.pool, Pool)
+        self._cli_deref_helper(DIFFERENTIALPOOL_ID, args.differential_pool, Pool)
+        self._cli_deref_helper(FULLPOOL_ID, args.full_pool, Pool)
+        self._cli_deref_helper(INCREMENTALPOOL_ID, args.incremental_pool, Pool)
+
+        self._cli_deref_helper(FILESET_ID, args.fileset, Fileset)
+        self._cli_deref_helper(CLIENT_ID, args.client, Client)
+        self._cli_deref_helper(MESSAGES_ID, args.message_set, Messages)
+        self._cli_deref_helper(SCHEDULE_ID, args.schedule, Schedule)
+        self._cli_deref_helper(STORAGE_ID, args.storage, Storage)
+        self._cli_deref_helper(JOB_ID, args.default_job, JobDef)
+        return
+
+    def _cli_deref_helper(self, key, value, obj):
+        if value == None: return
+        if value=='': return self._set(key, None)
+        target = obj().search(value)
+        if target[ID]: self._set(key, target[ID])
+        print('Unable to find a match for %s, continuing' % value)
+        pass
+# }}}
+    # {{{ _cli_special_print(): print out the weird phrases that go with filesets
+
+    def _cli_special_print(self):
+        fmt = '%' + str(self._maxlen) + 's: %s'
+        for x in self.REFERENCE_KEYS:
+            if self[x] == None: continue
+            print(fmt % (x.replace('_id', '').capitalize(), self._fk_reference(x)[NAME]))
+
+        return
+    # }}}
+
+    def _cli_special_clone(self): pass
 
 class JobDef(Job):
     retlabel = 'JobDefs'
@@ -278,3 +333,9 @@ class JobDef(Job):
     def _save(self):
         self[JOBDEF] = 1
         return Job._save(self)
+
+def main():
+    s = Job()
+    s.cli()
+
+if __name__ == "__main__": main()

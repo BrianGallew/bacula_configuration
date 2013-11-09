@@ -157,7 +157,7 @@ class StoragePasswordStore(PasswordStore):
     column1 = 'storage_id'
     table = 'storage_pwords'
     def __str__(self):
-        d = bacula_tools.Director().search(id=self.director_id)
+        d = bacula_tools.Director().search(self.director_id)
         return '%s: %s' % (d[NAME], self.password)
         
 class DbDict(dict):             # base class for all of the things derived from database rows

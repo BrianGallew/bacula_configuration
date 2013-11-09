@@ -219,7 +219,7 @@ class Job(DbDict):
     def _load_scripts(self):
         if self[ID]:
             for row in self.bc.do_sql('SELECT * FROM job_scripts WHERE job_id = %s', (self[ID],), asdict=True):
-                s = Script({ID: row[SCRIPT_ID]})
+                s = bacula_tools.Script({ID: row[SCRIPT_ID]})
                 s.search()
                 self.scripts = [x for x in self.scripts if not x[ID] == s[ID]]
                 self.scripts.append(s)
@@ -230,8 +230,7 @@ class Job(DbDict):
 
     def _parse_script(self, **kwargs):
         def doit(a,b,c):
-            from bacula_tools.scripts import Script
-            s = Script(kwargs)
+            s = bacula_tools.Script(kwargs)
             s[COMMAND] = c[2]
             s.search()
             return self._add_script(s)
@@ -259,9 +258,10 @@ class Job(DbDict):
     # }}}
     # {{{ _parse_script_full(tokens):
 
-    def _parse_script_full(self, tokens):
-        s = Script()
-        values = tokens[1]
+    def _parse_script_full(self, *tokens):
+        from pprint import pprint
+        s = bacula_tools.Script()
+        values = tokens[2][1]
         while values:
             k,n,v = values[:3]
             del values[:3]

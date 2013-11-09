@@ -200,14 +200,15 @@ class DbDict(dict):             # base class for all of the things derived from 
         the passed-in key as an ID if it can be converted to an INT,
         otherwise assume it's a name.'''
         if not key:
+            debug_print('DbDict.search: no key, checking for NAME and ID: table "%s", name "%s", id "%s"'% (self.table, self[NAME], self[ID]))
             if self[NAME]: new_me = self.bc.value_check(self.table, NAME, self[NAME], asdict=True)
-            else: new_me = self.bc.value_check(self.table, ID, self[ID], asdict=True)
+            elif self[ID]: new_me = self.bc.value_check(self.table, ID, self[ID], asdict=True)
         else:
             try: new_me = self.bc.value_check(self.table, ID, int(key), asdict=True)
             except: new_me = self.bc.value_check(self.table, NAME, key, asdict=True)
         try: self.update(new_me[0])
         except Exception as e: pass
-        [getattr(self, x)() for x in dir(self) if '_load_' in x]
+        if self[ID]: [getattr(self, x)() for x in dir(self) if '_load_' in x]
         return self
 
     # }}}

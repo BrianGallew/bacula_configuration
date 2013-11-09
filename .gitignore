@@ -8,3 +8,5 @@ build
 manage_*
 *.egg-info
 dist
+setuptools-*.egg
+setuptools-*.tar.gz

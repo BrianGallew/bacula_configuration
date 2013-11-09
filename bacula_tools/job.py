@@ -311,7 +311,7 @@ class Job(DbDict):
         if value=='': return self._set(key, None)
         target = obj().search(value)
         if target[ID]: self._set(key, target[ID])
-        print('Unable to find a match for %s, continuing' % value)
+        else: print('Unable to find a match for %s, continuing' % value)
         pass
 # }}}
     # {{{ _cli_special_print(): print out the weird phrases that go with filesets

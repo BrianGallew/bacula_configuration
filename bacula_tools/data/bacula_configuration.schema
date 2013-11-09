@@ -155,7 +155,6 @@ CREATE TABLE `directors` (
   `sd_connect_timeout` int(11),
   `diraddresses` varchar(512),
   `statistics_retention` varchar(255),
-  `verid` varchar(255),
   `maximumconsoleconnections` int(11),
   `address` varchar(255),
   `sourceaddress` varchar(255),

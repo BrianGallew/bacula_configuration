@@ -1,14 +1,17 @@
+#! /usr/bin/env python
+
 from __future__ import print_function
-from . import *
-keylist = []
+try: from . import *
+except: from bacula_tools import *
 
 class Director(DbDict):
-    NULL_KEYS = [ADDRESS, (DIRPORT, 9101),
-                 FD_CONNECT_TIMEOUT, HEARTBEATINTERVAL, MAXIMUMCONSOLECONNECTIONS,
-                 MAXIMUMCONCURRENTJOBS, PASSWORD, PIDDIRECTORY, QUERYFILE,
+    SETUP_KEYS = [ADDRESS, 
+                 FD_CONNECT_TIMEOUT, HEARTBEATINTERVAL,
+                 PASSWORD, PIDDIRECTORY, QUERYFILE,
                  SCRIPTS_DIRECTORY, SD_CONNECT_TIMEOUT, SOURCEADDRESS, STATISTICS_RETENTION,
-                 VERID, WORKINGDIRECTORY,]
-    SETUP_KEYS = [MESSAGES_ID, DIRADDRESSES]
+                 WORKINGDIRECTORY, DIRADDRESSES]
+    INT_KEYS = [(DIRPORT, 9101), MAXIMUMCONCURRENTJOBS, MAXIMUMCONSOLECONNECTIONS,]
+    NULL_KEYS = [MESSAGES_ID, ]
     table = DIRECTORS
     IDTAG = 1
     # {{{ parse_string(string, director_config, obj): Entry point for a recursive descent parser
@@ -74,7 +77,6 @@ class Director(DbDict):
         gr_sd_conn = np(PList('sd connect timeout'), gr_number, self._parse_setter(SD_CONNECT_TIMEOUT, True))
         gr_source = np(PList('source address'), action=self._parse_setter(SOURCEADDRESS))
         gr_stats = np(PList('statistics retention'), action=self._parse_setter(STATISTICS_RETENTION))
-        gr_verid = np((VERID,), action=self._parse_setter(VERID))
         gr_messages = np((MESSAGES,), action=self._parse_setter(MESSAGES_ID, dereference=True))
         gr_work_dir = np(PList('working directory'), action=self._parse_setter(WORKINGDIRECTORY))
         gr_port = np(PList('dir port'), gr_number, self._parse_setter(DIRPORT, True))
@@ -122,5 +124,42 @@ class Director(DbDict):
         return '\n'.join(self.output)
 
     # }}}
+    # {{{ _cli_special_setup(): setup the weird phrases that go with filesets
+
+    def _cli_special_setup(self):
+        group = optparse.OptionGroup(self.parser,
+                                     "Object Setters",
+                                     "Various objects associated with a Job")
+        group.add_option('--message-set')
+        self.parser.add_option_group(group)
+        return
+
+    # }}}
+    # {{{ _cli_special_do_parse(args): handle the weird phrases that go with filesets
+
+    def _cli_special_do_parse(self, args):
+        if args.message_set == None: return
+        if args.message_set =='': return self._set(MESSAGES_ID, None)
+        target = Messages().search(args.message_set)
+        if target[ID]: self._set(MESSAGES_ID, target[ID])
+        else: print('Unable to find a match for %s, continuing' % args.message_set)
+        return
+
+# }}}
+    # {{{ _cli_special_print(): print out the weird phrases that go with filesets
+
+    def _cli_special_print(self):
+        if not self[MESSAGES_ID]: return
+        fmt = '%' + str(self._maxlen) + 's: %s'
+        print(fmt % ('Messages', self._fk_reference(MESSAGES_ID)[NAME]))
+        return
+    # }}}
+
+    def _cli_special_clone(self): pass
         
   
+def main():
+    s = Director()
+    s.cli()
+
+if __name__ == "__main__": main()

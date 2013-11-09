@@ -91,7 +91,7 @@ class Director(DbDict):
         if director_config: gr_pass = np((PASSWORD,), action=self._parse_setter(PASSWORD))
         else: gr_pass = np((PASSWORD,), action=_handle_password)
 
-        gr_res = OneOrMore(gr_name | gr_address | gr_fd_conn | gr_heart | gr_max_con | gr_max_jobs | gr_pass | gr_pid | gr_query | gr_scripts | gr_sd_conn | gr_source | gr_stats | gr_verid | gr_messages | gr_work_dir | gr_port | gr_monitor | da_addresses)
+        gr_res = OneOrMore(gr_name | gr_address | gr_fd_conn | gr_heart | gr_max_con | gr_max_jobs | gr_pass | gr_pid | gr_query | gr_scripts | gr_sd_conn | gr_source | gr_stats | gr_messages | gr_work_dir | gr_port | gr_monitor | da_addresses)
 
         result = gr_res.parseString(string, parseAll=True)
         return 'Director: ' + self[NAME]

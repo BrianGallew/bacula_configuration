@@ -311,6 +311,7 @@ CREATE TABLE `storage_pwords` (
 -- select 'Creating table scripts';
 CREATE TABLE `scripts` (
   `id` int(11) NOT NULL auto_increment,
+  `name` varchar(255),
   `runsonsuccess` tinyint(1),
   `runsonfailure` tinyint(1),
   `runsonclient` tinyint(1),

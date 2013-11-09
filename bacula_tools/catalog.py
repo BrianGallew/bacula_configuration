@@ -54,10 +54,10 @@ class Catalog(DbDict):
         return '\n'.join(self.output)
 
 # }}}
-    # {{{ search(string=None, id=None):
+    # {{{ search(key=None):
 
-    def search(self, string=None, id=None):
-        DbDict.search(self, string, id)
+    def search(self, key=None):
+        DbDict.search(self, key)
         if self[ID]: return self
         if not self[DIRECTOR_ID]: return self # can't look myself up if I don't have any attributes
         new_me = self.bc.value_check(self.table, DIRECTOR_ID, self[DIRECTOR_ID], asdict=True)
@@ -79,7 +79,7 @@ class Catalog(DbDict):
     def _cli_special_do_parse(self, args):
         if args.director == None: return # Nothing to do!
         d = bacula_tools.Director()
-        d.search(id=args.director)
+        d.search(args.director)
         if not d[ID]: d.search(args.director)
         if not d[ID]:
             print('\n***WARNING***: Unable to find a director using "%s".  Association not changed\n' % args.director)
@@ -91,13 +91,15 @@ class Catalog(DbDict):
     # {{{ _cli_special_print(): print out passwords
 
     def _cli_special_print(self):
-        d = bacula_tools.Director().search(id=self[DIRECTOR_ID])
+        d = bacula_tools.Director().search(self[DIRECTOR_ID])
         fmt = '%' + str(self._maxlen) +'s: %s'
         print(fmt % (DIRECTOR, d[NAME]))
         return
 
     # }}}
 
-if __name__ == "__main__":
+def main():
     s = Catalog()
     s.cli()
+
+if __name__ == "__main__": main()

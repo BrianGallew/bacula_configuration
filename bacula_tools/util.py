@@ -192,16 +192,19 @@ class DbDict(dict):             # base class for all of the things derived from 
         return
 
     # }}}
-    # {{{ search(string=None, id=None):
+    # {{{ search(key=None):
 
-    def search(self, string=None, id=None):
-        if string:
-            new_me = self.bc.value_check(self.table, NAME, string, asdict=True)
-        elif not id == None:
-            debug_print('tracking down id %s', id)
-            new_me = self.bc.value_check(self.table, ID, id, asdict=True)
+    def search(self, key=None):
+        '''Search for ourself using a number of different methods.  If no
+        key is passed in, try self[NAME] and then self[ID].  Otherwise, try
+        the passed-in key as an ID if it can be converted to an INT,
+        otherwise assume it's a name.'''
+        if not key:
+            if self[NAME]: new_me = self.bc.value_check(self.table, NAME, self[NAME], asdict=True)
+            else: new_me = self.bc.value_check(self.table, ID, self[ID], asdict=True)
         else:
-            new_me = self.bc.value_check(self.table, NAME, self[NAME], asdict=True)
+            try: new_me = self.bc.value_check(self.table, ID, int(key), asdict=True)
+            except: new_me = self.bc.value_check(self.table, NAME, key, asdict=True)
         try: self.update(new_me[0])
         except Exception as e: pass
         [getattr(self, x)() for x in dir(self) if '_load_' in x]
@@ -317,7 +320,7 @@ class DbDict(dict):             # base class for all of the things derived from 
             obj.search(string.strip())
             if not obj[ID]: obj._set_name(string.strip())
             if not self[fk] == obj[ID]: self._set(fk, obj[ID])
-        else: obj.search(None, id=self[fk])
+        else: obj.search(self[fk])
         return obj
 
 # }}}
@@ -384,10 +387,7 @@ class DbDict(dict):             # base class for all of the things derived from 
         name_or_num = client_arg[0]
         if args.create: self._set_name(name_or_num)
 
-        try:
-            idnum = int(name_or_num)
-            self.search(id=idnum)
-        except: self.search(name_or_num)
+        self.search(name_or_num)
         
         if not self[ID]:
             print('No such %s: %s' % (self.word, name_or_num))

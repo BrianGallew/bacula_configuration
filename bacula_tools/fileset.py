@@ -186,6 +186,8 @@ class Fileset(DbDict):
 
         
 
-if __name__ == "__main__":
+def main():
     s = Fileset()
     s.cli()
+
+if __name__ == "__main__": main()

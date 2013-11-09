@@ -137,7 +137,7 @@ class Client(DbDict):
             print('\n***WARNING***: You must specify both a password and a director to change a password.  Password not changed.\n')
             return              # Bail on any password changes, but otherwise continue
         d = bacula_tools.Director()
-        try: d.search(id=args.director)
+        try: d.search(args.director)
         except: d.search(args.director)
         if not d[ID]:
             print('\n***WARNING***: Unable to find a director using "%s".  Password not changed\n' % args.director)
@@ -158,7 +158,7 @@ class Client(DbDict):
         sql = 'select director_id from %s where %s = %%s' % (PasswordStore.table, PasswordStore.column1)
         for row in self.bc.do_sql(sql, self[ID]):
             password = PasswordStore(self[ID], row[0])
-            d = bacula_tools.Director().search(id=row[0])
+            d = bacula_tools.Director().search(row[0])
             retval = '%30s: %s' % (d[NAME], password.password)
             if password.monitor: retval += ' (monitor)'
             print(retval)
@@ -168,6 +168,8 @@ class Client(DbDict):
 
     def _cli_special_clone(self): pass
 
-if __name__ == "__main__":
+def main():
     s = Client()
     s.cli()
+
+if __name__ == "__main__": main()

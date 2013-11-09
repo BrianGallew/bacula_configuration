@@ -6,3 +6,5 @@ build
 *.pyc
 *.pyo
 manage_*
+*.egg-info
+dist

@@ -79,19 +79,19 @@ if args.director:
     cf.write(d, '\n')
     c = Catalog({DIRECTOR_ID: d[ID]}).search()
     cf.write(c, '\n')
-    for id in d.bc.do_sql('SELECT messages_id FROM messages_link where ref_id = %s and link_type = %s', (d[ID], d.IDTAG)): cf.write( Messages().search(id=id), '\n')
+    for id in d.bc.do_sql('SELECT messages_id FROM messages_link where ref_id = %s and link_type = %s', (d[ID], d.IDTAG)): cf.write( Messages().search(id), '\n')
     # Now, for a little more interesting stuff (and we're cheating hard)
-    for id in d.bc.do_sql('SELECT id FROM filesets ORDER BY name'): cf.write( Fileset().search(id=id), '\n')
-    for id in d.bc.do_sql('SELECT id FROM schedules ORDER BY name'): cf.write( Schedule().search(id=id), '\n')
+    for id in d.bc.do_sql('SELECT id FROM filesets ORDER BY name'): cf.write( Fileset().search(id), '\n')
+    for id in d.bc.do_sql('SELECT id FROM schedules ORDER BY name'): cf.write( Schedule().search(id), '\n')
     # clients
-    for id in d.bc.do_sql('SELECT id FROM clients ORDER BY name'): cf.write( Client(director_id = d[ID]).search(id=id), '\n')
+    for id in d.bc.do_sql('SELECT id FROM clients ORDER BY name'): cf.write( Client(director_id = d[ID]).search(id), '\n')
     # jobs
-    for id in d.bc.do_sql('SELECT id FROM jobs WHERE jobdef=1 ORDER BY name'): cf.write( JobDef().search(id=id), '\n')
-    for id in d.bc.do_sql('SELECT id FROM jobs WHERE NOT jobdef=1 ORDER BY name'): cf.write( Job().search(id=id), '\n')
+    for id in d.bc.do_sql('SELECT id FROM jobs WHERE jobdef=1 ORDER BY name'): cf.write( JobDef().search(id), '\n')
+    for id in d.bc.do_sql('SELECT id FROM jobs WHERE NOT jobdef=1 ORDER BY name'): cf.write( Job().search(id), '\n')
     # storage
-    for id in d.bc.do_sql('SELECT id FROM storage ORDER BY name'): cf.write( Storage(director_id = d[ID]).search(id=id), '\n')
+    for id in d.bc.do_sql('SELECT id FROM storage ORDER BY name'): cf.write( Storage(director_id = d[ID]).search(id), '\n')
     # Pools
-    for id in d.bc.do_sql('SELECT id FROM pools ORDER BY name'): cf.write( Pool().search(id=id), '\n')
+    for id in d.bc.do_sql('SELECT id FROM pools ORDER BY name'): cf.write( Pool().search(id), '\n')
     if cf.close(): reload_director(d)
 
     # }}}
@@ -105,9 +105,9 @@ if args.fd:
     cf.write(cl.fd(), '\n')
 
     for id in cl.bc.do_sql('SELECT director_id FROM client_pwords where client_id = %s ORDER BY director_id', cl[ID]):
-        cf.write( Director(client_id = cl[ID]).search(id=id).fd(), '\n')
+        cf.write( Director(client_id = cl[ID]).search(id).fd(), '\n')
     
-    for id in cl.bc.do_sql('SELECT messages_id FROM messages_link WHERE ref_id = %s AND link_type = %s', (cl[ID], cl.IDTAG)): cf.write( Messages().search(id=id), '\n')
+    for id in cl.bc.do_sql('SELECT messages_id FROM messages_link WHERE ref_id = %s AND link_type = %s', (cl[ID], cl.IDTAG)): cf.write( Messages().search(id), '\n')
     if cf.close(): pass
 
     # }}}
@@ -118,11 +118,11 @@ if args.sd:
     cf.write(sd.sd(), '\n')
 
     for id in sd.bc.do_sql('SELECT director_id FROM storage_pwords where storage_id = %s ORDER BY director_id', sd[ID]):
-        cf.write( Director(client_id = sd[ID]).search(id=id).fd(), '\n')
+        cf.write( Director(client_id = sd[ID]).search(id).fd(), '\n')
     
     for id in sd.bc.do_sql('SELECT device_id FROM device_link WHERE storage_id = %s', sd[ID]):
-        cf.write( Device().search(id=id), '\n')
+        cf.write( Device().search(id), '\n')
         
     for id in sd.bc.do_sql('SELECT messages_id FROM messages_link WHERE ref_id = %s AND link_type = %s', (sd[ID], sd.IDTAG)):
-        cf.write( Messages().search(id=id), '\n')
+        cf.write( Messages().search(id), '\n')
     if cf.close(): pass

@@ -1,10 +1,15 @@
+#! /usr/bin/env python
+
 from __future__ import print_function
-from . import *
+try: from . import *
+except: from bacula_tools import *
 
 class Messages(DbDict):
     SETUP_KEYS = [(DATA, ''),]
     table = MESSAGES
-    _insert = 'INSERT INTO messages_link (messages_id, ref_id, link_type) values (%s, %s, %s)'
+    _select = 'SELECT ref_id, link_type FROM messages_link WHERE messages_id=%s'
+    _insert = 'INSERT INTO messages_link (messages_id, ref_id, link_type) VALUES (%s, %s, %s)'
+    _delete = 'DELETE FROM messages_link WHERE messages_id = %s AND ref_id=%s AND link_type=%s'
     # {{{ parse_string(string, obj=None):
 
     def parse_string(self, string, obj=None):
@@ -25,6 +30,13 @@ class Messages(DbDict):
                 raise
 
                 # }}}
+    # {{{ unlink(obj): unlink the device from a storage daemon
+
+    def unlink(self, obj):
+        self.bc.do_sql(self._delete, (self[ID], obj[ID], obj.IDTAG))
+        return
+
+            # }}}
     # {{{ __str__(): 
 
     def __str__(self):
@@ -32,3 +44,61 @@ class Messages(DbDict):
         return output
 
 # }}}
+    # {{{ _cli_special_setup(): add in password support
+
+    def _cli_special_setup(self):
+        group = optparse.OptionGroup(self.parser, "Object links",
+                                     "Messages are used by clients, storage daemons, and directors.")
+        group.add_option('--add-link', metavar='STORAGE_DAEMON')
+        group.add_option('--remove-link', metavar='STORAGE_DAEMON')
+        group.add_option('--object-type', help='Optional device type to disambiguate the desired linkage')
+        self.parser.add_option_group(group)
+        return
+
+    # }}}
+    # {{{ _cli_special_do_parse(args): handle password parsing
+
+    def _cli_special_do_parse(self, args):
+        obj = None
+        if args.object_type: obj = getattr(bacula_tools, args.object_type.capitalize(), None)
+            
+        if args.add_link:
+            if obj: target = obj().search(args.add_link)
+            else:
+                for key in [Client, Storage, Director]:
+                    target = key().search(args.add_link)
+                    if target[ID]: break
+            if target[ID]: self.link(target)
+            else: print('Unable to find anything named', args.add_link)
+
+        if args.remove_link:
+            if obj: target = obj().search(args.remove_link)
+            else:
+                for key in [Client, Storage, Director]:
+                    target = key().search(args.remove_link)
+                    if target[ID]: break
+            if not target: print('Unable to find anything named', args.remove_link)
+            else: self.unlink(target)
+
+        return
+
+# }}}
+    # {{{ _cli_special_print(): print out passwords
+
+    def _cli_special_print(self):
+        resultset = self.bc.do_sql(self._select, self[ID])
+        if not resultset: return
+        fmt = '%'+ str(self._maxlen) + 's'
+        for row in resultset:
+            for key in [Client, Storage, Director]:
+                if key.IDTAG == row[1]: print(fmt % key().search(row[0])[NAME])
+        return
+
+    # }}}
+
+def main():
+    s = Messages()
+    s.cli()
+
+if __name__ == "__main__": main()
+

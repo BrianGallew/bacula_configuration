@@ -76,6 +76,8 @@ class Pool(DbDict):
 
 # }}}
 
-if __name__ == "__main__":
+def main():
     s = Pool()
     s.cli()
+
+if __name__ == "__main__": main()

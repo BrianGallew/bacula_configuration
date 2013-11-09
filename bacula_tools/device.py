@@ -151,7 +151,7 @@ class Device(DbDict):
 
     def _cli_special_do_parse(self, args):
         if args.add_link:
-            s = bacula_tools.Storage().search(id=args.add_link)
+            s = bacula_tools.Storage().search(args.add_link)
             if not s[ID]: s.search(args.add_link)
             if not s[ID]:
                 print('\n***WARNING***: Unable to find a Storage Daemon identified by "%s".  Not linked.\n' % args.add_link)
@@ -159,7 +159,7 @@ class Device(DbDict):
             self.link(s)
 
         if args.remove_link:
-            s = bacula_tools.Storage().search(id=args.remove_link)
+            s = bacula_tools.Storage().search(args.remove_link)
             if not s[ID]: s.search(args.remove_link)
             if not s[ID]:
                 print('\n***WARNING***: Unable to find a Storage Daemon identified by "%s".  Not unlinked.\n' % args.remove_link)
@@ -173,12 +173,14 @@ class Device(DbDict):
 
     def _cli_special_print(self):
         for row in self.bc.do_sql(self._select, self[ID]):
-            s = bacula_tools.Storage().search(id=row[0])
+            s = bacula_tools.Storage().search(row[0])
             print(('%'+ str(self._maxlen) + 's: %s') % ('Storage Daemon', s[NAME]))
         return
 
     # }}}
 
-if __name__ == "__main__":
+def main():
     s = Device()
     s.cli()
+
+if __name__ == "__main__": main()

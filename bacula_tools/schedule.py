@@ -81,7 +81,6 @@ class Schedule(DbDict):
         if not self[ID]: return
         self.entries = list(self.bc.do_sql('''SELECT b.id AS id, b.data AS data FROM schedule_link a, schedule_time b
                                            WHERE a.scheduleid = %s AND a.timeid = b.id''', (self[ID],)))
-        print('loaded entries', self.entries)
         return self
 
     # }}}

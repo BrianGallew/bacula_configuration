@@ -43,6 +43,7 @@ setup(name = NAME,
               'manage_pools = bacula_tools.pool:main',
               'manage_storage = bacula_tools.storage:main',
               'manage_messages = bacula_tools.messages:main',
+              'manage_schedules = bacula_tools.schedule:main',
               ]
       },
       )

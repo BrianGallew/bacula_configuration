@@ -189,6 +189,8 @@ class DbDict(dict):             # base class for all of the things derived from 
         self.update(row)
         if string: self.parse_string(string)
         for key in kwargs: setattr(self, key, kwargs[key])
+        self.word = self.table
+        if self.word[-1] == 's': self.word = self.word[:-1]
         return
 
     # }}}
@@ -234,12 +236,18 @@ class DbDict(dict):             # base class for all of the things derived from 
     # }}}
     # {{{ _save(): Save the top-level fileset record
     def _save(self):
-        keys = [x for x in self.keys() if not x == ID]
-        keys.sort()
-        sql = 'update %s set %s where id = %%s' % (self.table,
-                                                   ', '.join(['`%s` = %%s' % x for x in keys]))
-        values = tuple([self[x] for x in keys] + [self[ID],])
-        return self.bc.do_sql(sql, values)
+        if self[ID]:
+            keys = [x for x in self.keys() if not x == ID]
+            keys.sort()
+            sql = 'UPDATE %s SET %s WHERE id = %%s' % (self.table,
+                                                       ', '.join(['`%s` = %%s' % x for x in keys]))
+            values = tuple([self[x] for x in keys] + [self[ID],])
+            return self.bc.do_sql(sql, values)
+        sql = 'INSERT INTO %s (%s) VALUES (%s)' % (self.table, ','.join(self.keys()), ','.join(['%s' for x in self.keys()]))
+        debug_print(sql, self.values())
+        try: return self.bc.do_sql(sql, tuple(self.values()))
+        except: self.bc.die('\t%s "%s" already exists.  You must delete it first.' % (self.word.capitalize(), self[NAME]))
+
 # }}}
     # {{{ _set_name(name): set my name
 
@@ -332,8 +340,6 @@ class DbDict(dict):             # base class for all of the things derived from 
     # {{{ cli(): Instantiate an option parser and add all the standard bits to it
 
     def cli(self):
-        self.word = self.table
-        if self.word[-1] == 's': self.word = self.word[:-1]
         self.parser = optparse.OptionParser(description='Manage Bacula %ss.' % self.word,
                                             usage='usage: %%prog [options] [%s]' % self.word)
         self.parser.add_option('--create', action='store_true',
@@ -402,8 +408,9 @@ class DbDict(dict):             # base class for all of the things derived from 
         if args.rename: self._set(NAME, args.rename)
 
         if args.clone:
-            del self[ID]
-            self._set_name(args.clone)
+            self[ID] = None
+            self[NAME] = args.clone
+            self._save()
             self._cli_special_clone()
 
         self._cli_option_processor(args, self.BOOL_KEYS, boolean=True)
@@ -411,6 +418,11 @@ class DbDict(dict):             # base class for all of the things derived from 
         self._cli_option_processor(args, self.SETUP_KEYS)
         self._cli_special_do_parse(args)
 
+        self._cli_printer()
+        return
+
+        # }}}
+    def _cli_printer(self):
         # Now print things out neatly
         maxlen = 10
         keylist = []
@@ -429,8 +441,6 @@ class DbDict(dict):             # base class for all of the things derived from 
         for key in keylist: print(fmt % (key, str(self[key])))
         self._cli_special_print()
         return
-
-        # }}}
     # {{{ _cli_parser_group(keys, label, help_message, **kwargs): add an option group to the CLI parser
 
     def _cli_parser_group(self, keys, label, help_message, **kwargs):

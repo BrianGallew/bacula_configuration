@@ -245,7 +245,9 @@ class DbDict(dict):             # base class for all of the things derived from 
             return self.bc.do_sql(sql, values)
         sql = 'INSERT INTO %s (%s) VALUES (%s)' % (self.table, ','.join(self.keys()), ','.join(['%s' for x in self.keys()]))
         debug_print(sql, self.values())
-        try: return self.bc.do_sql(sql, tuple(self.values()))
+        try:
+            self.bc.do_sql(sql, tuple(self.values()))
+            return self.search()
         except: self.bc.die('\t%s "%s" already exists.  You must delete it first.' % (self.word.capitalize(), self[NAME]))
 
 # }}}
@@ -408,10 +410,11 @@ class DbDict(dict):             # base class for all of the things derived from 
         if args.rename: self._set(NAME, args.rename)
 
         if args.clone:
+            oid = self[ID]
             self[ID] = None
             self[NAME] = args.clone
             self._save()
-            self._cli_special_clone()
+            self._cli_special_clone(oid)
 
         self._cli_option_processor(args, self.BOOL_KEYS, boolean=True)
         self._cli_option_processor(args, self.INT_KEYS)
@@ -422,6 +425,8 @@ class DbDict(dict):             # base class for all of the things derived from 
         return
 
         # }}}
+    # {{{ _cli_printer():
+
     def _cli_printer(self):
         # Now print things out neatly
         maxlen = 10
@@ -441,6 +446,8 @@ class DbDict(dict):             # base class for all of the things derived from 
         for key in keylist: print(fmt % (key, str(self[key])))
         self._cli_special_print()
         return
+
+    # }}}
     # {{{ _cli_parser_group(keys, label, help_message, **kwargs): add an option group to the CLI parser
 
     def _cli_parser_group(self, keys, label, help_message, **kwargs):
@@ -472,7 +479,7 @@ class DbDict(dict):             # base class for all of the things derived from 
     # enable more complicated behaviors.
     def _cli_special_setup(self): pass
     def _cli_special_do_parse(self, args): pass
-    def _cli_special_clone(self): pass
+    def _cli_special_clone(self, oid): pass
     def _cli_special_print(self): pass
 
 class PList(list):

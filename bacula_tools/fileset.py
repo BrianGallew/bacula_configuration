@@ -182,7 +182,7 @@ class Fileset(DbDict):
                 
     # }}}
 
-    def _cli_special_clone(self): pass
+    def _cli_special_clone(self, oid): pass
 
         
 

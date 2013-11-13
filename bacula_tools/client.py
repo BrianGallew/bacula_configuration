@@ -166,7 +166,12 @@ class Client(DbDict):
 
     # }}}
 
-    def _cli_special_clone(self): pass
+    def _cli_special_clone(self, oid):
+        select = 'SELECT %s, director_id, password, monitor FROM client_pwords WHERE client_id = %%s' % self[ID]
+        insert = 'INSERT INTO client_pwords (client_id, director_id, password, monitor) VALUES (%s,%s,%s,%s)'
+        for row in self.bc.do_sql(select, oid):
+            self.bc.do_sql(insert, tuple(row))
+        pass
 
 def main():
     s = Client()

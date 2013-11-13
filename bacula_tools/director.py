@@ -155,7 +155,7 @@ class Director(DbDict):
         return
     # }}}
 
-    def _cli_special_clone(self): pass
+    def _cli_special_clone(self, oid): pass
         
   
 def main():

@@ -243,7 +243,7 @@ class DbDict(dict):             # base class for all of the things derived from 
                                                        ', '.join(['`%s` = %%s' % x for x in keys]))
             values = tuple([self[x] for x in keys] + [self[ID],])
             return self.bc.do_sql(sql, values)
-        sql = 'INSERT INTO %s (%s) VALUES (%s)' % (self.table, ','.join(self.keys()), ','.join(['%s' for x in self.keys()]))
+        sql = 'INSERT INTO %s (`%s`) VALUES (%s)' % (self.table, '`,`'.join(self.keys()), ','.join(['%s' for x in self.keys()]))
         debug_print(sql, self.values())
         try:
             self.bc.do_sql(sql, tuple(self.values()))

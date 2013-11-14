@@ -179,6 +179,10 @@ class Device(DbDict):
 
     # }}}
 
+    def _cli_special_clone(self, oid):
+        for row in self.bc.do_sql(self._select, oid): self.bc.do_sql(self._insert, (self[ID], row[0]))
+        return
+
 def main():
     s = Device()
     s.cli()

@@ -240,7 +240,7 @@ CREATE TABLE `filesets` (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
   `enablevss` tinyint(1),
-  `ignorechanges` tinyint(1),
+  `ignorefilesetchanges` tinyint(1),
   PRIMARY KEY `id` (`id`),
   UNIQUE KEY `name_UNIQUE` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

@@ -125,6 +125,18 @@ class Director(DbDict):
         return '\n'.join(self.output)
 
     # }}}
+    # {{{ sd(): return the string that describes the filedaemon configuration
+
+    def sd(self):
+        '''This is what we'll call to dump out the config for the file daemon'''
+        self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
+        if getattr(self,STORAGE_ID, None):
+            a = StoragePasswordStore(self.storage_id, self[ID])
+            if getattr(a,PASSWORD, None):
+                self.output.insert(-1,'  Password = "%s"' % a.password)
+        return '\n'.join(self.output)
+
+    # }}}
     # {{{ _cli_special_setup(): setup the weird phrases that go with directors
 
     def _cli_special_setup(self):

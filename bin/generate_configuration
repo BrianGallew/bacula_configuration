@@ -118,7 +118,7 @@ if args.sd:
     cf.write(sd.sd(), '\n')
 
     for id in sd.bc.do_sql('SELECT director_id FROM storage_pwords where storage_id = %s ORDER BY director_id', sd[ID]):
-        cf.write( Director(client_id = sd[ID]).search(id).fd(), '\n')
+        cf.write( Director(storage_id = sd[ID]).search(id).sd(), '\n')
     
     for id in sd.bc.do_sql('SELECT device_id FROM device_link WHERE storage_id = %s', sd[ID]):
         cf.write( Device().search(id), '\n')

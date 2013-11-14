@@ -270,7 +270,7 @@ class Job(DbDict):
         return
 
 # }}}
-    # {{{ _cli_special_setup(): setup the weird phrases that go with filesets
+    # {{{ _cli_special_setup(): setup the weird phrases that go with jobs
 
     def _cli_special_setup(self):
         group = optparse.OptionGroup(self.parser,
@@ -290,7 +290,7 @@ class Job(DbDict):
         return
 
     # }}}
-    # {{{ _cli_special_do_parse(args): handle the weird phrases that go with filesets
+    # {{{ _cli_special_do_parse(args): handle the weird phrases that go with jobs
 
     def _cli_special_do_parse(self, args):
         self._cli_deref_helper(POOL_ID, args.pool, Pool)
@@ -314,18 +314,25 @@ class Job(DbDict):
         else: print('Unable to find a match for %s, continuing' % value)
         pass
 # }}}
-    # {{{ _cli_special_print(): print out the weird phrases that go with filesets
+    # {{{ _cli_special_print(): print out the weird phrases that go with jobs
 
     def _cli_special_print(self):
         fmt = '%' + str(self._maxlen) + 's: %s'
         for x in self.REFERENCE_KEYS:
             if self[x] == None: continue
             print(fmt % (x.replace('_id', '').capitalize(), self._fk_reference(x)[NAME]))
-
+        if self.scripts:
+            print( '\nScripts')
+            for x in self.scripts: print( x)
         return
     # }}}
 
-    def _cli_special_clone(self, oid): pass
+    def _cli_special_clone(self, oid):
+        select = 'SELECT %s,script_id FROM job_scripts WHERE job_id = %%s' % self[ID]
+        insert = 'INSERT INTO job_scripts (job_id,script_id) VALUES (%s,%s)'
+        for row in self.bc.do_sql(select, oid): self.bc.do_sql(insert, row)
+        self._load_scripts()
+        pass
 
 class JobDef(Job):
     retlabel = 'JobDefs'

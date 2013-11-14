@@ -248,7 +248,10 @@ class DbDict(dict):             # base class for all of the things derived from 
         try:
             self.bc.do_sql(sql, tuple(self.values()))
             return self.search()
-        except: self.bc.die('\t%s "%s" already exists.  You must delete it first.' % (self.word.capitalize(), self[NAME]))
+        except Exception as e:
+            if e.args[0] == 1062: self.bc.die('\t%s "%s" already exists.  You must delete it first.' % (self.word.capitalize(), self[NAME]))
+            print(e)
+            raise
 
 # }}}
     # {{{ _set_name(name): set my name

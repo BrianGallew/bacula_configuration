@@ -181,9 +181,16 @@ class Fileset(DbDict):
                 [print(fmt % ('',x[1])) for x in subset if not x[2]]
                 
     # }}}
+    # {{{ _cli_special_clone(oid):
 
-    def _cli_special_clone(self, oid): pass
+    def _cli_special_clone(self, oid):
+        select = 'SELECT %s,file_id, exclude FROM fileset_link WHERE fileset_id = %%s' % self[ID]
+        insert = 'INSERT INTO fileset_link (fileset_id,file_id,exclude) VALUES (%s,%s,%s)'
+        for row in self.bc.do_sql(select, oid): self.bc.do_sql(insert, row)
+        self._load_parts()
+        return
 
+# }}}
         
 
 def main():

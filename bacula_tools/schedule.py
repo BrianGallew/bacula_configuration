@@ -85,7 +85,7 @@ class Schedule(DbDict):
 
     # }}}
 
-    # {{{ _cli_special_setup(): setup the weird phrases that go with filesets
+    # {{{ _cli_special_setup(): setup the weird phrases that go with schedules
 
     def _cli_special_setup(self):
         group = optparse.OptionGroup(self.parser,
@@ -97,7 +97,7 @@ class Schedule(DbDict):
         return
 
     # }}}
-    # {{{ _cli_special_do_parse(args): handle the weird phrases that go with filesets
+    # {{{ _cli_special_do_parse(args): handle the weird phrases that go with schedules
 
     def _cli_special_do_parse(self, args):
         for stanza in args.add: self._add_run(stanza)
@@ -105,7 +105,7 @@ class Schedule(DbDict):
         return
 
 # }}}
-    # {{{ _cli_special_print(): print out the weird phrases that go with filesets
+    # {{{ _cli_special_print(): print out the weird phrases that go with schedules
 
     def _cli_special_print(self):
         print('Run times:')

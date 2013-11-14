@@ -124,7 +124,7 @@ class Director(DbDict):
         return '\n'.join(self.output)
 
     # }}}
-    # {{{ _cli_special_setup(): setup the weird phrases that go with filesets
+    # {{{ _cli_special_setup(): setup the weird phrases that go with directors
 
     def _cli_special_setup(self):
         group = optparse.OptionGroup(self.parser,
@@ -135,7 +135,7 @@ class Director(DbDict):
         return
 
     # }}}
-    # {{{ _cli_special_do_parse(args): handle the weird phrases that go with filesets
+    # {{{ _cli_special_do_parse(args): handle the weird phrases that go with directors
 
     def _cli_special_do_parse(self, args):
         if args.message_set == None: return
@@ -146,7 +146,7 @@ class Director(DbDict):
         return
 
 # }}}
-    # {{{ _cli_special_print(): print out the weird phrases that go with filesets
+    # {{{ _cli_special_print(): print out the weird phrases that go with directors
 
     def _cli_special_print(self):
         if not self[MESSAGES_ID]: return

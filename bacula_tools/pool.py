@@ -69,7 +69,7 @@ class Pool(DbDict):
 
     def __str__(self):
         self.output = ['Pool {\n  Name = "%(name)s"' % self,'}']
-        for key in self.SETUP_KEYS_KEYS: self._simple_phrase(key)
+        for key in self.SETUP_KEYS: self._simple_phrase(key)
         for key in self.BOOL_KEYS: self._yesno_phrase(key)
 
         return '\n'.join(self.output)

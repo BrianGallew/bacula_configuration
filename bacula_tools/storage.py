@@ -77,7 +77,7 @@ class Storage(DbDict):
         self.output = ['Storage {\n  Name = "%(name)s"' % self,'}']
         if self.director_id:
             a = StoragePasswordStore(self[ID], self.director_id)
-            self.output.insert(-1,'  Password = "%s"' % a.password)
+            if getattr(a,PASSWORD,None): self.output.insert(-1,'  Password = "%s"' % a.password)
         
         for key in self.dir_keys: self._simple_phrase(key)
         for key in self.BOOL_KEYS: self._simple_phrase(key)

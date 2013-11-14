@@ -119,8 +119,9 @@ class Director(DbDict):
         self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
         if getattr(self,CLIENT_ID, None):
             a = PasswordStore(self.client_id, self[ID])
-            self.output.insert(-1,'  Password = "%s"' % a.password)
-            if a.monitor: self.output.insert(-1,'  Monitor = "yes"' )
+            if getattr(a,PASSWORD, None):
+                self.output.insert(-1,'  Password = "%s"' % a.password)
+                if a.monitor: self.output.insert(-1,'  Monitor = "yes"' )
         return '\n'.join(self.output)
 
     # }}}

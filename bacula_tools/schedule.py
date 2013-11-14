@@ -113,6 +113,16 @@ class Schedule(DbDict):
         [print(fmt % x[1]) for x in self.entries]
                 
     # }}}
+    # {{{ _cli_special_clone(oid):
+
+    def _cli_special_clone(self, oid):
+        select = 'SELECT %s,timeid FROM schedule_link WHERE scheduleid = %%s' % self[ID]
+        insert = 'INSERT INTO schedule_link (scheduleid,timeid) VALUES (%s,%s)'
+        for row in self.bc.do_sql(select, oid): self.bc.do_sql(insert, row)
+        self._load_runs()
+        return
+
+# }}}
 
     
 def main():

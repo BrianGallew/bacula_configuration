@@ -137,8 +137,15 @@ class Storage(DbDict):
         return
 
     # }}}
+    # {{{ _cli_special_clone(oid):
 
-    def _cli_special_clone(self, oid): pass
+    def _cli_special_clone(self, oid):
+        select = 'SELECT %s, director_id, password FROM storage_pwords WHERE storage_id = %%s' % self[ID]
+        insert = 'INSERT INTO storage_pwords (storage_id, director_id, password) VALUES (%s,%s,%s)'
+        for row in self.bc.do_sql(select, oid): self.bc.do_sql(insert, row)
+        return
+
+# }}}
 
 def main():
     s = Storage()

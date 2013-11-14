@@ -206,6 +206,7 @@ class DbDict(dict):             # base class for all of the things derived from 
             if self[NAME]: new_me = self.bc.value_check(self.table, NAME, self[NAME], asdict=True)
             elif self[ID]: new_me = self.bc.value_check(self.table, ID, self[ID], asdict=True)
         else:
+            if type(key) == list or type(key) == tuple: key=key[0]
             try: new_me = self.bc.value_check(self.table, ID, int(key), asdict=True)
             except: new_me = self.bc.value_check(self.table, NAME, key, asdict=True)
         try: self.update(new_me[0])

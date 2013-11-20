@@ -9,6 +9,8 @@ class Storage(DbDict):
                  WORKINGDIRECTORY, PIDDIRECTORY, CLIENTCONNECTWAIT, SDADDRESSES]
     BOOL_KEYS = [AUTOCHANGER, ALLOWCOMPRESSION]
     table = STORAGE
+    # This is kind of a hack used for associating Messages with different
+    # resources that are otherwise identically named/numbered.
     IDTAG = 3
     dir_keys = [SDPORT, ADDRESS, DEVICE, MEDIATYPE, MAXIMUMCONCURRENTJOBS, HEARTBEATINTERVAL]
     sd_keys = [WORKINGDIRECTORY, PIDDIRECTORY, CLIENTCONNECTWAIT, SDADDRESSES,

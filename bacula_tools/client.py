@@ -15,7 +15,10 @@ class Client(DbDict):
     BOOL_KEYS = [AUTOPRUNE, PKIENCRYPTION, PKISIGNATURES]
     INT_KEYS = [(FDPORT, 9102), (MAXIMUMCONCURRENTJOBS, 1), PRIORITY]
     table = CLIENTS
-    IDTAG = 2
+    # This is kind of a hack used for associating Messages with different
+    # resources that are otherwise identically named/numbered.
+    IDTAG = 2                   
+
     # {{{ parse_string(string): Entry point for a recursive descent parser
 
     def parse_string(self, string):
@@ -81,6 +84,7 @@ class Client(DbDict):
     # {{{ __str__(): 
 
     def __str__(self):
+        '''Convert a Client into a string suitable for inclusion into a Director's configuration.'''
         self.output = ['Client {\n  Name = "%(name)s"' % self,'}']
         self.output.insert(-1, '  %s = "%s"' % (CATALOG.capitalize(), self._fk_reference(CATALOG_ID)[NAME]))
         if getattr(self,DIRECTOR_ID, None):
@@ -95,10 +99,10 @@ class Client(DbDict):
         return '\n'.join(self.output)
 
 # }}}
-    # {{{ fd(): return the string that describes the filedaemon configuration
+    # {{{ fd(): return the string that describes the filedaemon configuration for this Client
 
     def fd(self):
-        '''This is what we'll call to dump out the config for the file daemon'''
+        '''Generate the Client configuration as appropriate for a file daemon'''
         self.output = ['Client {\n  Name = "%(name)s"' % self, '}']
         
         for key in [WORKINGDIRECTORY, PIDDIRECTORY, HEARTBEATINTERVAL, MAXIMUMCONCURRENTJOBS,
@@ -115,9 +119,15 @@ class Client(DbDict):
         return '\n'.join(self.output)
 
     # }}}
-    # {{{ _cli_special_setup(): add in password support
+    # {{{ _cli_special_setup(): add in password support on the CLI
 
     def _cli_special_setup(self):
+        '''This is *all* for setting the password.  Client passwords are associated
+        with Directors, which in turn may or may not be monitors for this
+        client, and different for other clients.  Look at the PasswordStore
+        object in util.py for further detail.
+
+        '''
         group = optparse.OptionGroup(self.parser,
                                      "Password set/change",
                                      "Passwords are associated with directors, so changing a password requires "
@@ -132,20 +142,20 @@ class Client(DbDict):
     # {{{ _cli_special_do_parse(args): handle password parsing
 
     def _cli_special_do_parse(self, args):
+        '''When setting the password, ensure that a Director is referenced.  If
+        that's the case, make the appropriate updates.'''
         if (args.password == None) and (args.director == None): return # Nothing to do!
         if (args.password == None) ^ (args.director == None):
             print('\n***WARNING***: You must specify both a password and a director to change a password.  Password not changed.\n')
             return              # Bail on any password changes, but otherwise continue
-        d = bacula_tools.Director()
-        try: d.search(args.director)
-        except: d.search(args.director)
+        d = bacula_tools.Director().search(args.director)
         if not d[ID]:
             print('\n***WARNING***: Unable to find a director using "%s".  Password not changed\n' % args.director)
             return
         password = PasswordStore(self[ID], d[ID])
         password.password = args.password
         if args.monitor:
-            if args.monitor in ['1', 'yes', 'Yes', 'YES', 'on', 'On', 'ON', 'true', 'True', 'TRUE']: password.monitor = 1
+            if args.monitor.lower() in TRUE_VALUES: password.monitor = 1
             else: password.monitor = 0
         password.store()
         return
@@ -154,6 +164,7 @@ class Client(DbDict):
     # {{{ _cli_special_print(): print out passwords
 
     def _cli_special_print(self):
+        '''Prints out the passwords and the directors with which they are associated'''
         print('\nPasswords:')
         sql = 'select director_id from %s where %s = %%s' % (PasswordStore.table, PasswordStore.column1)
         for row in self.bc.do_sql(sql, self[ID]):
@@ -168,6 +179,7 @@ class Client(DbDict):
     # {{{ _cli_special_clone(oid):
 
     def _cli_special_clone(self, oid):
+        '''When cloning a Client, assume that we want to also clone the passwords'''
         select = 'SELECT %s, director_id, password, monitor FROM client_pwords WHERE client_id = %%s' % self[ID]
         insert = 'INSERT INTO client_pwords (client_id, director_id, password, monitor) VALUES (%s,%s,%s,%s)'
         for row in self.bc.do_sql(select, oid): self.bc.do_sql(insert, row)
@@ -175,6 +187,7 @@ class Client(DbDict):
 
 # }}}
 
+# Implement the CLI for managing Clients
 def main():
     s = Client()
     s.cli()

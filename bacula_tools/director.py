@@ -13,6 +13,8 @@ class Director(DbDict):
     INT_KEYS = [(DIRPORT, 9101), MAXIMUMCONCURRENTJOBS, MAXIMUMCONSOLECONNECTIONS,]
     NULL_KEYS = [MESSAGES_ID, ]
     table = DIRECTORS
+    # This is kind of a hack used for associating Messages with different
+    # resources that are otherwise identically named/numbered.
     IDTAG = 1
     # {{{ parse_string(string, director_config, obj): Entry point for a recursive descent parser
 

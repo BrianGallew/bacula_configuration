@@ -78,6 +78,8 @@ _INTERNED = [
 for w in _INTERNED: locals()[w.upper()] = w
 
 STATUS = [FULL, USED, APPEND, CLEANING, ERROR, PURGED, RECYCLE, AVAILABLE]
+TRUE_VALUES = ['1', 'yes', 'y', 'on', 'true', 't']
+FALSE_VALUES = ['0', 'no', 'n', 'off', 'false', 'f']
 
 WORKING_DIR = {
     'Linux': "/var/lib/bacula",
@@ -98,15 +100,6 @@ def set_debug(value):
     return
 
 set_debug(os.environ.get('DEBUG', False))
-
-def set_bool_values(key, value, obj, okey):
-    if value in ['1','y','yes','Y','YES','Yes','t','T','true','True','TRUE']:
-        if 1 ^ obj[okey]: obj._set(okey, 1)
-        return 
-    if value in ['0','n','no','N','NO','No','f','F','false','False','FALSE']:
-        if 0 ^ obj[okey]: obj._set(okey, 0)
-        return
-    raise Exception('%s takes a boolean value, and I was unable to translate %s' % (key, value))
 
 # These rules will be used to determine what fileset(s) and schedule(s)
 # will be applied to new jobs that are generated in an automated fashion.

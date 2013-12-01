@@ -7,27 +7,29 @@ import os, glob
 from setuptools import setup, find_packages
 
 NAME = 'bacula_configuration'
-VERSION = '0.4'
+VERSION = '0.6'
 WEBSITE = 'http://gallew.org/bacula_configuration'
 LICENSE = 'GPLv3 or later'
 DESCRIPTION = 'Bacula configuration management tool'
-LONG_DESCRIPTION = 'Bacula is a great backup tool, but ships with no way to manage the configuration.  This suite will help you solve the management problem'
 AUTHOR = 'Brian Gallew'
 EMAIL = 'bacula_configuration@gallew.org'
 
 setup(name = NAME,
       version = VERSION,
       description = DESCRIPTION,
-      long_description = LONG_DESCRIPTION,
+      long_description = open('README.md').read(),
       author = AUTHOR,
       author_email = EMAIL,
       url = WEBSITE,
       install_requires = ['mysql-python'],
       extras_require = { 'parsing': ['pyparsing']},
       scripts = glob.glob('bin/*_configuration'),
-      package_data = {'bacula_tools': ['data/*']},
+      include_package_data = True,
+      package_data = {
+        'bacula_tools': ['data/*'],
+        },
       packages = ['bacula_tools',],
-      classifiers = ['Development Status :: 5 - Alpha',
+      classifiers = ['Development Status :: 4 - Beta',
                      'Environment :: Console',
                      'Intended Audience :: System Administrators',
                      'Operating System :: OS Independent',

@@ -76,6 +76,7 @@ class Storage(DbDict):
     # {{{ __str__(): 
 
     def __str__(self):
+        '''String representation of a Storage suitable for inclusion in a Director configuration.'''
         self.output = ['Storage {\n  Name = "%(name)s"' % self,'}']
         if self.director_id:
             a = StoragePasswordStore(self[ID], self.director_id)
@@ -89,6 +90,7 @@ class Storage(DbDict):
     # {{{ sd(): 
 
     def sd(self):
+        '''String representation of a Storage suitable for inclusion in a Storage configuration.'''
         self.output = ['Storage {\n  Name = "%(name)s"' % self,'}']
         for key in self.sd_keys: self._simple_phrase(key)
         # Special keys
@@ -99,6 +101,7 @@ class Storage(DbDict):
     # {{{ _cli_special_setup(): add password support
 
     def _cli_special_setup(self):
+        '''Add CLI switches for password handling.'''
         self._cli_parser_group(
             [PASSWORD, (DIRECTOR,None,'Director (name or ID) to associate with a password')],
             "Password set/change",
@@ -111,6 +114,7 @@ class Storage(DbDict):
     # {{{ _cli_special_do_parse(args): add password support
 
     def _cli_special_do_parse(self, args):
+        '''Handle CLI switches for password management.'''
         if (args.password == None) and (args.director == None): return # Nothing to do!
         if (args.password == None) ^ (args.director == None):
             print('\n***WARNING***: You must specify both a password and a director to change a password.  Password not changed.\n')
@@ -130,6 +134,7 @@ class Storage(DbDict):
     # {{{ _cli_special_print(): add password support
 
     def _cli_special_print(self):
+        '''Print out the passwords for the CLI.'''
         print('\nPasswords:')
         sql = 'select director_id from %s where %s = %%s' % (StoragePasswordStore.table, StoragePasswordStore.column1)
         for row in self.bc.do_sql(sql, self[ID]):
@@ -142,6 +147,7 @@ class Storage(DbDict):
     # {{{ _cli_special_clone(oid):
 
     def _cli_special_clone(self, oid):
+        '''Storage clones should have the same sets of passwords as the source object.'''
         select = 'SELECT %s, director_id, password FROM storage_pwords WHERE storage_id = %%s' % self[ID]
         insert = 'INSERT INTO storage_pwords (storage_id, director_id, password) VALUES (%s,%s,%s)'
         for row in self.bc.do_sql(select, oid): self.bc.do_sql(insert, row)

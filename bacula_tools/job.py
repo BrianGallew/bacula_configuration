@@ -4,6 +4,7 @@ from __future__ import print_function
 try: from . import *
 except: from bacula_tools import *
 
+# These are some shortcuts I put here just to make later code look a little cleaner.
 RBJ = PList('Run Before Job')
 RAJ = PList('Run After Job')
 RAFJ = PList( 'Run After Failed Job')
@@ -11,14 +12,15 @@ CRBJ = PList('Client Run Before Job')
 CRAJ = PList('Client Run After Job')
 
 class Job(DbDict):
+    '''This actually covers both Jobs and JobDefs, EXCEPT during parsing, when
+    the JobDef subclass is used because it has different default values.
+    '''
     SETUP_KEYS = [
         # Enum
         TYPE, LEVEL,
         # Strings
-        NOTES, ADDPREFIX, ADDSUFFIX, BASE, BOOTSTRAP, 
-        MAXIMUMBANDWIDTH,
-        MAXSTARTDELAY, REGEXWHERE, RUN, SPOOLSIZE, 
-        STRIPPREFIX, VERIFYJOB, WHERE, WRITEBOOTSTRAP,
+        NOTES, ADDPREFIX, ADDSUFFIX, BASE, BOOTSTRAP, MAXIMUMBANDWIDTH, MAXSTARTDELAY,
+        REGEXWHERE, RUN, SPOOLSIZE, STRIPPREFIX, VERIFYJOB, WHERE, WRITEBOOTSTRAP,
         # keys with values
         (REPLACE, 'always'), 
         # Times
@@ -185,6 +187,7 @@ class Job(DbDict):
     # {{{ __str__(): 
 
     def __str__(self):
+        '''String representation of a Job, suitable for inclusion in a Director config'''
         self.output = ['%s {' % self.retlabel,'}']
         for x in self.SETUP_KEYS: self._simple_phrase(x)
         for x in self.INT_KEYS: self._simple_phrase(x)
@@ -203,6 +206,9 @@ class Job(DbDict):
     # {{{ _fk_reference(fk, string=None): Set/get fk-references
 
     def _fk_reference(self, fk, string=None):
+        '''This overrides the normal _fk_reference function becase we actually have
+        four different keys that all point to Pools.
+        '''
         key = fk.replace('_id', '')
         if 'pool' in key: key = 'pool'
         obj = bacula_tools._DISPATCHER[key]()
@@ -217,6 +223,7 @@ class Job(DbDict):
     # {{{ _load_scripts():
 
     def _load_scripts(self):
+        '''Job scripts are stored separately as Script objects.  This loads them in. '''
         if self[ID]:
             for row in self.bc.do_sql('SELECT * FROM job_scripts WHERE job_id = %s', (self[ID],), asdict=True):
                 s = bacula_tools.Script({ID: row[SCRIPT_ID]})
@@ -229,6 +236,7 @@ class Job(DbDict):
     # {{{ _parse_script(**kwargs): returns a parser for the script shortcuts
 
     def _parse_script(self, **kwargs):
+        '''Helper function for parsing configuration strings.'''
         def doit(a,b,c):
             s = bacula_tools.Script(kwargs)
             s[COMMAND] = c[2]
@@ -240,6 +248,7 @@ class Job(DbDict):
     # {{{ _add_script(s): Add a script to myself
 
     def _add_script(self, s):
+        '''Add a script to the Job.'''
         self.scripts = [x for x in self.scripts if not x[ID] == s[ID]]
         self.scripts.append(s)
         row = self.bc.do_sql('SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (self[ID], s[ID]))
@@ -251,6 +260,8 @@ class Job(DbDict):
     # {{{ _delete_script(s): Remove a script from myself
 
     def _delete_script(self, s):
+        '''Remove a Script from the Job.  This does not actually delete the Script,
+        just the linkage to this job.'''
         self.bc.do_sql('DELETE FROM job_scripts WHERE id = %s', (s[ID]))
         self.scripts = [x for x in self.scripts if not x[ID] == s[ID]]
         return
@@ -259,6 +270,7 @@ class Job(DbDict):
     # {{{ _parse_script_full(tokens):
 
     def _parse_script_full(self, *tokens):
+        '''Another helper for script parsing.'''
         from pprint import pprint
         s = bacula_tools.Script()
         values = tokens[2][1]
@@ -273,6 +285,7 @@ class Job(DbDict):
     # {{{ _cli_special_setup(): setup the weird phrases that go with jobs
 
     def _cli_special_setup(self):
+        '''Suport for adding all of the foreign-key references to the CLI.'''
         group = optparse.OptionGroup(self.parser,
                                      "Object Setters",
                                      "Various objects associated with a Job")
@@ -293,6 +306,7 @@ class Job(DbDict):
     # {{{ _cli_special_do_parse(args): handle the weird phrases that go with jobs
 
     def _cli_special_do_parse(self, args):
+        '''CLI Foreign Key reference actions.'''
         self._cli_deref_helper(POOL_ID, args.pool, Pool)
         self._cli_deref_helper(DIFFERENTIALPOOL_ID, args.differential_pool, Pool)
         self._cli_deref_helper(FULLPOOL_ID, args.full_pool, Pool)
@@ -307,6 +321,7 @@ class Job(DbDict):
         return
 
     def _cli_deref_helper(self, key, value, obj):
+        '''Shortcut function to make _cli_special_do_parse() a lot cleaner.'''
         if value == None: return
         if value=='': return self._set(key, None)
         target = obj().search(value)
@@ -317,6 +332,7 @@ class Job(DbDict):
     # {{{ _cli_special_print(): print out the weird phrases that go with jobs
 
     def _cli_special_print(self):
+        '''All of the foreign key objects get printed out here for the CLI.'''
         fmt = '%' + str(self._maxlen) + 's: %s'
         for x in self.REFERENCE_KEYS:
             if self[x] == None: continue
@@ -326,18 +342,24 @@ class Job(DbDict):
             for x in self.scripts: print( x)
         return
     # }}}
+    # {{{ _cli_special_clone(oid): script links for CLI
 
     def _cli_special_clone(self, oid):
+        '''When cloning, add in script links.'''
         select = 'SELECT %s,script_id FROM job_scripts WHERE job_id = %%s' % self[ID]
         insert = 'INSERT INTO job_scripts (job_id,script_id) VALUES (%s,%s)'
         for row in self.bc.do_sql(select, oid): self.bc.do_sql(insert, row)
         self._load_scripts()
         pass
 
+        # }}}
+
 class JobDef(Job):
+    '''This is really just a Job with a different label (for printing) and a value of 1 for the JOBDEF key.'''
     retlabel = 'JobDefs'
     
     def _save(self):
+        '''JobDefs force the JOBDEF key to 1 upon saving.'''
         self[JOBDEF] = 1
         return Job._save(self)
 

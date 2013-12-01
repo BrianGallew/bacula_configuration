@@ -5,6 +5,10 @@ try: from . import *
 except: from bacula_tools import *
 
 class Script(DbDict):
+    '''This is a "ninja" class.  There are no Script resources in Bacula, but there should be.
+
+    Scripts handle the RunScript items in Jobs.
+    '''
     SETUP_KEYS = [(RUNSWHEN, 'Never', 'Legal values are "Never", "Before", "After", "AfterVSS", and "Always"'), COMMAND, CONSOLE]
     BOOL_KEYS = [RUNSONSUCCESS, RUNSONCLIENT, FAILJOBONERROR, RUNSONFAILURE,]
     table = SCRIPTS
@@ -12,6 +16,7 @@ class Script(DbDict):
     # {{{ __str__(): 
 
     def __str__(self):
+        '''Standardized string representation of a Script, suitable for including in a Job configuration.'''
         self.output = ['  RunScript {  # Script ID: %d\n    # Name: %s' % (self[ID], self[NAME]),'  }']
         for key in self.SETUP_KEYS: self._simple_phrase(key)
         for key in self.BOOL_KEYS: self._yesno_phrase(key)
@@ -21,6 +26,10 @@ class Script(DbDict):
     # {{{ search():
 
     def search(self, key=None):
+        '''Since Scripts are ninjas, they have no Name=FOO in the configuration
+        file.  We will generate names upon creation, and use them, but we have to
+        support much more complicated searching to deal with the reality of Bacula
+        configurations.'''
         debug_print('dbdict search')
         DbDict.search(self, key)
         if self[ID]: return self
@@ -43,6 +52,7 @@ class Script(DbDict):
     # {{{ _create():
 
     def _create(self):
+        '''This is where new Scripts get created and named.'''
         keys = []
         keysub=[]
         values = []

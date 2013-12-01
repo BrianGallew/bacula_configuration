@@ -15,6 +15,7 @@ class Fileset(DbDict):
     # {{{ _load_parts(): helper for loading self from the database
 
     def _load_parts(self):
+        '''Load up the rules from the table.'''
         if not self[ID]: return
         sql = '''SELECT b.id AS id, b.name AS name, b.option, a.exclude
                  FROM fileset_link a, fileset_files b
@@ -26,6 +27,10 @@ class Fileset(DbDict):
     # {{{ _parse_add_entry(*args): adds various entries into this fileset
 
     def _parse_add_entry(self, *args):
+        '''Supports the string parser.  Extracts fileset Include/Exclude phrases.
+        This should probably be thrown back into the parser, but I'll leave
+        that for a later effort.  For now, it works just fine.
+        '''
         trim = args[2]
         if trim[0] == EXCLUDE: exclude=1
         else: exclude=0
@@ -88,8 +93,12 @@ class Fileset(DbDict):
     # {{{ _add_entry(entry, option, exclude): add another entry
 
     def _add_entry(self, entry, option, exclude):
-        '''The logic here could bite you if it were legal to have an option
+        '''This holds the SQL that manages writing entries.  It probably needs a
+        complete redesign.
+        
+        The logic here could bite you if it were legal to have an option
         and a file with the same content.
+
         '''
         new_entry = list(self.bc.value_ensure(FILESET_FILES, NAME, entry)[0])
         if not new_entry[2] == option:
@@ -111,6 +120,7 @@ class Fileset(DbDict):
     # {{{ _delete_entry(entry): delete an entry
 
     def _delete_entry(self, entry):
+        '''Remove an entry.'''
         for row in self.entries:
             if not row[1] == entry: continue
             self.bc.do_sql('DELETE FROM fileset_link WHERE fileset_id = %s AND file_id = %s and exclude = %s',
@@ -124,6 +134,7 @@ class Fileset(DbDict):
     # {{{ __str__(): 
 
     def __str__(self):
+        '''Stringify into a form suitable for dropping into a Director configuration.'''
         self.output = ['Fileset {','  Name = "%(name)s"' % self, '}']
         for key in self.BOOL_KEYS: self._yesno_phrase(key)
 
@@ -144,6 +155,7 @@ class Fileset(DbDict):
     # {{{ _cli_special_setup(): setup the weird phrases that go with filesets
 
     def _cli_special_setup(self):
+        '''Add CLI options to add file/option inclusion/exclusion rules.'''
         group = optparse.OptionGroup(self.parser,
                                      "Stanzas",
                                      "Handle elements of the Include and Exclude sections")
@@ -159,6 +171,7 @@ class Fileset(DbDict):
     # {{{ _cli_special_do_parse(args): handle the weird phrases that go with filesets
 
     def _cli_special_do_parse(self, args):
+        '''Handle the args for adding/removing entries'''
         for stanza in args.add_file: self._add_entry(stanza, 0, 0)
         for stanza in args.add_option: self._add_entry(stanza, 1, 0)
         for stanza in args.add_exclusion_file: self._add_entry(stanza, 0, 1)
@@ -170,6 +183,7 @@ class Fileset(DbDict):
     # {{{ _cli_special_print(): print out the weird phrases that go with filesets
 
     def _cli_special_print(self):
+        '''Print out the Inclusion and Exclusion rules'''
         fmt = '%' + str(self._maxlen) + 's: %s'
         for test,phrase in ([0,'Include'],[1,'Exclude']):
             subset =  [x for x in self.entries if x[3] == test]
@@ -184,6 +198,7 @@ class Fileset(DbDict):
     # {{{ _cli_special_clone(oid):
 
     def _cli_special_clone(self, oid):
+        '''When cloning, ensure that all of the rules get copied into the cloned Fileset.'''
         select = 'SELECT %s,file_id, exclude FROM fileset_link WHERE fileset_id = %%s' % self[ID]
         insert = 'INSERT INTO fileset_link (fileset_id,file_id,exclude) VALUES (%s,%s,%s)'
         for row in self.bc.do_sql(select, oid): self.bc.do_sql(insert, row)

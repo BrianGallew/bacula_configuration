@@ -68,6 +68,7 @@ class Pool(DbDict):
     # {{{ __str__(): 
 
     def __str__(self):
+        '''String representation of a Pool formatted for inclusion in a config file.'''
         self.output = ['Pool {\n  Name = "%(name)s"' % self,'}']
         for key in self.SETUP_KEYS: self._simple_phrase(key)
         for key in self.BOOL_KEYS: self._yesno_phrase(key)

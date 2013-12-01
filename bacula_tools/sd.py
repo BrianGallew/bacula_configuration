@@ -14,6 +14,7 @@ class SDaemon(BSock):
 # {{{ version(): request version info from the remote daemon (useless?)
 
     def version(self):
+        '''Query the SD for its version.'''
         for line in self.status().split('\n'):
             if 'Version' in line: return line
         return 'Unable to determine version'

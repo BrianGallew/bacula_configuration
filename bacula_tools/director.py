@@ -102,6 +102,7 @@ class Director(DbDict):
     # {{{ __str__(): 
 
     def __str__(self):
+        '''String representation of a Director, suitable for inclusion in director.conf'''
         self.output = ['Director {\n  Name = "%(name)s"' % self,'}']
         for key in self.NULL_KEYS: self._simple_phrase(key)
         # set the messages
@@ -127,10 +128,10 @@ class Director(DbDict):
         return '\n'.join(self.output)
 
     # }}}
-    # {{{ sd(): return the string that describes the filedaemon configuration
+    # {{{ sd(): return the string that describes the storagedaemon configuration
 
     def sd(self):
-        '''This is what we'll call to dump out the config for the file daemon'''
+        '''This is what we'll call to dump out the config for the storage daemon'''
         self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
         if getattr(self,STORAGE_ID, None):
             a = StoragePasswordStore(self.storage_id, self[ID])
@@ -142,6 +143,7 @@ class Director(DbDict):
     # {{{ _cli_special_setup(): setup the weird phrases that go with directors
 
     def _cli_special_setup(self):
+        '''Handle setting by the CLI of the Message to be used by this Director.'''
         group = optparse.OptionGroup(self.parser,
                                      "Object Setters",
                                      "Various objects associated with a Job")
@@ -153,6 +155,7 @@ class Director(DbDict):
     # {{{ _cli_special_do_parse(args): handle the weird phrases that go with directors
 
     def _cli_special_do_parse(self, args):
+        '''Enable the CLI to set the Message to be used by this Director.'''
         if args.message_set == None: return
         if args.message_set =='': return self._set(MESSAGES_ID, None)
         target = Messages().search(args.message_set)
@@ -164,15 +167,13 @@ class Director(DbDict):
     # {{{ _cli_special_print(): print out the weird phrases that go with directors
 
     def _cli_special_print(self):
+        '''Print out the Message for this Director'''
         if not self[MESSAGES_ID]: return
         fmt = '%' + str(self._maxlen) + 's: %s'
         print(fmt % ('Messages', self._fk_reference(MESSAGES_ID)[NAME]))
         return
     # }}}
 
-    def _cli_special_clone(self, oid): pass
-        
-  
 def main():
     s = Director()
     s.cli()

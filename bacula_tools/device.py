@@ -109,6 +109,10 @@ class Device(DbDict):
     # {{{ __str__(): 
 
     def __str__(self):
+        '''String representation of a Device suitable for inclusion in a
+        configuration file.
+
+        '''
         self.output = ['Device {\n  Name = "%(name)s"' % self,'}']
         
         for key in self.SETUP_KEYS: self._simple_phrase(key)
@@ -120,6 +124,11 @@ class Device(DbDict):
     # {{{ link(obj): link the device to a storage daemon
 
     def link(self, obj):
+        '''Devices belong to Storage Daemons, but there's no intrinsic way to know
+        that a device belongs to a daemon, so we have a table that provides
+        links between the two.  This member, given a Storage object, will
+        link the Device to the Storage.
+        '''
         try:
             self.bc.do_sql(self._insert, (self[ID], obj[ID]))
         except Exception as e:
@@ -132,13 +141,15 @@ class Device(DbDict):
     # {{{ unlink(obj): unlink the device from a storage daemon
 
     def unlink(self, obj):
+        '''Remove the linkage between a Device and a Storage'''
         self.bc.do_sql(self._delete, (self[ID], obj[ID]))
         return
 
             # }}}
-    # {{{ _cli_special_setup(): add in password support
+    # {{{ _cli_special_setup(): (un)link Storage
 
     def _cli_special_setup(self):
+        '''Enable the CLI to (un)link devices to/from Sotrage Daemons.'''
         group = optparse.OptionGroup(self.parser, "Storage daemon links",
                                      "A device is associated with one or more storage daemons.")
         group.add_option('--add-link', metavar='STORAGE_DAEMON')
@@ -147,9 +158,10 @@ class Device(DbDict):
         return
 
     # }}}
-    # {{{ _cli_special_do_parse(args): handle password parsing
+    # {{{ _cli_special_do_parse(args): (un)link Storage
 
     def _cli_special_do_parse(self, args):
+        '''Handle any attempts by the CLI to (un)link the Device to/from Storage'''
         if args.add_link:
             s = bacula_tools.Storage().search(args.add_link)
             if not s[ID]: s.search(args.add_link)
@@ -169,19 +181,24 @@ class Device(DbDict):
         return
 
 # }}}
-    # {{{ _cli_special_print(): print out passwords
+    # {{{ _cli_special_print(): Display any linked Storage
 
     def _cli_special_print(self):
+        '''Print any linked Storage'''
         for row in self.bc.do_sql(self._select, self[ID]):
             s = bacula_tools.Storage().search(row[0])
             print(('%'+ str(self._maxlen) + 's: %s') % ('Storage Daemon', s[NAME]))
         return
 
     # }}}
+    # {{{ _cli_special_clone(oid): Handle cloning requirements.
 
     def _cli_special_clone(self, oid):
+        '''Any clones of this device will be linked to the same Storage.'''
         for row in self.bc.do_sql(self._select, oid): self.bc.do_sql(self._insert, (self[ID], row[0]))
         return
+
+        # }}}
 
 def main():
     s = Device()

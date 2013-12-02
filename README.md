@@ -70,14 +70,9 @@ same time I built the resource class).
 
 The next steps, in no particular order:
 
-- Storage daemon resources
-- Association of SDs, pools, and devices (this is the most difficult
-piece)
 - Convenience functions/scripts (e.g. move all clients from one SD to
 another)
 - Web CGI (trivial)
-- Configuration extraction tools (mostly simple, needs the association
-piece above before it'll actuall work on the SDs)
 - Wiki updater (this may be too site-specific to be useful, but we'll see)
 
 
@@ -106,7 +101,7 @@ OS SETUP
 ---------
 
 Finally, you will need to customize several values, whose defaults are in
-bacula_tools/__init__.py.  The easiest way to do so is to drop value
+bacula_tools/\_\_init\_\_.py.  The easiest way to do so is to drop value
 assignments into any/all of the configuration files:
 	/etc/bacula/bacula.conf
 	/usr/local/etc/bacula/bacula.conf

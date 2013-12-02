@@ -106,7 +106,8 @@ class Storage(DbDict):
             [PASSWORD, (DIRECTOR,None,'Director (name or ID) to associate with a password')],
             "Password set/change",
             "Passwords are associated with directors, so changing a password requires "
-            "that you specify the director to which that password applies."
+            "that you specify the director to which that password applies.  Set the password to "
+            "a value of 'generate' to auto-generate a password."
             )
         return
 

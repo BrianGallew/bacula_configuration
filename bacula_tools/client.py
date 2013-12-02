@@ -128,14 +128,13 @@ class Client(DbDict):
         object in util.py for further detail.
 
         '''
-        group = optparse.OptionGroup(self.parser,
-                                     "Password set/change",
-                                     "Passwords are associated with directors, so changing a password requires "
-                                     "that you specify the director to which that password applies.")
-        group.add_option('--password')
-        group.add_option('--director')
-        group.add_option('--monitor', metavar='[yes|no]')
-        self.parser.add_option_group(group)
+        self._cli_parser_group(
+            [PASSWORD, (DIRECTOR,None,'Director (name or ID) to associate with a password'), (MONITOR,None, '[yes|no]')],
+            "Password set/change",
+            "Passwords are associated with Directors, so changing a password requires "
+            "that you specify the Director to which that password applies.  Also, Directors may be "
+            "restricted to a monitoring role.  Specify a value of 'generate' for an auto-generated password."
+            )
         return
 
     # }}}

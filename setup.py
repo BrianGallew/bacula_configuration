@@ -7,7 +7,7 @@ import os, glob
 from setuptools import setup, find_packages
 
 NAME = 'bacula_configuration'
-VERSION = '0.6'
+VERSION = '0.7'
 WEBSITE = 'http://gallew.org/bacula_configuration'
 LICENSE = 'GPLv3 or later'
 DESCRIPTION = 'Bacula configuration management tool'

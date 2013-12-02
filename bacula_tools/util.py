@@ -2,7 +2,7 @@ from __future__ import print_function
 try: from . import *
 except: from bacula_tools import *
 import bacula_tools
-import re, os, sys, filecmp, optparse
+import re, os, sys, filecmp, optparse, random
 
 # Extra stuff needed for the console/daemon tools
 import socket, hmac, base64, hashlib, time
@@ -38,7 +38,7 @@ def guess_os():
 def generate_password(length=44):
     '''Genearte a new password.'''
     possible = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890'
-    return ''.join(choice(possible) for _ in xrange(length))
+    return ''.join(random.choice(possible) for _ in xrange(length))
 
 # }}}
 # {{{ guess_schedule_and_filesets(hostname, os):
@@ -155,6 +155,7 @@ class PasswordStore(object):
 
     def store(self):
         '''Write the data out to the database'''
+        if self.password == GENERATE: self.password = generate_password()
         if not self.password:
             sql = self._delete % (self.table, self.column1)
             self.bc.do_sql(sql, (self.id, self.director_id))
@@ -271,8 +272,8 @@ class DbDict(dict):
             else:
                 print('"%s" is not a proper boolean value: %s not changed' % (value, field))
                 return
-        if dereference:
-            value = self._fk_reference(field, value)[ID]
+        if dereference: value = self._fk_reference(field, value)[ID]
+        if field == PASSWORD and value == GENERATE: value = bacula_tools.generate_password()
         self[field] = value
         return self._save()
 
@@ -444,7 +445,7 @@ class DbDict(dict):
                 "You didn't think this one out very well, did you?.")
 
         if args.list:
-            for row in self.bc.so_sql('select name from %s order by name' % self.table): print(row[0])
+            for row in self.bc.do_sql('select name from %s order by name' % self.table): print(row[0])
             if not client_arg: exit()
 
         if not client_arg:

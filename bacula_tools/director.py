@@ -143,10 +143,10 @@ class Director(DbDict):
     # {{{ _cli_special_setup(): setup the weird phrases that go with directors
 
     def _cli_special_setup(self):
-        '''Handle setting by the CLI of the Message to be used by this Director.'''
+        '''Handle setting by the CLI of the Message to be used by this %s.''' % self.word.capitalize()
         group = optparse.OptionGroup(self.parser,
                                      "Object Setters",
-                                     "Various objects associated with a Job")
+                                     "Various objects associated with a %s" % self.word.capitalize())
         group.add_option('--message-set')
         self.parser.add_option_group(group)
         return

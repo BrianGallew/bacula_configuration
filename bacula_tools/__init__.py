@@ -126,7 +126,7 @@ BACULADATADIR = '/data/bacula'
 CUSTOM_LIST = ['/etc/bacula/bacula.conf',
                '/usr/local/etc/bacula/bacula.conf',
                '/usr/local/etc/bacula.conf',
-               os.path.join(os.environ['HOME'], '.bacula.conf')
+               os.path.join(os.environ.get('HOME','/'), '.bacula.conf')
                ]
 for filename in CUSTOM_LIST:
     if not os.access(filename, os.R_OK): continue

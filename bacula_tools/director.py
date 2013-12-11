@@ -140,6 +140,17 @@ class Director(DbDict):
         return '\n'.join(self.output)
 
     # }}}
+    # {{{ bconsole(): return the string that describes the storagedaemon configuration
+
+    def bconsole(self):
+        '''This is what we'll call to dump out the config for the bconsole'''
+        self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
+        self._simple_phrase(DIRPORT)
+        self._simple_phrase(ADDRESS)
+        self._simple_phrase(PASSWORD)
+        return '\n'.join(self.output)
+
+    # }}}
     # {{{ _cli_special_setup(): setup the weird phrases that go with directors
 
     def _cli_special_setup(self):

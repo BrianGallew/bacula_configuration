@@ -64,7 +64,77 @@ def die(*msg):
     return                  # This will never happen, but it makes auto-formatting a little happier.
 
 # }}}
+def hostname_mangler(fqdn, target=CLIENT):
+    '''Alters the hostname in the desired manner to return a client, director,
+    or storage name.  You will probably want to OVERRIDE THIS to meet the
+    needs of your own site.
 
+    This default function just truncates the last one or two parts of the
+    FQDN, regardless of the target type.  As an alternative, the "standard"
+    that is used by the Bacula installation scripts is to append "-fd",
+    "-sd", or "-dir" to the shortname.  Redefine this function in the
+    config file.
+
+    '''
+    parts = fqdn.split('.')
+    if parts[-1] in ['com', 'org']: del parts[-2:]
+    if parts[-1] == 'local': del parts[-1]
+    return '.'.join(parts)
+
+def default_jobs(client):
+    '''Returns the best guess as to jobs for a newly configured host.  You
+    will probably want to OVERRIDE THIS to meet the needs of your own site.
+
+    The default setting here will create a single job named
+    client-fileset-schedule, and assumes these exist:
+    	Fileset "FullUnix"
+    	Schedule "Daily"
+    	Messages "Standard"
+    	Pool "Default"
+    	Storage "File"
+
+    Absent any of those objects, this will fail.
+    '''
+    message = bacula_tools.Messages({bacula_tools.NAME: 'Standard'}).search()
+    pool = bacula_tools.Pool({bacula_tools.NAME: 'Default'}).search()
+    storage = bacula_tools.Storage({bacula_tools.NAME: 'File'}).search()
+    schedule = bacula_tools.Schedule({bacula_tools.NAME: 'Daily'}).search()
+    fileset = bacula_tools.Fileset({bacula_tools.NAME: 'FullUnix'}).search()
+    job = bacula_tools.Job({bacula_tools.NAME: '%s-FullUnix-Daily' % client[bacula_tools.NAME],
+                            bacula_tools.MESSAGES_ID: message[bacula_tools.ID],
+                            bacula_tools.POOL_ID: pool[bacula_tools.ID],
+                            bacula_tools.STORAGE_ID: storage[bacula_tools.ID],
+                            bacula_tools.SCHEDULE_ID: schedule[bacula_tools.ID],
+                            bacula_tools.FILESET_ID: fileset[bacula_tools.ID],
+                            bacula_tools.MAXIMUMCONCURRENTJOBS: 1,
+                            bacula_tools.PRIORITY: 10,
+                            bacula_tools.LEVEL: 'Incremental',
+                            bacula_tools.RESCHEDULETIMES: 0,
+                            bacula_tools.TYPE: 'Backup',
+                            bacula_tools.WRITEBOOTSTRAP: '/var/tmp/%c.bsr',
+           })
+    job._save()
+    # Going to cheat here, as a newly-created client won't have any
+    # Messages associated.
+    message.link(client)
+    return 
+
+def default_director(client, dname=''):
+    '''Selects a director (preferring the value passed in if possible), and
+    creates a new password for use with that director.  You will
+    undoubtedly want to OVERRIDE THIS to meet the needs of your own
+    site.  The default in this case is the first one returned by a select
+    against the director table with no where clause.'''
+    if not dname:
+        bc = bacula_tools.Bacula_Factory()
+        dname =  bc.do_sql('SELECT name FROM %s LIMIT 1' % bacula_tools.Director.table)[0]
+
+    d = bacula_tools.Director().search(dname)
+    password = bacula_tools.PasswordStore(client[ID], d[ID])
+    password.password = bacula_tools.GENERATE
+    password.store()
+
+    
     
 class ConfigFile(object):
     '''Easy config file management wrapper.

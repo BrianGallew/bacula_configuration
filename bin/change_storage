@@ -1,0 +1,50 @@
+#! /usr/bin/env python
+'''Change or list the hosts using a given storage server.'''
+
+from __future__ import print_function
+import os, sys, bacula_tools
+
+def usage():
+    print('Usage: %s storageserver [client [client...]]' % sys.argv[0])
+    print('Given just a storageserver, list all of the clients using this storageserver.\n'
+          'If given one or more clients, switch them to this storageserver.')
+    exit()
+
+def find_storage_server(s):
+    storage_id = bacula.do_sql('SELECT id FROM storage WHERE name = %s', s)
+    if not storage_id:
+        print( 'No such storage server (%s).  Perhaps you really meant one of these?' % s)
+        for daemon in bacula.do_sql('SELECT name FROM storage ORDER BY name'): print(daemon)
+        exit()
+    return storage_id[0][0]
+
+def move(destination, destination_name, target_host):
+    client_id = bacula.do_sql('SELECT DISTINCT id FROM clients WHERE name = %s', target_host)
+    if not client_id:
+        print('No such client:', target_host)
+        return
+    client_id = client_id[0][0]
+    old_dests = [x[0] for x in bacula.do_sql('SELECT DISTINCT s.name FROM storage s, jobs j where j.client_id = %s and j.storage_id = s.id', client_id)]
+    if not old_dests: return
+    retval = bacula.do_sql('UPDATE jobs SET storage_id = %s WHERE client_id = %s', (destination, client_id))
+    print('Moved %s from %s to %s' % (target_host, ', '.join(old_dests), destination_name))
+    pass
+
+def display(destination):
+    for host in bacula.do_sql('SELECT DISTINCT c.name FROM clients c, jobs j WHERE j.storage_id = %s AND j.client_id = c.id', destination): print(host[0])
+    pass
+
+# Actual program is here.
+
+if len(sys.argv) < 2 or '-h' in sys.argv or '--help' in sys.argv: usage()
+storage = sys.argv[1]
+clients = sys.argv[2:]
+
+bacula = bacula_tools.Bacula_Factory()        # Instantiate our DB connection thingy
+storage_id = find_storage_server(storage)
+
+if clients:
+    for host in clients:
+        move(storage_id, storage, host)
+else:
+    display(storage_id)

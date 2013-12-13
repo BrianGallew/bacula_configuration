@@ -72,7 +72,6 @@ The next steps, in no particular order:
 
 - Convenience functions/scripts (e.g. move all clients from one SD to
 another)
-- Web CGI (trivial)
 - Wiki updater (this may be too site-specific to be useful, but we'll see)
 
 

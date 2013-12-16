@@ -1,4 +1,7 @@
-from . import *
+from __future__ import print_function
+try: from . import *
+except: from bacula_tools import *
+
 # client for interacting with a file daemon
 
 class FDaemon(BSock):
@@ -6,8 +9,7 @@ class FDaemon(BSock):
     '''
 # {{{ __init__(address, password, myname, port=BACULA_FD_PORT, debug=False, timeout=5):
     def __init__(self, address, password, myname, port=BACULA_FD_PORT, debug=False, timeout=5):
-        BSock.__init__(self, address, password, 'Director ' + myname,
-                                             port, debug, timeout)
+        BSock.__init__(self, address, password, 'Director ' + myname, port, debug, timeout)
         return
 # }}}
 # {{{ version(): request version info from the remote daemon (useless?)

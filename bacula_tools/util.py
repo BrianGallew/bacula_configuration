@@ -656,7 +656,6 @@ class BSock:
     easier, not to mention making dealing with timeouts a lot more
     mangeable.
     '''
-# {{{ __init__(address, password, myname, port, debug=False, timeout=5):
     def __init__(self, address, password, myname, port, debug=False, timeout=5):
         '''Address, password, myname, and port are all mandatory.
 
@@ -664,17 +663,15 @@ class BSock:
         myname = the "name" with which a password is associated.  This is not as obvious as you might hope.
 
         '''
+        self.DEBUG = debug
+        self.password = password
+        self.name = myname
         if not address: address = '127.0.0.1'
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connection.settimeout(timeout) # Don't take forever trying to do stuff
         self.log('connecting to: %s' % str((address,port)))
         self.connection.connect((address,port))
-        self.password = password
-        self.name = myname
-        self.DEBUG = debug
         return
-# }}}
-# {{{ log(msg): Debugging output
 
     def log(self, msg):
         '''Write out a single message to stderr, IFF self.DEBUG.'''
@@ -682,9 +679,6 @@ class BSock:
             sys.stderr.write(msg)
             sys.stderr.flush()
         return
-
-    # }}}
-# {{{ auth(): authenticate a new connection
 
     def auth(self):
         '''Authenticated this client with the target service.
@@ -716,9 +710,6 @@ class BSock:
         self.auth = True
         return data
 
-    # }}}
-# {{{ send(message): send a message to the remote daemon
-
     def send(self, message):
         '''Send a properly encoded messages to the connected service.'''
         ldata = pack('!i',len(message))
@@ -727,9 +718,6 @@ class BSock:
         self.connection.send(message)
         return
 
-    # }}}
-# {{{ recv(): Get a one line response from the remote daemon
-
     def recv(self):
         '''Read a (theoretically) single-line response from the connected service.'''
         msglen = unpack('!i', self.connection.recv(4))[0]
@@ -737,9 +725,6 @@ class BSock:
         response = self.connection.recv(msglen)
         self.log( 'received: %s' % response)
         return response
-
-    # }}}
-# {{{ recv_all(): receive a multi-line response from the remote daemon
 
     def recv_all(self):
         """Gets all lines of a request"""
@@ -750,25 +735,16 @@ class BSock:
             s = self.recv()
         return r
 
-    # }}}
-# {{{ version(): request version info from the remote daemon (useless?)
-
     def version(self):
         '''Request the version string from the connected services.'''
         self.send('version')
         return self.recv()
-
-    # }}}
-# {{{ status(args=''): request status of the remote daemon
 
     def status(self, args=''):
         '''Ask the connected service for its status.'''
         if args: self.send('.status %s' % args)
         else: self.send('status')
         return self.recv_all()
-
-    # }}}
-# {{{ _time(): format the time for uniqueifying various things
 
     def _time(self):
         '''Format the time for uniqueifying various things'''

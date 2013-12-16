@@ -1,0 +1,23 @@
+#!/usr/local/bin/python
+'''Report on the status of all of the clients. '''
+from __future__ import print_function
+import bacula_tools
+
+bc = bacula_tools.Bacula_Factory()
+
+sql = 'select director_id from %s where %s = %%s' % (bacula_tools.PasswordStore.table, bacula_tools.PasswordStore.column1)
+
+for client in bc.do_sql('SELECT id from clients'):
+    c = bacula_tools.Client({bacula_tools.ID: client[0]}).search()
+    row = bc.do_sql(sql, c[bacula_tools.ID])[0] # Grab the first password available
+    password = bacula_tools.PasswordStore(c[bacula_tools.ID], row[0])
+    d = bacula_tools.Director().search(row[0])
+
+    connection = bacula_tools.FDaemon(c[bacula_tools.ADDRESS], password.password, d[bacula_tools.NAME])
+    connection.auth()
+    try:
+        result = connection.version()
+        print(result)
+    except Exception as e:
+        print('%s: connection refused (firewall or dead)' % c[bacula_tools.NAME])
+        print(e)

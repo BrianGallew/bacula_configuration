@@ -78,7 +78,7 @@ class Storage(DbDict):
     def __str__(self):
         '''String representation of a Storage suitable for inclusion in a Director configuration.'''
         self.output = ['Storage {\n  Name = "%(name)s"' % self,'}']
-        if self.director_id:
+        if getattr(self, bacula_tools.DIRECTOR_ID, None):
             a = StoragePasswordStore(self[ID], self.director_id)
             if getattr(a,PASSWORD,None): self.output.insert(-1,'  Password = "%s"' % a.password)
         

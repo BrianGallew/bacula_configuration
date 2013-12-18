@@ -48,7 +48,7 @@ setup(name = NAME,
               'manage_messages = bacula_tools.messages:main',
               'manage_schedules = bacula_tools.schedule:main',
               'manage_jobs = bacula_tools.job:main',
-              'manage_directors = bacula_tools.directors:main',
+              'manage_directors = bacula_tools.director:main',
               'manage_scripts = bacula_tools.scripts:main',
               ]
       },

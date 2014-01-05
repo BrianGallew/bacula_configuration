@@ -7,7 +7,7 @@ except: from bacula_tools import *
 class Console(DbDict):
     '''This is for configuring bconsole access.  Unfortunately, there's no good
     way to extract this for constructing a bconsole.conf.  You can set up
-    conventions that a client hostname should match the name of te Console,
+    conventions that a client hostname should match the name of the Console,
     but that isn't going to be very satisfactory.
 
     '''

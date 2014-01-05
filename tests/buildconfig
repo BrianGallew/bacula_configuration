@@ -1,0 +1,196 @@
+#! /usr/bin/env python
+
+from __future__ import print_function
+import os, sys, pprint, bacula_tools, pkg_resources
+
+# This will only work against an installed package.  Sorry.
+sql = pkg_resources.resource_string('bacula_tools','data/bacula_configuration.schema')
+
+# First, (re-)create the schema
+try:
+    bc = bacula_tools.Bacula_Factory() # get a hand for doing SQL
+    row = bc.do_sql(sql)
+except:
+    print('''Unable to rebuild the configuration database.  Please ensure the schema''',
+          '''and credentials all exist and are accessible in one of the following locations.''',
+          sep = '\n')
+    for location in bacula_tools.CUSTOM_LIST:
+        print('\t',location)
+    exit()
+
+# Next, let's create a bunch of objects modelled after the default installation.
+
+obj = bacula_tools.Fileset()
+obj._set_name('Full Set')
+obj._add_entry('/')
+obj._add_entry('signature = MD5', option=1)
+obj._add_entry('/tmp', exclude=1)
+obj._add_entry('/proc', exclude=1)
+obj._add_entry('/.journal', exclude=1)
+obj._add_entry('/.fsck', exclude=1)
+obj._save()
+
+
+obj = bacula_tools.Fileset()
+obj._set_name('Catalog')
+obj._add_entry('/var/lib/working/bacula.sql')
+obj._add_entry('signature = MD5', option=1)
+obj._save()
+
+obj = bacula_tools.Schedule()
+obj._set_name('WeeklyCycle')
+obj._add_run('Full 1st sun at 23:05')
+obj._add_run('Differential 2nd-5th sun at 23:05')
+obj._add_run('Incremental mon-sat at 23:05')
+obj._save()
+
+obj = bacula_tools.Schedule()
+obj._set_name('WeeklyCycleAfterBackup')
+obj._add_run('Full sun-sat at 23:10')
+obj._save()
+
+catalog = bacula_tools.Catalog()
+catalog._set_name('MyCatalog')
+catalog[bacula_tools.DBNAME] = 'catalog'
+catalog[bacula_tools.USER] = 'director'
+catalog[bacula_tools.PASSWORD] = ''
+catalog._save()
+
+ms = bacula_tools.Messages()
+ms._set_name('Standard')
+ms[bacula_tools.DATA] = '''mailcommand = /usr/sbin/bsmtp -h localhost -f \"\(Bacula\) \<%r\>\" -s \"Bacula: %t %e of %c %l\" %r
+operatorcommand = /usr/sbin/bsmtp -h localhost -f \"\(Bacula\) \<%r\>\" -s \"Bacula: Intervention needed for %j\" %r
+mail = root@localhost = all, !skipped
+operator = root@localhost = mount
+console = all, !skipped, !saved
+append = "/usr/log/bacula/bacula.log" = all, !skipped'''
+ms._save()
+
+md = bacula_tools.Messages()
+md._set_name('Daemon')
+md[bacula_tools.DATA] = '''mailcommand = /usr/sbin/bsmtp -h localhost -f \"\(Bacula\) \<%r\>\" -s \"Bacula daemon message\" %r
+mail = root@localhost = all, !skipped
+console = all, !skipped, !saved
+append = "/var/log/bacula/bacula.log" = all, !skipped'''
+md._save()
+
+obj = bacula_tools.Console()
+obj._set_name(os.uname()[1] + '-mon')
+obj[bacula_tools.COMMANDACL] = 'status, .status'
+obj._save()
+
+d = bacula_tools.Director()
+d._set_name(os.uname()[1] + '-dir')
+d[bacula_tools.ADDRESS] = '127.0.0.1'
+d[bacula_tools.DIRPORT] = 9101
+d[bacula_tools.QUERYFILE] = '/etc/bacula/query.sql'
+d[bacula_tools.WORKINGDIRECTORY] = '/var/lib/bacula/working'
+d[bacula_tools.PIDDIRECTORY] = '/var/run'
+d[bacula_tools.MAXIMUMCONCURRENTJOBS] = 1
+d[bacula_tools.PASSWORD] = bacula_tools.GENERATE
+d[bacula_tools.MESSAGES_ID] = md[bacula_tools.ID]
+md.link(d)
+ms.link(d)
+d._save()
+
+obj = bacula_tools.Pool()
+obj._set_name('Default')
+obj[bacula_tools.RECYCLE] = 1
+obj[bacula_tools.AUTOPRUNE] = 1
+obj[bacula_tools.VOLUMERETENTION] = '365 days'
+obj._save()
+
+obj = bacula_tools.Pool()
+obj._set_name('Scratch')
+obj._save()
+
+obj = bacula_tools.Pool()
+obj._set_name('File')
+obj[bacula_tools.RECYCLE] = 1
+obj[bacula_tools.AUTOPRUNE] = 1
+obj[bacula_tools.VOLUMERETENTION] = '365 days'
+obj[bacula_tools.MAXIMUMVOLUMEBYTES] = '50G'
+obj[bacula_tools.MAXIMUMVOLUMES] = 100
+obj._save()
+
+obj = bacula_tools.Storage()
+obj._set_name('File')
+obj[bacula_tools.ADDRESS] = '127.0.0.1'
+obj[bacula_tools.SDPORT] = 9103
+obj[bacula_tools.DEVICE] = 'FileStorage'
+obj[bacula_tools.MEDIATYPE] = 'File'
+password = bacula_tools.StoragePasswordStore(obj[bacula_tools.ID], d[bacula_tools.ID])
+password.password = bacula_tools.GENERATE
+password.store()
+ms.link(obj)
+obj._save()
+
+cl = bacula_tools.Client()
+cl._set_name(os.uname()[1] + '-fd')
+cl[bacula_tools.ADDRESS] = '127.0.0.1'
+cl[bacula_tools.FDPORT] = 9102
+cl[bacula_tools.CATALOG_ID] = catalog[bacula_tools.ID]
+cl[bacula_tools.FILERETENTION] = '30 days'
+cl[bacula_tools.JOBRETENTION] = '6 months'
+cl[bacula_tools.AUTOPRUNE] = 1
+password = bacula_tools.PasswordStore(cl[bacula_tools.ID], d[bacula_tools.ID])
+password.password = bacula_tools.GENERATE
+password.store()
+cl._save()
+
+obj = bacula_tools.JobDef()
+obj._set_name('DefaultJob')
+obj[bacula_tools.TYPE] = 'Backup'
+obj[bacula_tools.LEVEL] = 'Level'
+obj[bacula_tools.CLIENT_ID] = cl[bacula_tools.ID]
+obj[bacula_tools.FILESET_ID] = bacula_tools.Fileset().search('Full Set')[bacula_tools.ID]
+obj[bacula_tools.SCHEDULE_ID] = bacula_tools.Schedule().search('WeeklyCycle')[bacula_tools.ID]
+obj[bacula_tools.STORAGE_ID] = bacula_tools.Storage().search('File')[bacula_tools.ID]
+obj[bacula_tools.MESSAGES_ID] = ms[bacula_tools.ID]
+obj[bacula_tools.POOL_ID] = bacula_tools.Pool().search('File')[bacula_tools.ID]
+obj[bacula_tools.PRIORITY] = 10
+obj[bacula_tools.WRITEBOOTSTRAP] = '/usr/opt/bacula/working/%c.bsr'
+obj._save()
+
+obj = bacula_tools.Job()
+obj._set_name('BackupClient1')
+obj[bacula_tools.JOB_ID] = bacula_tools.Job().search('DefaultJob')[bacula_tools.ID]
+obj._save()
+
+obj = bacula_tools.Job()
+obj._set_name('RestoreFiles')
+obj[bacula_tools.TYPE] = 'Restore'
+obj[bacula_tools.CLIENT_ID] = cl[bacula_tools.ID]
+obj[bacula_tools.FILESET_ID] = bacula_tools.Fileset().search('Full Set')[bacula_tools.ID]
+obj[bacula_tools.STORAGE_ID] = bacula_tools.Storage().search('File')[bacula_tools.ID]
+obj[bacula_tools.MESSAGES_ID] = ms[bacula_tools.ID]
+obj[bacula_tools.POOL_ID] = bacula_tools.Pool().search('File')[bacula_tools.ID]
+obj[bacula_tools.WHERE] = '/tmp/bacula-restores'
+obj._save()
+
+
+bscr = bacula_tools.Script()
+bscr._set_name('Catalog Dump Script')
+bscr[bacula_tools.RUNSONCLIENT] = 0
+bscr[bacula_tools.RUNSWHEN] = 'Before'
+bscr[bacula_tools.COMMAND] = '/etc/bacula/make_catalog_backup.pl MyCatalog'
+bscr._save()
+
+ascr = bacula_tools.Script()
+ascr._set_name('Catalog Cleanup Script')
+ascr[bacula_tools.RUNSONCLIENT] = 0
+ascr[bacula_tools.RUNSWHEN] = 'After'
+ascr[bacula_tools.COMMAND] = '/etc/bacula/delete_catalog_backup'
+ascr._save()
+
+obj = bacula_tools.Job()
+obj._set_name('BackupCatalog')
+obj[bacula_tools.JOB_ID] = bacula_tools.Job().search('DefaultJob')[bacula_tools.ID]
+obj[bacula_tools.LEVEL] = 'Full'
+obj[bacula_tools.FILESET_ID] = bacula_tools.Fileset().search('Catalog')[bacula_tools.ID]
+obj[bacula_tools.SCHEDULE_ID] = bacula_tools.Schedule().search('WeeklyCycleAfterBackup')[bacula_tools.ID]
+obj[bacula_tools.PRIORITY] = 11
+obj._add_script(bscr)
+obj._add_script(ascr)
+obj._save()
+

@@ -334,7 +334,7 @@ class Job(DbDict):
     def _cli_special_print(self):
         '''All of the foreign key objects get printed out here for the CLI.'''
         fmt = '%' + str(self._maxlen) + 's: %s'
-        for x in self.REFERENCE_KEYS:
+        for x in self.REFERENCE_KEYS + self.SPECIAL_KEYS:
             if self[x] == None: continue
             print(fmt % (x.replace('_id', '').capitalize(), self._fk_reference(x)[NAME]))
         if self.scripts:

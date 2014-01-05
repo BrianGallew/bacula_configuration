@@ -92,7 +92,7 @@ class Fileset(DbDict):
     # }}}
     # {{{ _add_entry(entry, option, exclude): add another entry
 
-    def _add_entry(self, entry, option, exclude):
+    def _add_entry(self, entry, option=0, exclude=0):
         '''This holds the SQL that manages writing entries.  It probably needs a
         complete redesign.
         

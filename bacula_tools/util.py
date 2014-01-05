@@ -130,7 +130,7 @@ def default_director(client, dname=''):
         dname =  bc.do_sql('SELECT name FROM %s LIMIT 1' % bacula_tools.Director.table)[0]
 
     d = bacula_tools.Director().search(dname)
-    password = bacula_tools.PasswordStore(client[ID], d[ID])
+    password = bacula_tools.PasswordStore(client, d)
     password.password = bacula_tools.GENERATE
     password.store()
 
@@ -191,73 +191,44 @@ class ConfigFile(object):
 
 class PasswordStore(object):
     '''Client resources have passwords associated.  This class helps manage
-    that.  Instantiate with a Client ID and a Director ID.'''
+    that.  Instantiate with two objects: a Client/Storage and a Director/Console.'''
     bc = bacula_tools.Bacula_Factory()
-    column1 = 'client_id'
-    table = 'client_pwords'
-    _select = 'SELECT * FROM %s where %s = %%s and %s = %%s'
-    _insert = 'INSERT INTO %s (%s, director_id, password %s) values (%%s, %%s, %%s %s)'
-    _update = 'UPDATE %s set password=%%s %s where %s=%%s and director_id=%%s'
-    _delete = 'DELETE FROM %s where %s=%%s and director_id=%%s'
-    # {{{ __init__(id1, director_id):
+    table = 'pwords'
+    _where = 'where obj_id = %s and obj_type = %s and director_id = %s and director_type = %s'
+    _select = 'SELECT * FROM %s %s'
+    _insert = 'INSERT INTO %s (obj_id, obj_type, director_id, director_type, password) values (%%s, %%s, %%s, %%s, %%s)'
+    _update = 'UPDATE %s set password=%%s %s'
+    _delete = 'DELETE FROM %s %s'
 
-    def __init__(self, id1, director_id):
-        self.id = id1
-        self.director_id = director_id
+    def __init__(self, obj1, obj2):
+        '''Store references to the two objects associated with this password'''
+        self.where_arguments = (int(obj1[ID]), obj1.IDTAG, int(obj2[ID]), obj2.IDTAG)
         self.load()
         return
 
-        # }}}
-    # {{{ load():
-
     def load(self):
         '''Load data from the database'''
-        sql = self._select % (self.table, self.column1, DIRECTOR_ID)
-        value = self.bc.do_sql(sql, (self.id, self.director_id), asdict=True)
-        if len(value) == 1:
-            value = value[0]
-            self.password = value[PASSWORD]
-            if value.has_key(MONITOR): self.monitor = value[MONITOR]
+        sql = self._select % (self.table, self._where)
+        value = self.bc.do_sql(sql, self.where_arguments, asdict=True)
+        if len(value) == 1: self.password = value[0][PASSWORD]
         return
-
-        # }}}
-    # {{{ store():
 
     def store(self):
         '''Write the data out to the database'''
         if self.password == GENERATE: self.password = generate_password()
         if not self.password:
-            sql = self._delete % (self.table, self.column1)
-            self.bc.do_sql(sql, (self.id, self.director_id))
+            sql = self._delete % (self.table, self._where)
+            self.bc.do_sql(sql, self.where_arguments)
             return
-        if hasattr(self, MONITOR):
-            values = (self.password, self.monitor)
-            m = ", monitor=%s"
-            n = ', monitor'
-            i = ', %s'
-        else:
-            values = (self.password,)
-            m = ""
-            n = ""
-            i = ''
+        values = (self.password,)
         try:
-            sql = self._insert % (self.table, self.column1, n, i)
-            self.bc.do_sql(sql, (self.id, self.director_id) + values)
+            sql = self._insert % self.table
+            self.bc.do_sql(sql, self.where_arguments + values)
         except Exception as e:
-            self.bc.do_sql(self._update % (self.table, m, self.column1), values + (self.id, self.director_id))
+            sql = self._update % (self.table, self._where)
+            self.bc.do_sql(sql, values + self.where_arguments)
         return
 
-        # }}}
-
-class StoragePasswordStore(PasswordStore):
-    '''The Storage daemons have slightly different requirements from Clients.
-    Instantiate with a Storage ID and a Director ID.'''
-    column1 = 'storage_id'
-    table = 'storage_pwords'
-    def __str__(self):
-        d = bacula_tools.Director().search(self.director_id)
-        return '%s: %s' % (d[NAME], self.password)
-        
 class DbDict(dict):
     '''Base class for all of the things derived from database rows.  It's badly
     overloaded with functionality, but it sure is convenient to do it this way.'''

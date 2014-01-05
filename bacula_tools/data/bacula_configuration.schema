@@ -9,8 +9,9 @@ DROP TABLE IF EXISTS `service_link` ;
 DROP TABLE IF EXISTS `schedule_link` ;
 DROP TABLE IF EXISTS `jobs` ;
 DROP TABLE IF EXISTS `scripts` ;
-DROP TABLE IF EXISTS `storage_pwords` ;
 DROP TABLE IF EXISTS `client_pwords` ;
+DROP TABLE IF EXISTS `storage_pwords` ;
+DROP TABLE IF EXISTS `pwords` ;
 DROP TABLE IF EXISTS `clients` ;
 DROP TABLE IF EXISTS `storage` ;
 DROP TABLE IF EXISTS `catalogs`;
@@ -115,7 +116,6 @@ CREATE TABLE `consoles`
  (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
-  `password` varchar(4096),
   `catalogacl` varchar(4096),	
   `clientacl` varchar(4096),
   `commandacl` varchar(4096),
@@ -283,29 +283,16 @@ CREATE TABLE `clients` (
   CONSTRAINT `clients_fk_catalog_id` FOREIGN KEY (`catalog_id`) REFERENCES `catalogs` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- select 'Creating table client_pwords';
-CREATE TABLE `client_pwords` (
+-- select 'Creating table pwords';
+CREATE TABLE `pwords` (
   `id` int(11) NOT NULL auto_increment,
-  `client_id` int(11) NOT NULL,
+  `obj_id` int(11) NOT NULL,
+  `obj_type` int(11) NOT NULL,
   `director_id` int(11) NOT NULL,
-  `password` varchar(255),
-  `monitor` tinyint(1),
-  PRIMARY KEY `PRIMARY` (`id`),
-  UNIQUE KEY `client_pwords_cid_did` (`client_id`, `director_id`),
-  CONSTRAINT `client_pwords_fk_client_id` FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `client_pwords_fk_director_id` FOREIGN KEY (`director_id`) REFERENCES `directors` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
--- select 'Creating table storage_pwords';
-CREATE TABLE `storage_pwords` (
-  `id` int(11) NOT NULL auto_increment,
-  `storage_id` int(11) NOT NULL,
-  `director_id` int(11) NOT NULL,
+  `director_type` int(11) NOT NULL,
   `password` varchar(255),
   PRIMARY KEY `PRIMARY` (`id`),
-  UNIQUE KEY `storage_pwords_cid_did` (`storage_id`, `director_id`),
-  CONSTRAINT `storage_pwords_fk_storage_id` FOREIGN KEY (`storage_id`) REFERENCES `storage` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `storage_pwords_fk_director_id` FOREIGN KEY (`director_id`) REFERENCES `directors` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  UNIQUE KEY `pwords_cid_did` (`obj_id`, `obj_type`, `director_id`, `director_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- select 'Creating table scripts';

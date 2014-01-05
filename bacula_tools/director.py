@@ -16,7 +16,6 @@ class Director(DbDict):
     # This is kind of a hack used for associating Messages with different
     # resources that are otherwise identically named/numbered.
     IDTAG = 1
-    # {{{ parse_string(string, director_config, obj): Entry point for a recursive descent parser
 
     def parse_string(self, string, director_config, obj):
         '''Populate a new object from a string.
@@ -34,18 +33,8 @@ class Director(DbDict):
 
         def _handle_password(*x):
             a,b,c =  x[2]
-            if type(obj) == bacula_tools.Client: klass = PasswordStore
-            elif type(obj) == bacula_tools.Storage: klass = StoragePasswordStore
-            else: print("WTH is a", type(obj), "being passed in?", director_config)
-            a = klass(obj[ID], self[ID])
+            a = PasswordStore(obj, self)
             a.password = c
-            a.store()
-            return
-
-        def _handle_monitor(*x):
-            a,b,c =  x[2]
-            a = PasswordStore(obj[ID], self[ID])
-            a.monitor = c
             a.store()
             return
 
@@ -82,7 +71,6 @@ class Director(DbDict):
         gr_messages = np((MESSAGES,), action=self._parse_setter(MESSAGES_ID, dereference=True))
         gr_work_dir = np(PList('working directory'), action=self._parse_setter(WORKINGDIRECTORY))
         gr_port = np(PList('dir port'), gr_number, self._parse_setter(DIRPORT, True))
-        gr_monitor = np((MONITOR,), gr_yn, action=_handle_monitor)
 
         # This is a complicated one
         da_addr = np(('Addr','Port'), Word(printables), lambda x,y,z: ' '.join(z))
@@ -93,12 +81,11 @@ class Director(DbDict):
         if director_config: gr_pass = np((PASSWORD,), action=self._parse_setter(PASSWORD))
         else: gr_pass = np((PASSWORD,), action=_handle_password)
 
-        gr_res = OneOrMore(gr_name | gr_address | gr_fd_conn | gr_heart | gr_max_con | gr_max_jobs | gr_pass | gr_pid | gr_query | gr_scripts | gr_sd_conn | gr_source | gr_stats | gr_messages | gr_work_dir | gr_port | gr_monitor | da_addresses)
+        gr_res = OneOrMore(gr_name | gr_address | gr_fd_conn | gr_heart | gr_max_con | gr_max_jobs | gr_pass | gr_pid | gr_query | gr_scripts | gr_sd_conn | gr_source | gr_stats | gr_messages | gr_work_dir | gr_port | da_addresses)
 
         result = gr_res.parseString(string, parseAll=True)
         return 'Director: ' + self[NAME]
 
-    # }}}
     # {{{ __str__(): 
 
     def __str__(self):
@@ -121,7 +108,7 @@ class Director(DbDict):
         '''This is what we'll call to dump out the config for the file daemon'''
         self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
         if getattr(self,CLIENT_ID, None):
-            a = PasswordStore(self.client_id, self[ID])
+            a = PasswordStore(Client().search(self.client_id), self)
             if getattr(a,PASSWORD, None):
                 self.output.insert(-1,'  Password = "%s"' % a.password)
                 if a.monitor: self.output.insert(-1,'  Monitor = "yes"' )
@@ -134,7 +121,7 @@ class Director(DbDict):
         '''This is what we'll call to dump out the config for the storage daemon'''
         self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
         if getattr(self,STORAGE_ID, None):
-            a = StoragePasswordStore(self.storage_id, self[ID])
+            a = PasswordStore(Storage().search(self.storage_id), self)
             if getattr(a,PASSWORD, None):
                 self.output.insert(-1,'  Password = "%s"' % a.password)
         return '\n'.join(self.output)

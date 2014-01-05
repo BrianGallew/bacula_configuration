@@ -17,6 +17,7 @@ class StringParseSupport:
     comment_re = re.compile(r'#.*', re.MULTILINE)
     semicolon_re = re.compile(r';', re.MULTILINE)
     blankline_re = re.compile(r'^\s+$', re.MULTILINE)
+    monitor_re = re.compile(r'^\s*m\s*o\s*n\s*i\s*t\s*o\s*r\s*=\s*yes\s*$', re.MULTILINE|re.I)
     # {{{ __init__(output):
 
     def __init__(self, output):
@@ -75,6 +76,8 @@ class StringParseSupport:
                 self.output(current)
                 raise
             name = name.strip().lower()
+            # special case the Console here because the client config is stupid
+            if self.monitor_re.search(body): name = CONSOLE
             self.parse_queue.setdefault(name, []).append(body.strip())
             while parts and parts[0] == '\n': del parts[0]
         return
@@ -102,6 +105,7 @@ class StringParseSupport:
                 obj = bacula_tools._DISPATCHER[key]()
                 self.parsed.append(obj)
                 if key == DIRECTOR: result = obj.parse_string(body, self.director_config, self.parsed[0])
+                elif key == CONSOLE: result = obj.parse_string(body, self.director_config, self.parsed[0])
                 elif key in [CATALOG.lower(), MESSAGES, DEVICE]: result = obj.parse_string(body, self.parsed[0])
                 else: result = obj.parse_string(body)
                 self.output(result)

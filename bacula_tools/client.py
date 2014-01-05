@@ -88,7 +88,7 @@ class Client(DbDict):
         self.output = ['Client {\n  Name = "%(name)s"' % self,'}']
         self.output.insert(-1, '  %s = "%s"' % (CATALOG.capitalize(), self._fk_reference(CATALOG_ID)[NAME]))
         if getattr(self,DIRECTOR_ID, None):
-            a = PasswordStore(self[ID], self.director_id)
+            a = PasswordStore(self, Director().search(self.director_id))
             if getattr(a, PASSWORD, None): self.output.insert(-1,'  Password = "%s"' % a.password)
         for key in [ADDRESS, FDPORT, FILERETENTION,
                     JOBRETENTION, MAXIMUMCONCURRENTJOBS,
@@ -151,7 +151,7 @@ class Client(DbDict):
         if not d[ID]:
             print('\n***WARNING***: Unable to find a director using "%s".  Password not changed\n' % args.director)
             return
-        password = PasswordStore(self[ID], d[ID])
+        password = PasswordStore(self, d)
         password.password = args.password
         if args.monitor:
             if args.monitor.lower() in TRUE_VALUES: password.monitor = 1
@@ -163,14 +163,14 @@ class Client(DbDict):
     # {{{ _cli_special_print(): print out passwords
 
     def _cli_special_print(self):
-        '''Prints out the passwords and the directors with which they are associated'''
+        '''Prints out the passwords and the directors/consoles with which they are associated'''
         print('\nPasswords:')
-        sql = 'select director_id from %s where %s = %%s' % (PasswordStore.table, PasswordStore.column1)
-        for row in self.bc.do_sql(sql, self[ID]):
-            password = PasswordStore(self[ID], row[0])
-            d = bacula_tools.Director().search(row[0])
-            retval = '%30s: %s' % (d[NAME], password.password)
-            if password.monitor: retval += ' (monitor)'
+        sql = 'select director_id, director_type from pwords where obj_id = %s and obj_type = %s'
+        for row in self.bc.do_sql(sql, (self[ID], self.IDTAG)):
+            if row[1] == Director.IDTAG: other = Director().search(row[0])
+            if row[1] == Console.IDTAG: other = Console().search(row[0])
+            password = PasswordStore(self, other)
+            retval = '%30s: %s' % (other[NAME], password.password)
             print(retval)
         return
 

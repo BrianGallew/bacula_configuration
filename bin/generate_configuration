@@ -6,9 +6,8 @@ import sys, os
 import optparse
 from bacula_tools import *
 
-# {{{ reload_director(): use bconsole to reload the config
-
 def reload_director(d):
+    '''use bconsole to reload the config'''
     handle = BDirector(d)
     handle.auth()
     handle.send('reload')
@@ -16,10 +15,8 @@ def reload_director(d):
     handle.send('status dir days=')
     handle.recv_all()
 
-# }}}
-# {{{ reload_storage(): Restart bacula-sd with appropriate precautions.  Relies on at
-
 def reload_storage():
+    '''Restart bacula-sd with appropriate precautions.  Relies on at(1).'''
     atjob = "/tmp/restart_storage.sh"
     cf = ConfigFile(atjob)
     resubmit = cf.close('''
@@ -37,9 +34,7 @@ service bacula-sd restart
     if resubmit: os.system("at -f %(atjob)s now + 1 minute" % locals())
     return
 
-# }}}
-
-# {{{ Parser configuration and sanity checking.  Also, "bacula" is instantiated in here
+# Parser configuration and sanity checking.  Also, "bacula" is instantiated in here
 
 parser = optparse.OptionParser(description='Print Bacula configuration.', usage='usage: %prog --(director|fd|sd) hostname ')
 parser.add_option('--bconsole', action='store_true',
@@ -70,8 +65,7 @@ bacula = Bacula_Factory()        # Instantiate our DB connection thingy
 
 hostname = given_arg[0].strip()
 
-if args.director:
-    # {{{ Director configuration stanzas
+if args.director:               # Director configuration stanzas
 
     # First, the basics
     cf = ConfigFile(BACULA_DIR_CONF)
@@ -92,13 +86,11 @@ if args.director:
     for id in d.bc.do_sql('SELECT id FROM storage ORDER BY name'): cf.write( Storage(director_id = d[ID]).search(id), '\n')
     # Pools
     for id in d.bc.do_sql('SELECT id FROM pools ORDER BY name'): cf.write( Pool().search(id), '\n')
+    # Consoles
+    for id in d.bc.do_sql('SELECT id FROM consoles ORDER BY name'): cf.write( Console().search(id), '\n')
     if cf.close(): reload_director(d)
 
-    # }}}
-    
-
-if args.fd:
-    # {{{ File Daemon configuration stanzas
+if args.fd:                     # File Daemon configuration stanzas
 
     cf = ConfigFile(BACULA_FD_CONF)
     cl = Client().search(hostname)
@@ -108,9 +100,8 @@ if args.fd:
         cf.write( Director(client_id = cl[ID]).search(id).fd(), '\n')
     
     for id in cl.bc.do_sql('SELECT messages_id FROM messages_link WHERE ref_id = %s AND link_type = %s', (cl[ID], cl.IDTAG)): cf.write( Messages().search(id), '\n')
+    for id in d.bc.do_sql('SELECT id FROM consoles ORDER BY name'): cf.write( Console().search(id).fd(), '\n')
     if cf.close(): pass
-
-    # }}}
 
 if args.sd:
     cf = ConfigFile(BACULA_SD_CONF)
@@ -125,4 +116,5 @@ if args.sd:
         
     for id in sd.bc.do_sql('SELECT messages_id FROM messages_link WHERE ref_id = %s AND link_type = %s', (sd[ID], sd.IDTAG)):
         cf.write( Messages().search(id), '\n')
+    for id in d.bc.do_sql('SELECT id FROM consoles ORDER BY name'): cf.write( Console().search(id).fd(), '\n')
     if cf.close(): pass

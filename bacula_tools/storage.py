@@ -79,7 +79,7 @@ class Storage(DbDict):
         '''String representation of a Storage suitable for inclusion in a Director configuration.'''
         self.output = ['Storage {\n  Name = "%(name)s"' % self,'}']
         if getattr(self, bacula_tools.DIRECTOR_ID, None):
-            a = StoragePasswordStore(self[ID], self.director_id)
+            a = PasswordStore(self, Director().search(self.director_id))
             if getattr(a,PASSWORD,None): self.output.insert(-1,'  Password = "%s"' % a.password)
         
         for key in self.dir_keys: self._simple_phrase(key)
@@ -126,7 +126,7 @@ class Storage(DbDict):
         if not d[ID]:
             print('\n***WARNING***: Unable to find a director using "%s".  Password not changed\n' % args.director)
             return
-        password = StoragePasswordStore(self[ID], d[ID])
+        password = PasswordStore(self, d)
         password.password = args.password
         password.store()
         return
@@ -137,11 +137,12 @@ class Storage(DbDict):
     def _cli_special_print(self):
         '''Print out the passwords for the CLI.'''
         print('\nPasswords:')
-        sql = 'select director_id from %s where %s = %%s' % (StoragePasswordStore.table, StoragePasswordStore.column1)
-        for row in self.bc.do_sql(sql, self[ID]):
-            password = StoragePasswordStore(self[ID], row[0])
-            d = bacula_tools.Director().search(row[0])
-            print('%30s: %s' % (d[NAME], password.password))
+        sql = 'select director_id, director_type from pwrods where obj_id = %s and obj_type'
+        for row in self.bc.do_sql(sql, (self[ID], self.IDTAG)):
+            if row[1] == Director.IDTAG: other = Director().search(row[0])
+            if row[1] == Console.IDTAG: other = Console().search(row[0])
+            password = StoragePasswordStore(self, other)
+            print('%30s: %s' % (other[NAME], password.password))
         return
 
     # }}}

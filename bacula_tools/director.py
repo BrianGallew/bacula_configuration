@@ -9,9 +9,9 @@ class Director(DbDict):
                  FD_CONNECT_TIMEOUT, HEARTBEATINTERVAL,
                  PASSWORD, PIDDIRECTORY, QUERYFILE,
                  SCRIPTS_DIRECTORY, SD_CONNECT_TIMEOUT, SOURCEADDRESS, STATISTICS_RETENTION,
-                 WORKINGDIRECTORY, DIRADDRESSES]
+                 WORKINGDIRECTORY]
     INT_KEYS = [(DIRPORT, 9101), MAXIMUMCONCURRENTJOBS, MAXIMUMCONSOLECONNECTIONS,]
-    NULL_KEYS = [MESSAGES_ID, ]
+    NULL_KEYS = [MESSAGES_ID, DIRADDRESSES ]
     table = DIRECTORS
     # This is kind of a hack used for associating Messages with different
     # resources that are otherwise identically named/numbered.
@@ -86,12 +86,10 @@ class Director(DbDict):
         result = gr_res.parseString(string, parseAll=True)
         return 'Director: ' + self[NAME]
 
-    # {{{ __str__(): 
-
     def __str__(self):
         '''String representation of a Director, suitable for inclusion in director.conf'''
         self.output = ['Director {\n  Name = "%(name)s"' % self,'}']
-        for key in self.NULL_KEYS: self._simple_phrase(key)
+        for key in self.SETUP_KEYS + self.INT_KEYS: self._simple_phrase(key)
         # set the messages
         m = self._fk_reference(MESSAGES_ID)
         self.output.insert(-1, '  %s = "%s"' % (MESSAGES.capitalize(), m[NAME]))
@@ -100,9 +98,6 @@ class Director(DbDict):
             self.output.insert(-1,  self[DIRADDRESSES])
             self.output.insert(-1, '  }')
         return '\n'.join(self.output)
-
-# }}}
-    # {{{ fd(): return the string that describes the filedaemon configuration
 
     def fd(self):
         '''This is what we'll call to dump out the config for the file daemon'''
@@ -114,9 +109,6 @@ class Director(DbDict):
                 if a.monitor: self.output.insert(-1,'  Monitor = "yes"' )
         return '\n'.join(self.output)
 
-    # }}}
-    # {{{ sd(): return the string that describes the storagedaemon configuration
-
     def sd(self):
         '''This is what we'll call to dump out the config for the storage daemon'''
         self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
@@ -126,9 +118,6 @@ class Director(DbDict):
                 self.output.insert(-1,'  Password = "%s"' % a.password)
         return '\n'.join(self.output)
 
-    # }}}
-    # {{{ bconsole(): return the string that describes the storagedaemon configuration
-
     def bconsole(self):
         '''This is what we'll call to dump out the config for the bconsole'''
         self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
@@ -136,9 +125,6 @@ class Director(DbDict):
         self._simple_phrase(ADDRESS)
         self._simple_phrase(PASSWORD)
         return '\n'.join(self.output)
-
-    # }}}
-    # {{{ _cli_special_setup(): setup the weird phrases that go with directors
 
     def _cli_special_setup(self):
         '''Handle setting by the CLI of the Message to be used by this %s.''' % self.word.capitalize()
@@ -149,9 +135,6 @@ class Director(DbDict):
         self.parser.add_option_group(group)
         return
 
-    # }}}
-    # {{{ _cli_special_do_parse(args): handle the weird phrases that go with directors
-
     def _cli_special_do_parse(self, args):
         '''Enable the CLI to set the Message to be used by this Director.'''
         if args.message_set == None: return
@@ -161,16 +144,13 @@ class Director(DbDict):
         else: print('Unable to find a match for %s, continuing' % args.message_set)
         return
 
-# }}}
-    # {{{ _cli_special_print(): print out the weird phrases that go with directors
-
     def _cli_special_print(self):
         '''Print out the Message for this Director'''
         if not self[MESSAGES_ID]: return
         fmt = '%' + str(self._maxlen) + 's: %s'
         print(fmt % ('Messages', self._fk_reference(MESSAGES_ID)[NAME]))
         return
-    # }}}
+
 
 def main():
     s = Director()

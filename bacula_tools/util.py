@@ -364,7 +364,7 @@ class DbDict(dict):
         passwords.  Sigh.
         '''
         g = self.name_re.search(string).groups()
-        self._set_name(g[0].strip())
+        self._set_name(g[0].strip().replace('"','').replace("'", ''))
         string = self.name_re.sub('', string)
         data = '\n  '.join([x.strip() for x in string.split('\n') if x])
         self._set(DATA, data)

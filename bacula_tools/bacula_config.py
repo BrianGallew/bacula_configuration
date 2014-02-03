@@ -27,9 +27,9 @@ class Bacula_Config:
     CURRENT_CONNECTION = None   # The currently in-use connection
 
     # }}}
-    # {{{ __db_connect(database=MYSQL_DB, user=MYSQL_USER, passwd=MYSQL_PASS, host=MYSQL_HOST):
+    # {{{ connect(database=MYSQL_DB, user=MYSQL_USER, passwd=MYSQL_PASS, host=MYSQL_HOST):
 
-    def __db_connect(self, database=MYSQL_DB, user=MYSQL_USER, passwd=MYSQL_PASS, host=MYSQL_HOST):
+    def connect(self, database=MYSQL_DB, user=MYSQL_USER, passwd=MYSQL_PASS, host=MYSQL_HOST):
         '''Connect to the database.  Tries to look up an existing connection to use if possible'''
         key = database+user+passwd+host
         if not self.CONNECTIONS.has_key(key): 
@@ -43,7 +43,7 @@ class Bacula_Config:
 
     def get_cursor(self, **kwargs):
         '''Returns a cursor for querying.  Will automatically connect to the database if necessary.'''
-        if not self.CURRENT_CONNECTION: self.__db_connect() # Assume default connection stuff
+        if not self.CURRENT_CONNECTION: self.connect() # Assume default connection stuff
         return self.CURRENT_CONNECTION.cursor(**kwargs)
 
     # }}}

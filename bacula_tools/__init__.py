@@ -2,7 +2,7 @@
 Configuration is at the *end* of this file.'''
 
 from __future__ import print_function
-import re, shlex, sys, os
+import re, sys, os
 
 # Just a placeholder, it gets overridden later
 DEBUG=False
@@ -88,10 +88,11 @@ WORKING_DIR = {
     'Windows': "/bacula/working",
     }
     
-def debug_print(msg, *args):
+def debug_print(msg, *args): #pragma: no cover
     global DEBUG
-    if DEBUG: print(msg % args, file=sys.stderr)
-    sys.stderr.flush()
+    if DEBUG:
+        print(msg % args, file=sys.stderr)
+        sys.stderr.flush()
     return
 
 def set_debug(value):
@@ -109,13 +110,13 @@ set_debug(os.environ.get('DEBUG', False))
 # The rules in here are examples only!
 
 # [variable, regex, fileset, schedule]
-_guessing_rules = [
-    (HOSTNAME, re.compile('origin'), 'SetOnHostGZIP', 'CustomHost'),
-    (HOSTNAME, re.compile('origin'), 'XferLogs', 'FtpHosts'),
-    (HOSTNAME, re.compile(r'\.ocs\.'), 'SetOnHostGZIP', 'Weekly'),
+guessing_rules = [
+    (HOSTNAME, re.compile('.*origin.*'), 'SetOnHostGZIP', 'CustomHost'),
+    (HOSTNAME, re.compile('.*origin.*'), 'XferLogs', 'FtpHosts'),
+    (HOSTNAME, re.compile(r'.*\.ocs\..*'), 'SetOnHostGZIP', 'Weekly'),
     (OS, re.compile(r'Windows'), 'WinFullGZIP', 'Weekly'),
     ]
-_default_rules = [('Daily', 'FullUnixGZIP')]
+default_rules = [('Daily', 'FullUnixGZIP')]
 
 # Where we keep
 BACULADATADIR = '/data/bacula'

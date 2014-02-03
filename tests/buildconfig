@@ -4,13 +4,16 @@ from __future__ import print_function
 import os, sys, pprint, bacula_tools, pkg_resources
 
 # This will only work against an installed package.  Sorry.
-sql = pkg_resources.resource_string('bacula_tools','data/bacula_configuration.schema')
+sql = pkg_resources.resource_string('bacula_tools','data/bacula_configuration.schema').split(';')
 
 # First, (re-)create the schema
 try:
     bc = bacula_tools.Bacula_Factory() # get a hand for doing SQL
-    row = bc.do_sql(sql)
-except:
+    for s in sql:
+        s = s.strip()
+        if not s: continue
+        row = bc.do_sql(s)
+except Exception as e:
     print('''Unable to rebuild the configuration database.  Please ensure the schema''',
           '''and credentials all exist and are accessible in one of the following locations.''',
           sep = '\n')
@@ -119,7 +122,7 @@ obj[bacula_tools.ADDRESS] = '127.0.0.1'
 obj[bacula_tools.SDPORT] = 9103
 obj[bacula_tools.DEVICE] = 'FileStorage'
 obj[bacula_tools.MEDIATYPE] = 'File'
-password = bacula_tools.StoragePasswordStore(obj[bacula_tools.ID], d[bacula_tools.ID])
+password = bacula_tools.PasswordStore(obj, d)
 password.password = bacula_tools.GENERATE
 password.store()
 ms.link(obj)
@@ -133,7 +136,7 @@ cl[bacula_tools.CATALOG_ID] = catalog[bacula_tools.ID]
 cl[bacula_tools.FILERETENTION] = '30 days'
 cl[bacula_tools.JOBRETENTION] = '6 months'
 cl[bacula_tools.AUTOPRUNE] = 1
-password = bacula_tools.PasswordStore(cl[bacula_tools.ID], d[bacula_tools.ID])
+password = bacula_tools.PasswordStore(cl, d)
 password.password = bacula_tools.GENERATE
 password.store()
 cl._save()

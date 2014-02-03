@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 try: from . import *
-except: from bacula_tools import *
+except: from bacula_tools import *  #pragma: no cover
 
 class Console(DbDict):
     '''This is for configuring bconsole access.  Unfortunately, there's no good

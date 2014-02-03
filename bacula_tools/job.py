@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 try: from . import *
-except: from bacula_tools import *
+except: from bacula_tools import * #pragma: no cover
 
 # These are some shortcuts I put here just to make later code look a little cleaner.
 RBJ = PList('Run Before Job')

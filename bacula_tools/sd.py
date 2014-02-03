@@ -1,4 +1,5 @@
-from . import *
+try: from . import *
+except: from bacula_tools import * #pragma: no cover
 
 # client for interacting with a storage daemon
 

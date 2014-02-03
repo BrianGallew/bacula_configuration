@@ -78,7 +78,7 @@ CREATE TABLE `device`
   `blockpositioning` tinyint(1),
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table pools';
 CREATE TABLE `pools` 
@@ -109,7 +109,7 @@ CREATE TABLE `pools`
   `labelformat` varchar(255),
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table consoles';
 CREATE TABLE `consoles` 
@@ -127,7 +127,7 @@ CREATE TABLE `consoles`
   `whereacl` varchar(4096),
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table messages';
 CREATE TABLE `messages` 
@@ -137,7 +137,7 @@ CREATE TABLE `messages`
   `data` varchar(32767) NOT NULL default '',
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table directors';
 CREATE TABLE `directors` (
@@ -162,7 +162,7 @@ CREATE TABLE `directors` (
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `name` (`name`),
   CONSTRAINT `directors_fk_messages_id` FOREIGN KEY (`messages_id`) REFERENCES `messages` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table catalogs';
 CREATE TABLE `catalogs` 
@@ -179,7 +179,7 @@ CREATE TABLE `catalogs`
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `name` (`name`),
   CONSTRAINT `catalogs_fk_director_id` FOREIGN KEY (`director_id`) REFERENCES `directors` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table storage';
 CREATE TABLE `storage` (
@@ -200,7 +200,7 @@ CREATE TABLE `storage` (
   `sdaddresses` varchar(255),
   PRIMARY KEY `id` (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table schedule_time';
 CREATE TABLE `schedule_time` (
@@ -208,7 +208,7 @@ CREATE TABLE `schedule_time` (
   `data` varchar(255) NOT NULL,
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `u_schedule_time` (`data`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table schedules';
 CREATE TABLE `schedules` (
@@ -216,7 +216,7 @@ CREATE TABLE `schedules` (
   `name` varchar(255) NOT NULL,
   PRIMARY KEY `pk_id` (`id`),
   UNIQUE KEY `u_schedules` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table services';
 CREATE TABLE `services` (
@@ -224,7 +224,7 @@ CREATE TABLE `services` (
   `name` varchar(255),
   `notes` text NOT NULL COMMENT 'Notes specific to an entire service, rather than an individual host.',
   PRIMARY KEY  (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table fileset_files';
 CREATE TABLE `fileset_files` (
@@ -233,7 +233,7 @@ CREATE TABLE `fileset_files` (
   `option` tinyint(1),
   PRIMARY KEY  (`id`),
   UNIQUE KEY `name_UNIQUE` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table filesets';
 CREATE TABLE `filesets` (
@@ -243,7 +243,7 @@ CREATE TABLE `filesets` (
   `ignorefilesetchanges` tinyint(1),
   PRIMARY KEY `id` (`id`),
   UNIQUE KEY `name_UNIQUE` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table clients';
 CREATE TABLE `clients` (
@@ -281,7 +281,7 @@ CREATE TABLE `clients` (
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `hostname` (`name`),
   CONSTRAINT `clients_fk_catalog_id` FOREIGN KEY (`catalog_id`) REFERENCES `catalogs` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table pwords';
 CREATE TABLE `pwords` (
@@ -293,7 +293,7 @@ CREATE TABLE `pwords` (
   `password` varchar(255),
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `pwords_cid_did` (`obj_id`, `obj_type`, `director_id`, `director_type`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table scripts';
 CREATE TABLE `scripts` (
@@ -307,7 +307,7 @@ CREATE TABLE `scripts` (
   `command` varchar(255),
   `console` varchar(255),
   PRIMARY KEY `PRIMARY` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table jobs';
 CREATE TABLE `jobs` (
@@ -386,7 +386,7 @@ CREATE TABLE `jobs` (
   CONSTRAINT `jobs_fk_fullpool_id` FOREIGN KEY (`fullpool_id`) REFERENCES `pools` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `jobs_fk_diffpool_id` FOREIGN KEY (`differentialpool_id`) REFERENCES `pools` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `jobs_fk_incrementalpool_id` FOREIGN KEY (`incrementalpool_id`) REFERENCES `pools` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table job_scripts';
 CREATE TABLE `job_scripts` (
@@ -396,7 +396,7 @@ CREATE TABLE `job_scripts` (
   PRIMARY KEY `PRIMARY` (`id`),
   CONSTRAINT `job_scripts_fk_script_id` FOREIGN KEY (`script_id`) REFERENCES `scripts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `job_scripts_fk_job_id` FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table service_link';
 CREATE TABLE `service_link` (
@@ -406,7 +406,7 @@ CREATE TABLE `service_link` (
   PRIMARY KEY `PRIMARY` (`id`),
   CONSTRAINT `service_link_fk_serviceid` FOREIGN KEY (`serviceid`) REFERENCES `services` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `service_link_fk_jobid` FOREIGN KEY (`jobid`) REFERENCES `jobs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table schedule_link';
 CREATE TABLE `schedule_link` (
@@ -416,7 +416,7 @@ CREATE TABLE `schedule_link` (
   PRIMARY KEY `PRIMARY` (`id`),
   CONSTRAINT `schedule_link_fk_schedule_id` FOREIGN KEY (`scheduleid`) REFERENCES `schedules` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `schedule_link_fk_time_id` FOREIGN KEY (`timeid`) REFERENCES `schedule_time` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table fileset_files';
 CREATE TABLE `fileset_link` (
@@ -428,7 +428,7 @@ CREATE TABLE `fileset_link` (
   UNIQUE KEY  (`fileset_id`,`file_id`),
   CONSTRAINT `fileset_link_fk_fileset_id` FOREIGN KEY (`fileset_id`) REFERENCES `filesets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fileset_link_fk_files_id` FOREIGN KEY (`file_id`) REFERENCES `fileset_files` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table messages_link';
 CREATE TABLE `messages_link` (
@@ -438,7 +438,7 @@ CREATE TABLE `messages_link` (
   `link_type` int(11) NOT NULL,
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY (`messages_id`, `ref_id`, `link_type`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table device_link';
 CREATE TABLE `device_link` (
@@ -449,4 +449,4 @@ CREATE TABLE `device_link` (
   UNIQUE KEY `device_link_did_sid` (`device_id`, `storage_id`),
   CONSTRAINT `device_link_fk_device_id` FOREIGN KEY (`device_id`) REFERENCES `device` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `device_link_fk_storage_id` FOREIGN KEY (`storage_id`) REFERENCES `storage` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) DEFAULT CHARSET=latin1;

@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 try: from . import *
-except: from bacula_tools import *
+except: from bacula_tools import * #pragma: no cover
 
 class Script(DbDict):
     '''This is a "ninja" class.  There are no Script resources in Bacula, but there should be.

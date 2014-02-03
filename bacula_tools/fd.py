@@ -1,6 +1,6 @@
 from __future__ import print_function
 try: from . import *
-except: from bacula_tools import *
+except: from bacula_tools import * #pragma: no cover
 
 # client for interacting with a file daemon
 

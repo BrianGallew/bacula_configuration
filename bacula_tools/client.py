@@ -177,11 +177,12 @@ class Client(DbDict):
     # }}}
     # {{{ _cli_special_clone(oid):
 
-    def _cli_special_clone(self, oid):
+    def _cli_special_clone(self, old_id):
         '''When cloning a Client, assume that we want to also clone the passwords'''
-        select = 'SELECT %s, director_id, password, monitor FROM client_pwords WHERE client_id = %%s' % self[ID]
-        insert = 'INSERT INTO client_pwords (client_id, director_id, password, monitor) VALUES (%s,%s,%s,%s)'
-        for row in self.bc.do_sql(select, oid): self.bc.do_sql(insert, row)
+        insert ='''INSERT INTO pwords (obj_id, obj_type, director_id, director_type, password)
+                   SELECT %s, obj_type, director_id, director_type, password FROM pwords
+                   WHERE obj_type=%s AND obj_id=%s;'''
+        self.bc.do_sql(insert, (self[ID], old_id, self.IDTAG))
         return
 
 # }}}

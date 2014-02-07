@@ -148,11 +148,12 @@ class Storage(DbDict):
     # }}}
     # {{{ _cli_special_clone(oid):
 
-    def _cli_special_clone(self, oid):
+    def _cli_special_clone(self, old_id):
         '''Storage clones should have the same sets of passwords as the source object.'''
-        select = 'SELECT %s, director_id, password FROM storage_pwords WHERE storage_id = %%s' % self[ID]
-        insert = 'INSERT INTO storage_pwords (storage_id, director_id, password) VALUES (%s,%s,%s)'
-        for row in self.bc.do_sql(select, oid): self.bc.do_sql(insert, row)
+        insert ='''INSERT INTO pwords (obj_id, obj_type, director_id, director_type, password)
+                   SELECT %s, obj_type, director_id, director_type, password FROM pwords
+                   WHERE obj_type=%s AND obj_id=%s;'''
+        self.bc.do_sql(insert, (self[ID], old_id, self.IDTAG))
         return
 
 # }}}

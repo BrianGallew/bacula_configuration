@@ -60,7 +60,7 @@ else:
         bacula_tools.default_jobs(client)
         bacula_tools.default_director(client, dname)
     print(client.fd())
-    for id in bc.do_sql('SELECT director_id FROM client_pwords where client_id = %s ORDER BY director_id', client[bacula_tools.ID]):
+    for id in bc.do_sql('SELECT director_id FROM pwords where obj_id = %s and obj_type = %s ORDER BY director_id', (client[bacula_tools.ID], client.IDTAG)):
         print( bacula_tools.Director(client_id = client[bacula_tools.ID]).search(id).fd())
     
     for id in bc.do_sql('SELECT messages_id FROM messages_link WHERE ref_id = %s AND link_type = %s', (client[bacula_tools.ID], client.IDTAG)): print( bacula_tools.Messages().search(id))

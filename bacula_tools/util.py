@@ -285,7 +285,7 @@ class DbDict(dict):
             elif value in FALSE_VALUES: value = 0
             else:
                 print('"%s" is not a proper boolean value: %s not changed' % (value, field))
-                return
+                return self
         if dereference: value = self._fk_reference(field, value)[ID]
         if field == PASSWORD and value == GENERATE: value = bacula_tools.generate_password()
         self[field] = value

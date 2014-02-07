@@ -2,7 +2,7 @@ from __future__ import print_function
 import os, sys, pprint, unittest, pkg_resources
 sys.path.insert(0, '..')
 sys.path.insert(0, '.')
-import bacula_tools
+import bacula_tools, mock, socket
 
 class generate_password_tests(unittest.TestCase):
     def test_length(self):
@@ -179,6 +179,9 @@ class database_storage_tests(unittest.TestCase):
         return
 
     def test_dbdict_set_boolean(self):
+        self.client[bacula_tools.PKIENCRYPTION] = 0
+        self.client._set(bacula_tools.PKIENCRYPTION, 'hi', boolean=True)
+        self.assertEquals(self.client[bacula_tools.PKIENCRYPTION], 0)
         self.client._set(bacula_tools.PKIENCRYPTION, '1', boolean=True)
         result = self.bc.do_sql('select pkiencryption from clients where id = %s', self.client[bacula_tools.ID])
         self.assertEquals(result[0][0], 1)
@@ -200,6 +203,13 @@ class database_storage_tests(unittest.TestCase):
         return
 
     def test_dbdict_save_duplicate_record(self):
+        oid = self.director[bacula_tools.ID]
+        self.director[bacula_tools.ID] = None
+        self.assertRaises(SystemExit, self.director._save)
+        self.director[bacula_tools.ID] = oid
+        return
+
+    def test_dbdict_cli_option_processor(self):
         oid = self.director[bacula_tools.ID]
         self.director[bacula_tools.ID] = None
         self.assertRaises(SystemExit, self.director._save)
@@ -286,3 +296,59 @@ class configfile_tests(unittest.TestCase):
         newdata = os.stat(self.testfile)
         self.assertNotEqual(data, newdata)
         return
+
+@mock.patch('socket.socket', autospec=True)
+@mock.patch('sys.stderr', autospec=True)
+class bsock_tests(unittest.TestCase):
+    def test_init(self, stderr, sock):
+        b = bacula_tools.BSock('foo', 'bar', 'me', 777)
+        c = b.connection
+        sock.assert_called_once_with(socket.AF_INET, socket.SOCK_STREAM)
+        c.assert_has_calls([mock.call.settimeout(5), mock.call.connect(('foo', 777))])
+        return
+
+    def test_log(self, stderr, sock):
+        with mock.patch('bacula_tools.BSock.__init__', new=lambda x: None):
+            b = bacula_tools.BSock()
+            b.DEBUG = True
+            b.log('foo')
+            stderr.assert_has_calls([mock.call.write('foo'), mock.call.flush()])
+        return
+
+    def test_auth(self, stderr, sock):
+        retstrings = [
+            'auth cram-md5 <1.145269@foolishness>',
+            '1000 OK auth\n',
+            'ignored',
+            '1000 OK auth\n',
+            ]
+        with mock.patch('bacula_tools.BSock.__init__', new=lambda x: None), mock.patch('bacula_tools.BSock.send', autospec=True), mock.patch('bacula_tools.BSock.recv', autospec=True, side_effect=retstrings):
+            b = bacula_tools.BSock()
+            b.password = 'unset'
+            b.name = 'fred'
+            b.auth()
+
+        return
+
+    def test_status(self, stderr, sock):
+        sock.reset_mock()
+        with mock.patch('bacula_tools.BSock.__init__', new=lambda x: None), mock.patch('bacula_tools.BSock.send',  new=sock), mock.patch('bacula_tools.BSock.recv_all', autospec=True, side_effect=['nothing', 'else']):
+            b = bacula_tools.BSock()
+            b.status()
+            sock.assert_has_calls([mock.call.send('status')])
+            sock.reset_mock()
+            b.status('fred')
+            sock.assert_has_calls([mock.call.send('.status fred')])
+        sock.reset_mock()
+        return
+
+    def test_version(self, stderr, sock):
+        sock.reset_mock()
+        with mock.patch('bacula_tools.BSock.__init__', new=lambda x: None), mock.patch('bacula_tools.BSock.send',  new=sock), mock.patch('bacula_tools.BSock.recv', autospec=True, side_effect=['nothing', 'else']):
+            b = bacula_tools.BSock()
+            result = b.version()
+            self.assertEquals(result, 'nothing')
+            sock.assert_has_calls([mock.call.send('version')])
+        sock.reset_mock()
+        return
+

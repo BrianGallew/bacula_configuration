@@ -137,11 +137,11 @@ class Storage(DbDict):
     def _cli_special_print(self):
         '''Print out the passwords for the CLI.'''
         print('\nPasswords:')
-        sql = 'select director_id, director_type from pwrods where obj_id = %s and obj_type'
+        sql = 'select director_id, director_type from pwords where obj_id = %s and obj_type = %s'
         for row in self.bc.do_sql(sql, (self[ID], self.IDTAG)):
             if row[1] == Director.IDTAG: other = Director().search(row[0])
             if row[1] == Console.IDTAG: other = Console().search(row[0])
-            password = StoragePasswordStore(self, other)
+            password = PasswordStore(self, other)
             print('%30s: %s' % (other[NAME], password.password))
         return
 
@@ -152,7 +152,8 @@ class Storage(DbDict):
         '''Storage clones should have the same sets of passwords as the source object.'''
         insert ='''INSERT INTO pwords (obj_id, obj_type, director_id, director_type, password)
                    SELECT %s, obj_type, director_id, director_type, password FROM pwords
-                   WHERE obj_type=%s AND obj_id=%s;'''
+                   WHERE obj_id=%s AND obj_type=%s;'''
+        print(insert % (self[ID], old_id, self.IDTAG))
         self.bc.do_sql(insert, (self[ID], old_id, self.IDTAG))
         return
 

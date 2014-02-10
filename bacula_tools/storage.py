@@ -15,7 +15,6 @@ class Storage(DbDict):
     dir_keys = [SDPORT, ADDRESS, DEVICE, MEDIATYPE, MAXIMUMCONCURRENTJOBS, HEARTBEATINTERVAL]
     sd_keys = [WORKINGDIRECTORY, PIDDIRECTORY, CLIENTCONNECTWAIT, SDADDRESSES,
                SDPORT, MAXIMUMCONCURRENTJOBS, HEARTBEATINTERVAL]
-    # {{{ parse_string(string): Entry point for a recursive descent parser
 
     def parse_string(self, string):
         '''Populate a new object from a string.
@@ -72,9 +71,6 @@ class Storage(DbDict):
         result = gr_res.parseString(string, parseAll=True)
         return 'Storage: ' + self[NAME]
 
-    # }}}
-    # {{{ __str__(): 
-
     def __str__(self):
         '''String representation of a Storage suitable for inclusion in a Director configuration.'''
         self.output = ['Storage {\n  Name = "%(name)s"' % self,'}']
@@ -86,9 +82,6 @@ class Storage(DbDict):
         for key in self.BOOL_KEYS: self._simple_phrase(key)
         return '\n'.join(self.output)
 
-# }}}
-    # {{{ sd(): 
-
     def sd(self):
         '''String representation of a Storage suitable for inclusion in a Storage configuration.'''
         self.output = ['Storage {\n  Name = "%(name)s"' % self,'}']
@@ -96,9 +89,6 @@ class Storage(DbDict):
         # Special keys
         if self[ADDRESS]: self.output.insert(-1,'%sSDAddress = %s' % (self.prefix, '"' + self[ADDRESS] + '"'))
         return '\n'.join(self.output)
-
-# }}}
-    # {{{ _cli_special_setup(): add password support
 
     def _cli_special_setup(self):
         '''Add CLI switches for password handling.'''
@@ -110,9 +100,6 @@ class Storage(DbDict):
             "a value of 'generate' to auto-generate a password."
             )
         return
-
-    # }}}
-    # {{{ _cli_special_do_parse(args): add password support
 
     def _cli_special_do_parse(self, args):
         '''Handle CLI switches for password management.'''
@@ -131,9 +118,6 @@ class Storage(DbDict):
         password.store()
         return
 
-    # }}}
-    # {{{ _cli_special_print(): add password support
-
     def _cli_special_print(self):
         '''Print out the passwords for the CLI.'''
         print('\nPasswords:')
@@ -145,9 +129,6 @@ class Storage(DbDict):
             print('%30s: %s' % (other[NAME], password.password))
         return
 
-    # }}}
-    # {{{ _cli_special_clone(oid):
-
     def _cli_special_clone(self, old_id):
         '''Storage clones should have the same sets of passwords as the source object.'''
         insert ='''INSERT INTO pwords (obj_id, obj_type, director_id, director_type, password)
@@ -157,7 +138,27 @@ class Storage(DbDict):
         self.bc.do_sql(insert, (self[ID], old_id, self.IDTAG))
         return
 
-# }}}
+    def list_clients(self):
+        '''List the clients with jobs that use this storage.'''
+        sql = 'SELECT DISTINCT c.name FROM clients c, jobs j WHERE j.storage_id = %s and j.client_id = c.id'
+        for host in self.bc.do_sql(sql, self[ID]): print(host[0])
+        return
+
+
+    def move(self, target_host):
+        '''Change all jobs for target_host to use this Storage.'''
+        client = Client().search(target_host)
+        if not client[ID]:
+            print('No such client:', target_host)
+            return
+        old_dests = [x[0] for x in self.bc.do_sql('SELECT DISTINCT s.name FROM storage s, jobs j where j.client_id = %s and j.storage_id = s.id', client[ID])]
+        if not old_dests:
+            print('No jobs configured for client:', target_host)
+            return
+        retval = self.bc.do_sql('UPDATE jobs SET storage_id = %s WHERE client_id = %s', (self[ID], client[ID]))
+        print('Moved %s from %s to %s' % (target_host, ', '.join(old_dests), self[NAME]))
+        pass
+
 
 def main():
     s = Storage()

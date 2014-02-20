@@ -80,6 +80,7 @@ md._save()
 obj = bacula_tools.Console()
 obj._set_name(os.uname()[1] + '-mon')
 obj[bacula_tools.COMMANDACL] = 'status, .status'
+obj[bacula_tools.PASSWORD] = bacula_tools.GENERATE
 obj._save()
 
 d = bacula_tools.Director()

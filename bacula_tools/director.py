@@ -89,7 +89,9 @@ class Director(DbDict):
     def __str__(self):
         '''String representation of a Director, suitable for inclusion in director.conf'''
         self.output = ['Director {\n  Name = "%(name)s"' % self,'}']
-        for key in self.SETUP_KEYS + self.INT_KEYS: self._simple_phrase(key)
+        for key in self.SETUP_KEYS + self.INT_KEYS:
+            if key == ADDRESS: continue
+            self._simple_phrase(key)
         # set the messages
         m = self._fk_reference(MESSAGES_ID)
         self.output.insert(-1, '  %s = "%s"' % (MESSAGES.capitalize(), m[NAME]))

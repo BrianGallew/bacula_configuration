@@ -189,6 +189,7 @@ class Job(DbDict):
     def __str__(self):
         '''String representation of a Job, suitable for inclusion in a Director config'''
         self.output = ['%s {' % self.retlabel,'}']
+        self._simple_phrase(NAME)
         for x in self.SETUP_KEYS: self._simple_phrase(x)
         for x in self.INT_KEYS: self._simple_phrase(x)
         for x in self.REFERENCE_KEYS:

@@ -345,9 +345,8 @@ class DbDict(dict):
         '''Shortcut for formatting a simple key/value pair.'''
         if not type(key) == str: key = key[0]
         if self[key] == None: return
-        if 'retention' in key: quoted = False
-        if 'size' in key: quoted = False
-        if 'bytes' in key: quoted = False
+        for unquoted in ['retention', 'size', 'bytes', 'address']:
+            if unquoted in key.lower(): quoted = False
         try:
             int(self[key])
             value = self[key]

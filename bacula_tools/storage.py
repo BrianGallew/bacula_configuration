@@ -87,7 +87,7 @@ class Storage(DbDict):
         self.output = ['Storage {\n  Name = "%(name)s"' % self,'}']
         for key in self.sd_keys: self._simple_phrase(key)
         # Special keys
-        if self[ADDRESS]: self.output.insert(-1,'%sSDAddress = %s' % (self.prefix, '"' + self[ADDRESS] + '"'))
+        if self[ADDRESS]: self.output.insert(-1,'%sSDAddress = %s' % (self.prefix, self[ADDRESS]))
         return '\n'.join(self.output)
 
     def _cli_special_setup(self):

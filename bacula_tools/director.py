@@ -3,6 +3,7 @@
 from __future__ import print_function
 try: from . import *
 except: from bacula_tools import * #pragma: no cover
+import bacula_tools
 
 class Director(DbDict):
     SETUP_KEYS = [ADDRESS, 
@@ -105,17 +106,16 @@ class Director(DbDict):
         '''This is what we'll call to dump out the config for the file daemon'''
         self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
         if getattr(self,CLIENT_ID, None):
-            a = PasswordStore(Client().search(self.client_id), self)
+            a = PasswordStore(bacula_tools.Client().search(self.client_id), self)
             if getattr(a,PASSWORD, None):
                 self.output.insert(-1,'  Password = "%s"' % a.password)
-                if a.monitor: self.output.insert(-1,'  Monitor = "yes"' )
         return '\n'.join(self.output)
 
     def sd(self):
         '''This is what we'll call to dump out the config for the storage daemon'''
         self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
         if getattr(self,STORAGE_ID, None):
-            a = PasswordStore(Storage().search(self.storage_id), self)
+            a = PasswordStore(bacula_tools.Storage().search(self.storage_id), self)
             if getattr(a,PASSWORD, None):
                 self.output.insert(-1,'  Password = "%s"' % a.password)
         return '\n'.join(self.output)

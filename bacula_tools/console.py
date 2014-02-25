@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 
 from __future__ import print_function
-try: from . import *
-except: from bacula_tools import *  #pragma: no cover
+from bacula_tools import *  #pragma: no cover
+import bacula_tools
 
 class Console(DbDict):
     '''This is for configuring bconsole access.  Unfortunately, there's no good
@@ -69,10 +69,9 @@ class Console(DbDict):
     def fd(self):
         self.output = ['Director {\n  Name = "%(name)s"' % self, '  Monitor = yes','}']
         if getattr(self,CLIENT_ID, None):
-            a = PasswordStore(Client().search(self.client_id), self)
-            if getattr(a,PASSWORD, None):
-                self.output.insert(-1,'  Password = "%s"' % a.password)
-                if a.monitor: self.output.insert(-1,'  Monitor = "yes"' )
+            c = bacula_tools.Client().search(self.client_id)
+            a = PasswordStore(c, self)
+            self.output.insert(-1,'  Password = "%s"' % a.password)
         return '\n'.join(self.output)
 
 

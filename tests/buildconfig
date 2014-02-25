@@ -52,13 +52,6 @@ obj._set_name('WeeklyCycleAfterBackup')
 obj._add_run('Full sun-sat at 23:10')
 obj._save()
 
-catalog = bacula_tools.Catalog()
-catalog._set_name('MyCatalog')
-catalog[bacula_tools.DBNAME] = 'catalog'
-catalog[bacula_tools.USER] = 'director'
-catalog[bacula_tools.PASSWORD] = ''
-catalog._save()
-
 ms = bacula_tools.Messages()
 ms._set_name('Standard')
 ms[bacula_tools.DATA] = '''mailcommand = /usr/sbin/bsmtp -h localhost -f \"\(Bacula\) \<%r\>\" -s \"Bacula: %t %e of %c %l\" %r
@@ -77,11 +70,11 @@ console = all, !skipped, !saved
 append = "/var/log/bacula/bacula.log" = all, !skipped'''
 md._save()
 
-obj = bacula_tools.Console()
-obj._set_name(os.uname()[1] + '-mon')
-obj[bacula_tools.COMMANDACL] = 'status, .status'
-obj[bacula_tools.PASSWORD] = bacula_tools.GENERATE
-obj._save()
+cons = bacula_tools.Console()
+cons._set_name(os.uname()[1] + '-mon')
+cons[bacula_tools.COMMANDACL] = 'status, .status'
+cons[bacula_tools.PASSWORD] = bacula_tools.GENERATE
+cons._save()
 
 d = bacula_tools.Director()
 d._set_name(os.uname()[1] + '-dir')
@@ -96,6 +89,14 @@ d[bacula_tools.MESSAGES_ID] = md[bacula_tools.ID]
 md.link(d)
 ms.link(d)
 d._save()
+
+catalog = bacula_tools.Catalog()
+catalog._set_name('MyCatalog')
+catalog[bacula_tools.DBNAME] = 'catalog'
+catalog[bacula_tools.USER] = 'director'
+catalog[bacula_tools.PASSWORD] = ''
+catalog[bacula_tools.DIRECTOR_ID] = d[bacula_tools.ID]
+catalog._save()
 
 obj = bacula_tools.Pool()
 obj._set_name('Default')
@@ -123,7 +124,12 @@ obj[bacula_tools.ADDRESS] = '127.0.0.1'
 obj[bacula_tools.SDPORT] = 9103
 obj[bacula_tools.DEVICE] = 'FileStorage'
 obj[bacula_tools.MEDIATYPE] = 'File'
+obj[bacula_tools.WORKINGDIRECTORY] = '/var/lib/bacula/working'
+obj[bacula_tools.PIDDIRECTORY] = '/var/lib/bacula/working'
 password = bacula_tools.PasswordStore(obj, d)
+password.password = bacula_tools.GENERATE
+password.store()
+password = bacula_tools.PasswordStore(obj, cons)
 password.password = bacula_tools.GENERATE
 password.store()
 ms.link(obj)
@@ -137,15 +143,21 @@ cl[bacula_tools.CATALOG_ID] = catalog[bacula_tools.ID]
 cl[bacula_tools.FILERETENTION] = '30 days'
 cl[bacula_tools.JOBRETENTION] = '6 months'
 cl[bacula_tools.AUTOPRUNE] = 1
+cl[bacula_tools.WORKINGDIRECTORY] = '/var/lib/bacula/working'
+cl[bacula_tools.PIDDIRECTORY] = '/var/lib/bacula/working'
 password = bacula_tools.PasswordStore(cl, d)
 password.password = bacula_tools.GENERATE
 password.store()
+password = bacula_tools.PasswordStore(cl, cons)
+password.password = bacula_tools.GENERATE
+password.store()
 cl._save()
+ms.link(cl)
 
 obj = bacula_tools.JobDef()
 obj._set_name('DefaultJob')
 obj[bacula_tools.TYPE] = 'Backup'
-obj[bacula_tools.LEVEL] = 'Level'
+obj[bacula_tools.LEVEL] = 'Full'
 obj[bacula_tools.CLIENT_ID] = cl[bacula_tools.ID]
 obj[bacula_tools.FILESET_ID] = bacula_tools.Fileset().search('Full Set')[bacula_tools.ID]
 obj[bacula_tools.SCHEDULE_ID] = bacula_tools.Schedule().search('WeeklyCycle')[bacula_tools.ID]

@@ -147,7 +147,7 @@ class Fileset(DbDict):
                     self.output.insert(-1,'    Options {')
                     [self.output.insert(-1,'      ' + x[1]) for x in options]
                     self.output.insert(-1,'    }')
-                [self.output.insert(-1,'    %s' % x[1]) for x in subset if not x[2]]
+                [self.output.insert(-1,'    File = "%s"' % x[1]) for x in subset if not x[2]]
                 self.output.insert(-1,'  }')
         return '\n'.join(self.output)
 

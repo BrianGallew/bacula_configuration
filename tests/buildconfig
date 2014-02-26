@@ -135,6 +135,18 @@ password.store()
 ms.link(obj)
 obj._save()
 
+dev = bacula_tools.Device()
+dev._set_name('FileStorage')
+dev[bacula_tools.MEDIATYPE] = 'File'
+dev[bacula_tools.ARCHIVEDEVICE] = '/data'
+dev[bacula_tools.LABELMEDIA] = 1
+dev[bacula_tools.RANDOMACCESS] = 1
+dev[bacula_tools.AUTOMATICMOUNT] = 1
+dev[bacula_tools.REMOVABLEMEDIA] = 0
+dev[bacula_tools.ALWAYSOPEN] = 0
+dev.link(obj)
+dev._save()
+
 cl = bacula_tools.Client()
 cl._set_name(os.uname()[1] + '-fd')
 cl[bacula_tools.ADDRESS] = '127.0.0.1'

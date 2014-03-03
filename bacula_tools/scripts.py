@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 
 from __future__ import print_function
-try: from . import *
-except: from bacula_tools import * #pragma: no cover
+from bacula_tools import * #pragma: no cover
+import logging
 
 class Script(DbDict):
     '''This is a "ninja" class.  There are no Script resources in Bacula, but there should be.
@@ -13,7 +13,6 @@ class Script(DbDict):
     BOOL_KEYS = [RUNSONSUCCESS, RUNSONCLIENT, FAILJOBONERROR, RUNSONFAILURE,]
     table = SCRIPTS
     prefix = '    '
-    # {{{ __str__(): 
 
     def __str__(self):
         '''Standardized string representation of a Script, suitable for including in a Job configuration.'''
@@ -22,18 +21,15 @@ class Script(DbDict):
         for key in self.BOOL_KEYS: self._yesno_phrase(key)
         return '\n'.join(self.output)
 
-    # }}}
-    # {{{ search():
-
     def search(self, key=None):
         '''Since Scripts are ninjas, they have no Name=FOO in the configuration
         file.  We will generate names upon creation, and use them, but we have to
         support much more complicated searching to deal with the reality of Bacula
         configurations.'''
-        debug_print('dbdict search')
+        logging.debug('dbdict search')
         DbDict.search(self, key)
         if self[ID]: return self
-        debug_print('continuing search')
+        logging.debug('continuing search')
         conditions = []
         values = []
         for key in self.keys():
@@ -47,9 +43,6 @@ class Script(DbDict):
         if not new_me: self._create()
         else: self.update(new_me[0])
         return self
-
-    # }}}
-    # {{{ _create():
 
     def _create(self):
         '''This is where new Scripts get created and named.'''
@@ -67,8 +60,6 @@ class Script(DbDict):
         self[NAME] = 'Script: %d' % self[ID]
         self._save()
         return self
-
-    # }}}
 
 def main():
     s = Script()

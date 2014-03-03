@@ -1,5 +1,5 @@
-'''Bacula configuration database stuff: common routines, credentials, etc'''
-# Bacula_Config and BSock classes and various definitions used by Bacula python programs.
+'''Bacula configuration database stuff: common routines, etc'''
+
 
 import MySQLdb as db
 import MySQLdb.cursors

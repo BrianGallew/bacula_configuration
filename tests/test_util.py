@@ -307,14 +307,6 @@ class bsock_tests(unittest.TestCase):
         c.assert_has_calls([mock.call.settimeout(5), mock.call.connect(('foo', 777))])
         return
 
-    def test_log(self, stderr, sock):
-        with mock.patch('bacula_tools.BSock.__init__', new=lambda x: None):
-            b = bacula_tools.BSock()
-            b.DEBUG = True
-            b.log('foo')
-            stderr.assert_has_calls([mock.call.write('foo'), mock.call.flush()])
-        return
-
     def test_auth(self, stderr, sock):
         retstrings = [
             'auth cram-md5 <1.145269@foolishness>',

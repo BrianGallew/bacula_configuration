@@ -2,7 +2,9 @@
 Configuration is at the *end* of this file.'''
 
 from __future__ import print_function
-import re, sys, os
+import re, sys, os, logging
+
+logging.basicConfig(level=logging.WARNING)
 
 # Just a placeholder, it gets overridden later
 DEBUG=False
@@ -88,19 +90,12 @@ WORKING_DIR = {
     'Windows': "/bacula/working",
     }
     
-def debug_print(msg, *args): #pragma: no cover
+def set_debug():
     global DEBUG
-    if DEBUG:
-        print(msg % args, file=sys.stderr)
-        sys.stderr.flush()
+    logging.root.setLevel(logging.DEBUG)
+    DEBUG = True
+    logging.debug('debugging enabled')
     return
-
-def set_debug(value):
-    global DEBUG
-    DEBUG = value
-    return
-
-set_debug(os.environ.get('DEBUG', False))
 
 # These rules will be used to determine what fileset(s) and schedule(s)
 # will be applied to new jobs that are generated in an automated fashion.

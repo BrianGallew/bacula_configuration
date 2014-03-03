@@ -2,7 +2,7 @@ from __future__ import print_function
 try: from . import *
 except: from bacula_tools import * #pragma: no cover
 import bacula_tools
-import re, os, sys, filecmp, optparse, random
+import re, os, sys, filecmp, optparse, random, logging
 
 # Extra stuff needed for the console/daemon tools
 import socket, hmac, base64, hashlib, time
@@ -143,7 +143,7 @@ class ConfigFile(object):
         self.newfilename = filename + '.new'
         self.fh = open(self.newfilename, 'w')
         self.fh.write(self.FILEHEADER)
-        debug_print("Opened %s", self.newfilename)
+        logging.debug("Opened %s", self.newfilename)
         return
 
     def close(self, *data):
@@ -156,9 +156,9 @@ class ConfigFile(object):
         except: test_value = False
         if test_value:
             os.unlink(self.newfilename)
-            debug_print("\t%s doesn't need to be updated", self.filename)
+            logging.debug("\t%s doesn't need to be updated", self.filename)
             return False
-        debug_print("\tupdating %s", self.filename)
+        logging.debug("\tupdating %s", self.filename)
         os.rename(self.newfilename, self.filename)
         return True
 
@@ -258,7 +258,7 @@ class DbDict(dict):
         return a suggestion as to something better to search for, if
         possible.'''
         if not key:
-            debug_print('DbDict.search: no key, checking for NAME and ID: table "%s", name "%s", id "%s"'% (self.table, self[NAME], self[ID]))
+            logging.debug('DbDict.search: no key, checking for NAME and ID: table "%s", name "%s", id "%s"', self.table, self[NAME], self[ID])
             if self[NAME]: new_me = self.bc.value_check(self.table, NAME, self[NAME], asdict=True)
             elif self[ID]: new_me = self.bc.value_check(self.table, ID, self[ID], asdict=True)
         else:
@@ -279,7 +279,7 @@ class DbDict(dict):
         '''Instead of overriding the standard setter, I chose to add a separate
         function that will set and save.  We also do some special processing of
         boolean values.'''
-        debug_print('setting %s to %s, boolean=%s, dereference=%s', field, value, boolean, dereference)
+        logging.debug('setting %s to %s, boolean=%s, dereference=%s', field, value, boolean, dereference)
         if boolean and value != None:
             if value in TRUE_VALUES: value = 1
             elif value in FALSE_VALUES: value = 0
@@ -302,7 +302,7 @@ class DbDict(dict):
             values = tuple([self[x] for x in keys] + [self[ID],])
             return self.bc.do_sql(sql, values)
         sql = 'INSERT INTO %s (`%s`) VALUES (%s)' % (self.table, '`,`'.join(self.keys()), ','.join(['%s' for x in self.keys()]))
-        debug_print(sql, self.values())
+        logging.debug('%s, %s', sql, self.values())
         try:
             self.bc.do_sql(sql, tuple(self.values()))
             return self.search()
@@ -373,7 +373,7 @@ class DbDict(dict):
 
     def _fk_reference(self, fk, string=None):
         '''Shortcut for vivifying objects related to foreign keys'''
-        debug_print('_fk_reference %s: %s, %s' % (fk, string, self[fk]))
+        logging.debug('_fk_reference %s: %s, %s', fk, string, self[fk])
         obj = bacula_tools._DISPATCHER[fk.replace('_id','')]()
         if string:
             obj.search(string.strip())
@@ -390,6 +390,10 @@ class DbDict(dict):
         '''Builds and runs a CLI that applies to every DbDict-derived object.'''
         self.parser = optparse.OptionParser(description='Manage Bacula %ss.' % self.word,
                                             usage='usage: %%prog [options] [%s]' % self.word)
+        self.parser.add_option('-d', '--debug', action='store_true',
+                               default=False, help='Turn on debug printing')
+        self.parser.add_option('-v', '--verbose', action='store_true',
+                               default=False, help='Turn on verbose output')
         self.parser.add_option('--create', action='store_true',
                                default=False, help='Create the given %s' % self.word)
         self.parser.add_option('--delete', action='store_true',
@@ -424,7 +428,9 @@ class DbDict(dict):
         '''Parse the standard CLI options.'''
         (args, client_arg) = self.parser.parse_args()
 
-
+        if args.verbose: logging.root.setLevel(logging.INFO)
+        if args.debug: bacula_tools.set_debug()
+        
         if args.delete and (args.create or args.rename or args.clone):
             die('','If you delete then there is no sense in doing anything else.',
                 "You didn't think this one out very well, did you?.")
@@ -554,28 +560,20 @@ class BSock:
     easier, not to mention making dealing with timeouts a lot more
     mangeable.
     '''
-    def __init__(self, address, password, myname, port, debug=False, timeout=5):
+    def __init__(self, address, password, myname, port, timeout=5):
         '''Address, password, myname, and port are all mandatory.
 
         address = the destination with which you want to communicate. (None -> 127.0.0.1)
         myname = the "name" with which a password is associated.  This is not as obvious as you might hope.
 
         '''
-        self.DEBUG = debug
         self.password = password
         self.name = myname
         if not address: address = '127.0.0.1'
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connection.settimeout(timeout) # Don't take forever trying to do stuff
-        self.log('connecting to: %s' % str((address,port)))
+        logging.debug('connecting to: %s:%s with password "%s"', address, port, self.password)
         self.connection.connect((address,port))
-        return
-
-    def log(self, msg):
-        '''Write out a single message to stderr, IFF self.DEBUG.'''
-        if self.DEBUG:
-            sys.stderr.write(msg)
-            sys.stderr.flush()
         return
 
     def auth(self):
@@ -589,6 +587,7 @@ class BSock:
         challenge = self.recv() # Receive the challenge response
         m = re.search("auth cram-md5 (<.+?>)", challenge) # parse the challenge out of the returned string
         chal = m.group(1)
+        logging.debug('auth: challenge received: %s', chal)
         
         pw = hashlib.md5(self.password).hexdigest()
         self.send(base64.b64encode(hmac.new(pw, chal).digest())[:-2]) # hmac and base64 encode the request
@@ -612,7 +611,7 @@ class BSock:
         '''Send a properly encoded messages to the connected service.'''
         ldata = pack('!i',len(message))
         self.connection.send(ldata)
-        self.log( 'sending:  (%d) %s\n' % (len(message), message))
+        logging.debug( 'sending:  (%d) %s',len(message), message)
         self.connection.send(message)
         return
 
@@ -621,7 +620,7 @@ class BSock:
         msglen = unpack('!i', self.connection.recv(4))[0]
         if msglen < 0: return ''
         response = self.connection.recv(msglen)
-        self.log( 'received: %s' % response)
+        logging.debug( 'received: %s' % response)
         return response
 
     def recv_all(self):

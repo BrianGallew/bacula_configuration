@@ -66,7 +66,7 @@ if len(given_arg) > 1 and (not args.bconsole):
     parser.print_help()
     exit()
 
-if args.debug: logging.basicConfig(level=logging.DEBUG)
+if args.debug: bacula_tools.set_debug()
 else: logging.basicConfig(level=logging.WARNING)
 
 bacula = Bacula_Factory()        # Instantiate our DB connection thingy

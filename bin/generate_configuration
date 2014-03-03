@@ -2,8 +2,7 @@
 # Add/remove/update/dump directors
 from __future__ import print_function
 
-import sys, os
-import optparse
+import sys, os, optparse, logging
 from bacula_tools import *
 
 def reload_director(d):
@@ -36,7 +35,7 @@ service bacula-sd restart
 
 # Parser configuration and sanity checking.  Also, "bacula" is instantiated in here
 
-parser = optparse.OptionParser(description='Print Bacula configuration.', usage='usage: %prog --(director|fd|sd) hostname ')
+parser = optparse.OptionParser(description='Print Bacula configuration.', usage='usage: %prog --(director|fd|sd) hostname [subsidiary hostnames]')
 parser.add_option('--bconsole', action='store_true',
                    default=False, help='Produce a configuration for using bconsole')
 parser.add_option('--director', action='store_true',
@@ -45,6 +44,8 @@ parser.add_option('--fd', action='store_true',
                    default=False, help='Produce a configuration for the given file daemon')
 parser.add_option('--sd', action='store_true',
                    default=False, help='Produce a configuration for the given storage daemon')
+parser.add_option('-d', '--debug', action='store_true',
+                   default=False, help='Enable debugging output')
 
 keylist = [DIRECTOR, FD, SD, BCONSOLE]
 (args, given_arg) = parser.parse_args()
@@ -55,13 +56,30 @@ if len(foo) != 1:
     parser.print_help()
     exit()
 
-if (not given_arg) or not len(given_arg) == 1:
+if (not given_arg) or not len(given_arg) > 0:
     print('You must supply the name of the configuration host\n')
     parser.print_help()
     exit()
 
+if len(given_arg) > 1 and (not args.bconsole):
+    print('Only the bconsole option accepts multiple hostames\n')
+    parser.print_help()
+    exit()
+
+if args.debug: logging.basicConfig(level=logging.DEBUG)
+else: logging.basicConfig(level=logging.WARNING)
+
 bacula = Bacula_Factory()        # Instantiate our DB connection thingy
-# }}}
+def query_id_thing(sql, obj, output, fun=None, args=(), **kwargs):
+    logging.debug('%s:%s:%s:%s', sql, obj, args, kwargs)
+    for id in bacula.do_sql(sql, args):
+        o = obj(**kwargs)
+        o.search(id)
+        if fun:
+            output.write(getattr(o, fun)(), '\n')
+        else:
+            output.write(o, '\n')
+    return
 
 hostname = given_arg[0].strip()
 
@@ -73,21 +91,21 @@ if args.director:               # Director configuration stanzas
     cf.write(d, '\n')
     c = Catalog({DIRECTOR_ID: d[ID]}).search()
     cf.write(c, '\n')
-    for id in d.bc.do_sql('SELECT messages_id FROM messages_link where ref_id = %s and link_type = %s', (d[ID], d.IDTAG)): cf.write( Messages().search(id), '\n')
+    query_id_thing('SELECT messages_id FROM messages_link where ref_id = %s and link_type = %s', Messages, cf, args=(d[ID], d.IDTAG))
     # Now, for a little more interesting stuff (and we're cheating hard)
-    for id in d.bc.do_sql('SELECT id FROM filesets ORDER BY name'): cf.write( Fileset().search(id), '\n')
-    for id in d.bc.do_sql('SELECT id FROM schedules ORDER BY name'): cf.write( Schedule().search(id), '\n')
+    query_id_thing('SELECT id FROM filesets ORDER BY name', Fileset, cf)
+    query_id_thing('SELECT id FROM schedules ORDER BY name', Schedule, cf)
     # clients
-    for id in d.bc.do_sql('SELECT id FROM clients ORDER BY name'): cf.write( Client(director_id = d[ID]).search(id), '\n')
+    query_id_thing('SELECT id FROM clients ORDER BY name', Client, cf, director_id = d[ID])
     # jobs
-    for id in d.bc.do_sql('SELECT id FROM jobs WHERE jobdef=1 ORDER BY name'): cf.write( JobDef().search(id), '\n')
-    for id in d.bc.do_sql('SELECT id FROM jobs WHERE NOT jobdef=1 OR jobdef IS NULL ORDER BY name'): cf.write( Job().search(id), '\n')
+    query_id_thing('SELECT id FROM jobs WHERE jobdef=1 ORDER BY name', JobDef, cf)
+    query_id_thing('SELECT id FROM jobs WHERE NOT jobdef=1 OR jobdef IS NULL ORDER BY name', Job, cf)
     # storage
-    for id in d.bc.do_sql('SELECT id FROM storage ORDER BY name'): cf.write( Storage(director_id = d[ID]).search(id), '\n')
+    query_id_thing('SELECT id FROM storage ORDER BY name', Storage, cf, director_id = d[ID])
     # Pools
-    for id in d.bc.do_sql('SELECT id FROM pools ORDER BY name'): cf.write( Pool().search(id), '\n')
+    query_id_thing('SELECT id FROM pools ORDER BY name', Pool, cf)
     # Consoles
-    for id in d.bc.do_sql('SELECT id FROM consoles ORDER BY name'): cf.write( Console().search(id), '\n')
+    query_id_thing('SELECT id FROM consoles ORDER BY name', Console, cf)
     if cf.close(): reload_director(d)
 
 if args.fd:                     # File Daemon configuration stanzas
@@ -96,13 +114,17 @@ if args.fd:                     # File Daemon configuration stanzas
     cl = Client().search(hostname)
     cf.write(cl.fd(), '\n')
 
-    for id in cl.bc.do_sql('SELECT director_id FROM pwords where obj_id = %s and obj_type = %s AND director_type = %s ORDER BY director_id', (cl[ID], cl.IDTAG, Director.IDTAG)):
-        cf.write( Director(client_id = cl[ID]).search(id).fd(), '\n')
+    query_id_thing('SELECT director_id FROM pwords where obj_id = %s and obj_type = %s AND director_type = %s ORDER BY director_id',
+                   Director, cf, fun='fd', args= (cl[ID], cl.IDTAG, Director.IDTAG), client_id = cl[ID])
 
-    for id in cl.bc.do_sql('SELECT director_id FROM pwords where obj_id = %s and obj_type = %s AND director_type = %s ORDER BY director_id', (cl[ID], cl.IDTAG, Console.IDTAG)):
-        cf.write( Console(client_id = cl[ID]).search(id).fd(), '\n')
-    
-    for id in cl.bc.do_sql('SELECT messages_id FROM messages_link WHERE ref_id = %s AND link_type = %s', (cl[ID], cl.IDTAG)): cf.write( Messages().search(id), '\n')
+
+    query_id_thing('SELECT director_id FROM pwords where obj_id = %s and obj_type = %s AND director_type = %s ORDER BY director_id',
+                   Console, cf, fun='fd',
+                   args = (cl[ID], cl.IDTAG, Console.IDTAG), client_id = cl[ID])
+
+    query_id_thing('SELECT messages_id FROM messages_link WHERE ref_id = %s AND link_type = %s',
+                   Messages, cf,
+                   args = (cl[ID], cl.IDTAG))
 
     if cf.close(): pass
 
@@ -111,15 +133,28 @@ if args.sd:
     sd = Storage().search(hostname)
     cf.write(sd.sd(), '\n')
 
-    for id in sd.bc.do_sql('SELECT director_id FROM pwords where obj_id = %s and obj_type = %s AND director_type = %s ORDER BY director_id', (sd[ID], sd.IDTAG, Director.IDTAG)):
-        cf.write( Director(client_id = sd[ID]).search(id).fd(), '\n')
+    query_id_thing('SELECT director_id FROM pwords where obj_id = %s and obj_type = %s AND director_type = %s ORDER BY director_id',
+                   Director, cf, fun='fd',
+                   args = (sd[ID], sd.IDTAG, Director.IDTAG), client_id = sd[ID])
 
-    for id in sd.bc.do_sql('SELECT director_id FROM pwords where obj_id = %s and obj_type = %s AND director_type = %s ORDER BY director_id', (sd[ID], sd.IDTAG, Console.IDTAG)):
-        cf.write( Console(client_id = sd[ID]).search(id).fd(), '\n')
+    query_id_thing('SELECT director_id FROM pwords where obj_id = %s and obj_type = %s AND director_type = %s ORDER BY director_id',
+                   Console, cf, fun='fd',
+                   args = (sd[ID], sd.IDTAG, Console.IDTAG), client_id = sd[ID])
     
-    for id in sd.bc.do_sql('SELECT device_id FROM device_link WHERE storage_id = %s', sd[ID]):
-        cf.write( Device().search(id), '\n')
+    query_id_thing('SELECT device_id FROM device_link WHERE storage_id = %s',
+                   Device, cf, args = (sd[ID],))
         
-    for id in sd.bc.do_sql('SELECT messages_id FROM messages_link WHERE ref_id = %s AND link_type = %s', (sd[ID], sd.IDTAG)):
-        cf.write( Messages().search(id), '\n')
+    query_id_thing('SELECT messages_id FROM messages_link WHERE ref_id = %s AND link_type = %s',
+                   Messages, cf, args = (sd[ID], sd.IDTAG))
+
     if cf.close(): pass
+
+if args.bconsole:               # bconsole setup
+    print('setting up bconsole')
+    # First, the basics
+    cf = ConfigFile(BCONSOLE_CONF)
+    for hostname in given_arg:
+        d = Director().search(hostname.strip())
+        if not d[bacula_tools.ID]: d = Console().search(hostname.strip())
+        cf.write(d.bconsole(), '\n')
+    cf.close()

@@ -74,6 +74,8 @@ cons = bacula_tools.Console()
 cons._set_name(os.uname()[1] + '-mon')
 cons[bacula_tools.COMMANDACL] = 'status, .status'
 cons[bacula_tools.PASSWORD] = bacula_tools.GENERATE
+cons[bacula_tools.ADDRESS] = '127.0.0.1'
+cons[bacula_tools.DIRPORT] = 9101
 cons._save()
 
 d = bacula_tools.Director()

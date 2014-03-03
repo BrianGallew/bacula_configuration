@@ -16,7 +16,7 @@ class Console(DbDict):
 
     '''
     SETUP_KEYS = [PASSWORD, CATALOGACL, CLIENTACL, COMMANDACL, FILESETACL, JOBACL,
-                  POOLACL, SCHEDULEACL, STORAGEACL, WHEREACL]
+                  POOLACL, SCHEDULEACL, STORAGEACL, WHEREACL, DIRPORT, ADDRESS]
     table = CONSOLES
     IDTAG = 4
     def parse_string(self, string, director_config, obj):
@@ -63,6 +63,7 @@ class Console(DbDict):
         self.output = ['Console {\n  Name = "%(name)s"' % self, '}']
         
         for key in self.SETUP_KEYS:
+            if key in [DIRPORT, ADDRESS]: continue
             self._simple_phrase(key)
         return '\n'.join(self.output)
 
@@ -72,6 +73,14 @@ class Console(DbDict):
             c = bacula_tools.Client().search(self.client_id)
             a = PasswordStore(c, self)
             self.output.insert(-1,'  Password = "%s"' % a.password)
+        return '\n'.join(self.output)
+
+    def bconsole(self):
+        '''This is what we'll call to dump out the config for the bconsole'''
+        self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
+        self._simple_phrase(DIRPORT)
+        self._simple_phrase(ADDRESS)
+        self._simple_phrase(PASSWORD)
         return '\n'.join(self.output)
 
 

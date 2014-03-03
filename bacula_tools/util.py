@@ -287,12 +287,13 @@ class DbDict(dict):
                 print('"%s" is not a proper boolean value: %s not changed' % (value, field))
                 return self
         if dereference: value = self._fk_reference(field, value)[ID]
-        if field == PASSWORD and value == GENERATE: value = bacula_tools.generate_password()
         self[field] = value
         return self._save()
 
     def _save(self):
         '''Update the database with our data.'''
+        if PASSWORD in self.keys():
+            if self[PASSWORD] == GENERATE: self[PASSWORD] = bacula_tools.generate_password()
         if self[ID]:
             keys = [x for x in self.keys() if not x == ID]
             keys.sort()

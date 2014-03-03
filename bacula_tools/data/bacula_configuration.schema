@@ -126,6 +126,8 @@ CREATE TABLE `consoles`
   `scheduleacl` varchar(4096),
   `storageacl` varchar(4096),
   `whereacl` varchar(4096),
+  `address` varchar(255),
+  `dirport` int(11) NOT NULL DEFAULT 9101,
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `name` (`name`)
 ) DEFAULT CHARSET=latin1;

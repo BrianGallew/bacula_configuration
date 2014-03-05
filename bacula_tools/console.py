@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 from bacula_tools import *  #pragma: no cover
-import bacula_tools
+import bacula_tools, logging
 
 class Console(DbDict):
     '''This is for configuring bconsole access.  Unfortunately, there's no good
@@ -32,9 +32,9 @@ class Console(DbDict):
         gr_yn = Keyword('yes', caseless=True).setParseAction(replaceWith('1')) | Keyword('no', caseless=True).setParseAction(replaceWith('0'))
 
         def np(words, fn = gr_opt_quoted_string, action=None):
-            p = Keyword(words[0], caseless=True).setDebug(bacula_tools.DEBUG)
+            p = Keyword(words[0], caseless=True).setDebug(logging.root.level < logging.INFO)
             for w in words[1:]:
-                p = p | Keyword(w, caseless=True).setDebug(bacula_tools.DEBUG)
+                p = p | Keyword(w, caseless=True).setDebug(logging.root.level < logging.INFO)
             p = p + gr_eq + fn
             p.setParseAction(action)
             return p

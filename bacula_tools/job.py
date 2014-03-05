@@ -3,6 +3,7 @@
 from __future__ import print_function
 try: from . import *
 except: from bacula_tools import * #pragma: no cover
+import logging
 
 # These are some shortcuts I put here just to make later code look a little cleaner.
 RBJ = PList('Run Before Job')
@@ -69,9 +70,9 @@ class Job(DbDict):
         gr_yn = Keyword('yes', caseless=True).setParseAction(replaceWith('1')) | Keyword('no', caseless=True).setParseAction(replaceWith('0'))
 
         def np(words, fn = gr_opt_quoted_string, action=nullDebugAction):
-            p = Keyword(words[0], caseless=True).setDebug(bacula_tools.DEBUG)
+            p = Keyword(words[0], caseless=True).setDebug(logging.root.level < logging.INFO)
             for w in words[1:]:
-                p = p | Keyword(w, caseless=True).setDebug(bacula_tools.DEBUG)
+                p = p | Keyword(w, caseless=True).setDebug(logging.root.level < logging.INFO)
             p = p + gr_eq + fn
             p.setParseAction(action)
             return p

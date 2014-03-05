@@ -4,6 +4,7 @@ from __future__ import print_function
 try: from . import *
 except: from bacula_tools import * #pragma: no cover
 from re import compile, MULTILINE, IGNORECASE, DOTALL
+import logging
 
 class Fileset(DbDict):
     table = FILESETS
@@ -65,9 +66,9 @@ class Fileset(DbDict):
         gr_phrase = Group(OneOrMore(gr_stripped_string | Word(alphanums)) + gr_eq + gr_opt_quoted_string)
 
         def np(words, fn = gr_opt_quoted_string, action=print):
-            p = Keyword(words[0], caseless=True).setDebug(bacula_tools.DEBUG)
+            p = Keyword(words[0], caseless=True).setDebug(logging.root.level < logging.INFO)
             for w in words[1:]:
-                p = p | Keyword(w, caseless=True).setDebug(bacula_tools.DEBUG)
+                p = p | Keyword(w, caseless=True).setDebug(logging.root.level < logging.INFO)
             p = p + gr_eq + fn
             p.setParseAction(action)
             return p

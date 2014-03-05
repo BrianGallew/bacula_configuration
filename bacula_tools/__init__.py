@@ -6,9 +6,6 @@ import re, sys, os, logging
 
 logging.basicConfig(level=logging.WARNING)
 
-# Just a placeholder, it gets overridden later
-DEBUG=False
-
 # Bacula CONFIG DB bits that are less easily interned
 BACULA_DIR_PORT = 9101
 BACULA_FD_PORT = 9102
@@ -91,9 +88,7 @@ WORKING_DIR = {
     }
     
 def set_debug():
-    global DEBUG
     logging.root.setLevel(logging.DEBUG)
-    DEBUG = True
     logging.debug('debugging enabled')
     return
 

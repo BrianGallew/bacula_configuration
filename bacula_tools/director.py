@@ -3,7 +3,7 @@
 from __future__ import print_function
 try: from . import *
 except: from bacula_tools import * #pragma: no cover
-import bacula_tools
+import bacula_tools, logging
 
 class Director(DbDict):
     SETUP_KEYS = [ADDRESS, 
@@ -49,9 +49,9 @@ class Director(DbDict):
             return
 
         def np(words, fn = gr_opt_quoted_string, action=None):
-            p = Keyword(words[0], caseless=True).setDebug(bacula_tools.DEBUG)
+            p = Keyword(words[0], caseless=True).setDebug(logging.root.level < logging.INFO)
             for w in words[1:]:
-                p = p | Keyword(w, caseless=True).setDebug(bacula_tools.DEBUG)
+                p = p | Keyword(w, caseless=True).setDebug(logging.root.level < logging.INFO)
             p = p + gr_eq + fn
             p.setParseAction(action)
             return p

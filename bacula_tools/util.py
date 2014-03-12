@@ -317,6 +317,7 @@ class DbDict(dict):
 
         '''
         row = self.bc.value_ensure(self.table, NAME, name.strip(), asdict=True)[0]
+        logging.fatal(str(row))
         self.update(row)
         [getattr(self, x)() for x in dir(self) if '_load_' in x]
         return

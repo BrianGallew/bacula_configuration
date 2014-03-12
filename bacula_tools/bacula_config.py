@@ -5,7 +5,7 @@ import MySQLdb as db
 import MySQLdb.cursors
 import os, sys
 
-from . import *
+from bacula_tools import *
 
 _singleton = None
 def Bacula_Factory():

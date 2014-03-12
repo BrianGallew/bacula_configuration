@@ -42,16 +42,12 @@ class Job(DbDict):
     SPECIAL_KEYS = [JOB_ID,]    # These won't be handled en- masse
     table = JOBS
     retlabel = 'Job'
-    # {{{ __init__(row={}, string = None):
 
     def __init__(self, row={}, string = None):
         '''Need to have a nice, clean scripts member'''
         DbDict.__init__(self, row, string)
         self.scripts = []
         return
-
-    # }}}
-    # {{{ parse_string(string): Entry point for a recursive descent parser
 
     def parse_string(self, string):
         # {{{ boilerplate.  Sigh
@@ -77,15 +73,12 @@ class Job(DbDict):
             p.setParseAction(action)
             return p
 
-        # }}}
-        # {{{ # Easy ones that go don't take embedded spaces because I say so.
-
+        # Easy ones that go don't take embedded spaces because I say so.
         gr_line = np((NAME,), action=lambda x: self._set_name(x[2]))
         for key in [TYPE, LEVEL, REPLACE, BASE, RUN, WHERE]:
             gr_line = gr_line | np((key,), action=self._parse_setter(key))
 
-            # }}}
-        # {{{ # Group of _id variables
+        # Group of _id variables
 
         gr_line = gr_line | np(PList('differential pool'), action=self._parse_setter(DIFFERENTIALPOOL_ID))
         gr_line = gr_line | np(PList('file set'), action=self._parse_setter(FILESET_ID, dereference=True))
@@ -98,15 +91,13 @@ class Job(DbDict):
         gr_line = gr_line | np((STORAGE,), action=self._parse_setter(STORAGE_ID, dereference=True))
         gr_line = gr_line | np(PList('job defs'), action=self._parse_setter(JOB_ID, dereference=True))
 
-        # }}}
-        # {{{ # INTs
+        # INTs
 
         gr_line = gr_line | np(PList('maximum concurrent jobs'), gr_number, action=self._parse_setter(MAXIMUMCONCURRENTJOBS))
         gr_line = gr_line | np(PList('re schedule times'), gr_number, action=self._parse_setter(RESCHEDULETIMES))
         gr_line = gr_line | np((PRIORITY,), gr_number, action=self._parse_setter(PRIORITY))
 
-        # }}}
-        # {{{ # True/False
+        # True/False
 
         gr_line = gr_line | np((ACCURATE,), gr_yn, action=self._parse_setter(ACCURATE))
         gr_line = gr_line | np(PList('allow duplicate jobs'), gr_yn, action=self._parse_setter(ALLOWDUPLICATEJOBS))
@@ -126,8 +117,7 @@ class Job(DbDict):
         gr_line = gr_line | np(PList('spool data'), gr_yn, action=self._parse_setter(SPOOLDATA))
         gr_line = gr_line | np(PList('write boot strap'), gr_yn, action=self._parse_setter(WRITEPARTAFTERJOB))
 
-        # }}}
-        # {{{ # plain strings
+        # plain strings
 
         gr_line = gr_line | np((NOTES,), action=self._parse_setter(NOTES))
         gr_line = gr_line | np((ADDPREFIX, 'add prefix'), action=self._parse_setter(ADDPREFIX))
@@ -152,7 +142,6 @@ class Job(DbDict):
         gr_line = gr_line | np((WHERE,), action=self._parse_setter(WHERE))
         gr_line = gr_line | np((WRITEBOOTSTRAP, 'write boot strap', 'write bootstrap', 'writeboot strap'), action=self._parse_setter(WRITEBOOTSTRAP))
 
-        # }}}
         # The ugliness that is run scripts
         gr_line = gr_line | np(RBJ, gr_stripped_string,
                                action=self._parse_script(runsonclient=0, runswhen='Before'))
@@ -184,9 +173,6 @@ class Job(DbDict):
             raise
         return self.retlabel + ': '+ self[NAME]
 
-    # }}}
-    # {{{ __str__(): 
-
     def __str__(self):
         '''String representation of a Job, suitable for inclusion in a Director config'''
         self.output = ['%s {' % self.retlabel,'}']
@@ -204,9 +190,6 @@ class Job(DbDict):
         for x in self.scripts: self.output.insert(-1, str(x))
         return '\n'.join(self.output)
 
-# }}}
-    # {{{ _fk_reference(fk, string=None): Set/get fk-references
-
     def _fk_reference(self, fk, string=None):
         '''This overrides the normal _fk_reference function becase we actually have
         four different keys that all point to Pools.
@@ -221,9 +204,6 @@ class Job(DbDict):
         else: obj.search(self[fk])
         return obj
 
-# }}}
-    # {{{ _load_scripts():
-
     def _load_scripts(self):
         '''Job scripts are stored separately as Script objects.  This loads them in. '''
         if self[ID]:
@@ -234,9 +214,6 @@ class Job(DbDict):
                 self.scripts.append(s)
         return
 
-    # }}}
-    # {{{ _parse_script(**kwargs): returns a parser for the script shortcuts
-
     def _parse_script(self, **kwargs):
         '''Helper function for parsing configuration strings.'''
         def doit(a,b,c):
@@ -245,9 +222,6 @@ class Job(DbDict):
             s.search()
             return self._add_script(s)
         return doit
-
-    # }}}
-    # {{{ _add_script(s): Add a script to myself
 
     def _add_script(self, s):
         '''Add a script to the Job.'''
@@ -258,18 +232,12 @@ class Job(DbDict):
             self.bc.do_sql('INSERT INTO job_scripts(job_id, script_id) VALUES (%s, %s)', (self[ID], s[ID]))
         return s
 
-    # }}}
-    # {{{ _delete_script(s): Remove a script from myself
-
     def _delete_script(self, s):
         '''Remove a Script from the Job.  This does not actually delete the Script,
         just the linkage to this job.'''
         self.bc.do_sql('DELETE FROM job_scripts WHERE id = %s', (s[ID]))
         self.scripts = [x for x in self.scripts if not x[ID] == s[ID]]
         return
-
-    # }}}
-    # {{{ _parse_script_full(tokens):
 
     def _parse_script_full(self, *tokens):
         '''Another helper for script parsing.'''
@@ -282,9 +250,6 @@ class Job(DbDict):
             s[k.lower()] = v
         self._add_script(s.search())
         return
-
-# }}}
-    # {{{ _cli_special_setup(): setup the weird phrases that go with jobs
 
     def _cli_special_setup(self):
         '''Suport for adding all of the foreign-key references to the CLI.'''
@@ -303,9 +268,6 @@ class Job(DbDict):
         group.add_option('--default-job', help='The job which will supply default values for those otherwise unset on this one')
         self.parser.add_option_group(group)
         return
-
-    # }}}
-    # {{{ _cli_special_do_parse(args): handle the weird phrases that go with jobs
 
     def _cli_special_do_parse(self, args):
         '''CLI Foreign Key reference actions.'''
@@ -330,8 +292,7 @@ class Job(DbDict):
         if target[ID]: self._set(key, target[ID])
         else: print('Unable to find a match for %s, continuing' % value)
         pass
-# }}}
-    # {{{ _cli_special_print(): print out the weird phrases that go with jobs
+
 
     def _cli_special_print(self):
         '''All of the foreign key objects get printed out here for the CLI.'''
@@ -343,8 +304,6 @@ class Job(DbDict):
             print( '\nScripts')
             for x in self.scripts: print( x)
         return
-    # }}}
-    # {{{ _cli_special_clone(oid): script links for CLI
 
     def _cli_special_clone(self, oid):
         '''When cloning, add in script links.'''
@@ -353,8 +312,6 @@ class Job(DbDict):
         for row in self.bc.do_sql(select, oid): self.bc.do_sql(insert, row)
         self._load_scripts()
         pass
-
-        # }}}
 
 class JobDef(Job):
     '''This is really just a Job with a different label (for printing) and a value of 1 for the JOBDEF key.'''

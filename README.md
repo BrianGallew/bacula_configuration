@@ -99,20 +99,22 @@ difficult, but I'd have to see a desire for that before doing the work.
 OS SETUP
 ---------
 
-Finally, you will need to customize several values, whose defaults are in
+You will need to customize several values, whose defaults are in
 bacula_tools/\_\_init\_\_.py.  The easiest way to do so is to drop value
 assignments into any/all of the configuration files:
+
 	/etc/bacula/bacula.conf
 	/usr/local/etc/bacula/bacula.conf
 	/usr/local/etc/bacula.conf
 	~/.bacula.conf
 
 The files are read in that order, and all updates applied in that order.
-In particular, you will want to look at things like:
-MYSQL_DB
-MYSQL_HOST
-MYSQL_USER
-MYSQL_PASS
+In particular, you will want to set values for:
+
+	MYSQL_DB
+	MYSQL_HOST
+	MYSQL_USER
+	MYSQL_PASS
 
 Here is an example script that will set it all up for you:
 

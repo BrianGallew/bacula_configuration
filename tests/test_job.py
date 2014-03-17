@@ -6,6 +6,7 @@ sys.path.insert(0, '..')
 sys.path.insert(0, '.')
 import bacula_tools, bacula_tools.bacula_config
 
+@mock.patch('bacula_tools.Job.bc')
 class job_tests(unittest.TestCase):
 
     silliness = '''  Name = "DefaultJob"
@@ -21,50 +22,7 @@ class job_tests(unittest.TestCase):
       Write Bootstrap = "/usr/local/Cellar/bacula/5.2.13/opt/bacula/working/%c.bsr"
     '''
 
-    test_cases = ['''  Name = "BackupClient1"
-      JobDefs = "DefaultJob"
-
-    ''',
-                  '''  Name = "BackupClient2"
-      Client = outbidoverdrive.gallew.org2-fd
-      RunBeforeJob = "/usr/local/Cellar/bacula/5.2.13/etc/make_catalog_backup.pl MyCatalog"
-      JobDefs = "DefaultJob"
-
-    ''',
-                  '''  Name = "BackupCatalog"
-      JobDefs = "DefaultJob"
-      Level = Full
-      FileSet="Catalog"
-      Schedule = "WeeklyCycleAfterBackup"
-      RunBeforeJob = "kiss butt goodbye"
-      Write Bootstrap = "/usr/local/Cellar/bacula/5.2.13/opt/bacula/working/%n.bsr"
-      Priority = 11
-
-    ''',
-                  '''  Name = "RestoreFiles"
-      Type = Restore
-      Client=outbidoverdrive.gallew.org-fd                 
-      FileSet="Full Set"                  
-      Storage = File                      
-      Pool = Default
-      Messages = Standard
-      Where = /tmp/bacula-restores
-      RunAfterJob  = "/usr/local/Cellar/bacula/5.2.13/etc/delete_catalog_backup"
-    ''',
-                  '''  Name = "Clever Test"
-      Client=outbidoverdrive.gallew.org-fd                 
-      FileSet="Full Set"                  
-      Storage = File                      
-      Pool = Default
-      Run Script {
-        Command = "clever script"
-        Runswhen = "Before"
-        Runsonclient = No
-      }
-      Messages = Standard
-      Where = /tmp/bacula-restores
-    ''',
-                  '''
+    full_case = '''
     Name = zabbix-db02-FullSnap
       Client = zabbix-db02
       Enabled = yes
@@ -99,22 +57,54 @@ class job_tests(unittest.TestCase):
                     RunsOnFailure = yes
                     RunsOnClient = Yes
                     RunsOnSuccess = No
-            }''',
+            }'''
 
-    ]
-    # def setUp(self):
-    #     self.db = mock.MagicMock()
-    #     mock.patch('bacula_tools.Job.bc', new=self.db)
-    #     return
-
-    def test_delete_script(self): pass
+    def test_delete_script(self, m): pass
         
-    def test_parser_simplest(self):
+    def test_parser_simplest(self, m):
         retstrings = ['1', '2', '3']
-        m = mock.MagicMock()
         m.value_ensure.return_value=[{bacula_tools.NAME: 'fred', bacula_tools.ID:1}, ()]
-        with mock.patch('bacula_tools.Job.bc', new=m):
+        j = bacula_tools.Job()
+        j.parse_string('''Name = fred''')
+        logging.warning(m.mock_calls)
+        m.value_ensure.assert_called_once_with('jobs', 'name', 'fred', asdict=True)
+
+        
+    def test_parser_more(self, m):
+        retstrings = ['1', '2', '3']
+        m.value_ensure.return_value=[{bacula_tools.NAME: 'fred', bacula_tools.ID:1},
+                                     {bacula_tools.NAME: 'script1', bacula_tools.ID:2},
+                                     {bacula_tools.NAME: 'script2', bacula_tools.ID:3},
+                                     {bacula_tools.NAME: 'script3', bacula_tools.ID:4}, ()]
+        s = mock.MagicMock()
+        s.search.return_value=[{bacula_tools.NAME: 'script1', bacula_tools.ID:2},
+                               {bacula_tools.NAME: 'script2', bacula_tools.ID:3},
+                               {bacula_tools.NAME: 'script3', bacula_tools.ID:4},
+                               {bacula_tools.NAME: 'script1', bacula_tools.ID:2},
+                               {bacula_tools.NAME: 'script2', bacula_tools.ID:3},
+                               {bacula_tools.NAME: 'script3', bacula_tools.ID:4},
+                               {bacula_tools.NAME: 'script1', bacula_tools.ID:2},
+                               {bacula_tools.NAME: 'script2', bacula_tools.ID:3},
+                               {bacula_tools.NAME: 'script3', bacula_tools.ID:4},
+                               {bacula_tools.NAME: 'script1', bacula_tools.ID:2},
+                               {bacula_tools.NAME: 'script2', bacula_tools.ID:3},
+                               {bacula_tools.NAME: 'script3', bacula_tools.ID:4},
+                               {bacula_tools.NAME: 'script1', bacula_tools.ID:2},
+                               {bacula_tools.NAME: 'script2', bacula_tools.ID:3},
+                               {bacula_tools.NAME: 'script3', bacula_tools.ID:4},
+        ]
+        
+        expected_call_list = [mock.call('SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (1, 3L)),
+                              mock.call('SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (1, 4L)),
+                              mock.call('SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (1, 5L)),
+                          ]
+        
+        with mock.patch('bacula_tools.Job._load_scripts'),mock.patch('bacula_tools.Job.search'), mock.patch('bacula_tools.Job._set'), mock.patch('bacula_tools.Job._parse_script', new=s):
             j = bacula_tools.Job()
-            j.parse_string('''Name = fred''')
+            j.parse_string(self.full_case)
+            #logging.warning(m.mock_calls)
+            #logging.warning('expected calls')
+            #logging.warning(expected_call_list)
+            logging.warning('actual calls')
             logging.warning(m.mock_calls)
-            m.value_ensure.assert_called_once_with('jobs', 'name', 'fred', asdict=True)
+            self.assertEquals(m.do_sql.call_args_list, expected_call_list)

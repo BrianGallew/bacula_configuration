@@ -8,11 +8,12 @@ import logging
 class Pool(DbDict):
     BOOL_KEYS = [AUTOPRUNE, CATALOGFILES, RECYCLE, USEVOLUMEONCE,
                  RECYCLEOLDESTVOLUME, RECYCLECURRENTVOLUME, PURGEOLDESTVOLUME]
-    SETUP_KEYS = [MAXIMUMVOLUMES, STORAGE, MAXIMUMVOLUMEJOBS, MAXIMUMVOLUMEFILES,
+    SETUP_KEYS = [MAXIMUMVOLUMES, MAXIMUMVOLUMEJOBS, MAXIMUMVOLUMEFILES,
                   MAXIMUMVOLUMEBYTES, VOLUMEUSEDURATION, VOLUMERETENTION,
                   ACTIONONPURGE, SCRATCHPOOL, RECYCLEPOOL,
                   FILERETENTION, JOBRETENTION, CLEANINGPREFIX,
                   LABELFORMAT, (POOLTYPE, 'Backup', "Enum: ['Backup', 'Archive', 'Cloned', 'Migration', 'Copy', 'Save']")]
+    REFERENCE_KEYS = [STORAGE_ID, ]
     table = POOLS
     # {{{ parse_string(string): Entry point for a recursive descent parser
 
@@ -40,7 +41,7 @@ class Pool(DbDict):
         gr_line = np((NAME,), action=lambda x: self._set_name(x[2]))
         gr_line = gr_line | np(PList('pool type'), action=self._parse_setter(POOLTYPE))
         gr_line = gr_line | np(PList('maximum volumes'), action=self._parse_setter(MAXIMUMVOLUMES))
-        gr_line = gr_line | np((STORAGE,), action=self._parse_setter(STORAGE))
+        gr_line = gr_line | np((STORAGE,), action=self._parse_setter(STORAGE_ID, dereference=True))
         gr_line = gr_line | np(PList('use volume once'), gr_yn, action=self._parse_setter(USEVOLUMEONCE))
         gr_line = gr_line | np(PList('catalog files'), gr_yn, action=self._parse_setter(CATALOGFILES))
         gr_line = gr_line | np(PList('auto prune'), gr_yn, action=self._parse_setter(AUTOPRUNE))
@@ -73,6 +74,9 @@ class Pool(DbDict):
         self.output = ['Pool {\n  Name = "%(name)s"' % self,'}']
         for key in self.SETUP_KEYS: self._simple_phrase(key)
         for key in self.BOOL_KEYS: self._yesno_phrase(key)
+        for key in self.REFERENCE_KEYS:
+            if self[key] == None: continue
+            self.output.insert(-1,'  %s = "%s"' % (key.replace('_id', '').capitalize(), self._fk_reference(key)[NAME]))
 
         return '\n'.join(self.output)
 

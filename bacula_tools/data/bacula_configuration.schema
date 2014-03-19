@@ -13,7 +13,6 @@ DROP TABLE IF EXISTS `client_pwords` ;
 DROP TABLE IF EXISTS `storage_pwords` ;
 DROP TABLE IF EXISTS `pwords` ;
 DROP TABLE IF EXISTS `clients` ;
-DROP TABLE IF EXISTS `storage` ;
 DROP TABLE IF EXISTS `catalogs`;
 DROP TABLE IF EXISTS `directors` ;
 DROP TABLE IF EXISTS `messages`;
@@ -25,6 +24,7 @@ DROP TABLE IF EXISTS `fileset_files` ;
 DROP TABLE IF EXISTS `filesets` ;
 DROP TABLE IF EXISTS `consoles`;
 DROP TABLE IF EXISTS `pools`;
+DROP TABLE IF EXISTS `storage` ;
 
 -- select 'Creating table device';
 CREATE TABLE `device` 
@@ -76,37 +76,6 @@ CREATE TABLE `device`
   `forwardspacefile` tinyint(1),
   `offlineonunmount` tinyint(1),
   `blockpositioning` tinyint(1),
-  PRIMARY KEY `PRIMARY` (`id`),
-  UNIQUE KEY `name` (`name`)
-) DEFAULT CHARSET=latin1;
-
--- select 'Creating table pools';
-CREATE TABLE `pools` 
- (
-  `id` int(11) NOT NULL auto_increment,
-  `name` varchar(255) NOT NULL,
-  `maximumvolumes` int(11),
-  `pooltype` varchar(15) NOT NULL DEFAULT 'Backup',
-  `storage` varchar(255),
-  `usevolumeonce` tinyint(1),
-  `maximumvolumejobs` int(11),
-  `maximumvolumefiles` int(11),
-  `maximumvolumebytes` varchar(255),
-  `volumeuseduration` varchar(255),
-  `catalogfiles` tinyint(1),
-  `autoprune` tinyint(1),
-  `volumeretention` varchar(255),
-  `actiononpurge` varchar(255),
-  `scratchpool` varchar(255),
-  `recyclepool` varchar(255),
-  `recycle` tinyint(1),
-  `recycleoldestvolume` tinyint(1),
-  `recyclecurrentvolume` tinyint(1),
-  `purgeoldestvolume` tinyint(1),
-  `fileretention` varchar(255),
-  `jobretention` varchar(255),
-  `cleaningprefix` varchar(255),
-  `labelformat` varchar(255),
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `name` (`name`)
 ) DEFAULT CHARSET=latin1;
@@ -203,6 +172,38 @@ CREATE TABLE `storage` (
   `sdaddresses` varchar(255),
   PRIMARY KEY `id` (`id`),
   UNIQUE KEY `name` (`name`)
+) DEFAULT CHARSET=latin1;
+
+-- select 'Creating table pools';
+CREATE TABLE `pools` 
+ (
+  `id` int(11) NOT NULL auto_increment,
+  `name` varchar(255) NOT NULL,
+  `maximumvolumes` int(11),
+  `pooltype` varchar(15) NOT NULL DEFAULT 'Backup',
+  `storage_id` int(11),
+  `usevolumeonce` tinyint(1),
+  `maximumvolumejobs` int(11),
+  `maximumvolumefiles` int(11),
+  `maximumvolumebytes` varchar(255),
+  `volumeuseduration` varchar(255),
+  `catalogfiles` tinyint(1),
+  `autoprune` tinyint(1),
+  `volumeretention` varchar(255),
+  `actiononpurge` varchar(255),
+  `scratchpool` varchar(255),
+  `recyclepool` varchar(255),
+  `recycle` tinyint(1),
+  `recycleoldestvolume` tinyint(1),
+  `recyclecurrentvolume` tinyint(1),
+  `purgeoldestvolume` tinyint(1),
+  `fileretention` varchar(255),
+  `jobretention` varchar(255),
+  `cleaningprefix` varchar(255),
+  `labelformat` varchar(255),
+  PRIMARY KEY `PRIMARY` (`id`),
+  UNIQUE KEY `name` (`name`),
+  CONSTRAINT `pools_fk_storage_id` FOREIGN KEY (`storage_id`) REFERENCES `storage` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table schedule_time';

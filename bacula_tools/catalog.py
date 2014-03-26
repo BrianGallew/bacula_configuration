@@ -9,7 +9,6 @@ class Catalog(DbDict):
     SETUP_KEYS = [DBADDRESS, DBNAME, DBPORT, DBSOCKET, PASSWORD, USER]
     SPECIAL_KEYS = [DIRECTOR_ID,]
     table = CATALOGS
-    # {{{ parse_string(string, director): Entry point for a recursive descent parser
 
     def parse_string(self, string, director):
         '''Populate a new object from a string.
@@ -44,9 +43,6 @@ class Catalog(DbDict):
         self._set(DIRECTOR_ID, director[ID])
         return 'Catalog: ' + self[NAME]
 
-    # }}}
-    # {{{ __str__(): 
-
     def __str__(self):
         '''Convert a Catalog into its string representation.  The result can be
         inserted directly into the configuration of the director.'''
@@ -55,9 +51,6 @@ class Catalog(DbDict):
         for key in self.SETUP_KEYS:
             self._simple_phrase(key)
         return '\n'.join(self.output)
-
-# }}}
-    # {{{ search(key=None):
 
     def search(self, key=None):
         '''Override the standard self.search() function to look up a catalog by
@@ -73,15 +66,9 @@ class Catalog(DbDict):
         [getattr(self, x)() for x in dir(self) if '_load_' in x]
         return self
 
-    # }}}
-    # {{{ _cli_special_setup(): add in Director ID support
-
     def _cli_special_setup(self):
         self.parser.add_option('--director', help='The name or ID of the Director that uses this catalog')
         return
-
-    # }}}
-    # {{{ _cli_special_do_parse(args): handle Director ID parsing
 
     def _cli_special_do_parse(self, args):
         '''It should be noted that a Catalog can be associated with one, and only
@@ -96,9 +83,6 @@ class Catalog(DbDict):
         self._set(DIRECTOR_ID, d[ID])
         return
 
-# }}}
-    # {{{ _cli_special_print(): print out passwords
-
     def _cli_special_print(self):
         '''De-reference the Director and print its name.'''
         d = bacula_tools.Director().search(self[DIRECTOR_ID])
@@ -106,7 +90,15 @@ class Catalog(DbDict):
         print(fmt % (DIRECTOR, d[NAME]))
         return
 
-    # }}}
+    def connect(self):
+        c_conn = Bacula_Config()
+        args = []
+        for key in [DBNAME, USER, PASSWORD, DBADDRESS]:
+            value = self[key]
+            if value == None: value = ''
+            args.append(value)
+        c_conn.connect(*args)
+        return c_conn
 
 # Implement the CLI for managing Catalogs
 def main():

@@ -186,6 +186,25 @@ class PasswordStore(object):
         self.load()
         return
 
+    @classmethod
+    def Find(kls, obj, director_type=False):
+        '''Find all of the password related to a particular object.'''
+        if director_type:
+            sql = 'SELECT obj_id, obj_type from %s where director_id = %%s and director_type = %%s'
+        else:
+            sql = 'SELECT director_id, director_type from %s where obj_id = %%s and obj_type = %%s'
+        result = []
+        class FauxDict(dict):
+            IDTAG = 0
+        for row in kls.bc.do_sql(sql % kls.table, (obj[ID], obj.IDTAG)):
+            o = FauxDict()
+            o[ID], o.IDTAG = row
+            if director_type:
+                result.append(kls(o, obj))
+            else:
+                result.append(kls(obj, o))
+        return result
+
     def load(self):
         '''Load data from the database'''
         sql = self._select % (self.table, self._where)
@@ -250,6 +269,27 @@ class DbDict(dict):
         if self.word[-1] == 's': self.word = self.word[:-1]
         return
 
+
+    @classmethod
+    def Find(kls, **kwargs):
+        '''This factory function should be available in all sub-classes as a
+        relatively easy way to get a list of all instances which meet a simple
+        criteria.'''
+        sql = 'SELECT id from %s' % kls.table
+        args = []
+        where = []
+        if kwargs:
+            for key in kwargs:
+                value = kwargs[key]
+                if value == None: where.append('`%s` is NULL' % key)
+                else:
+                    where.append('`%s` like %%s' % key)
+                    args.append(value)
+            sql += ' WHERE ' + ' AND '.join(where)
+        result = []
+        for row in kls.bc.do_sql(sql, tuple(args)): result.append(kls().search(row[0]))
+        return result
+            
     def search(self, key=None):
         '''Search for ourself using a number of different methods.  If no key is
         passed in, try self[NAME] and then self[ID].  Otherwise, try the
@@ -317,7 +357,6 @@ class DbDict(dict):
 
         '''
         row = self.bc.value_ensure(self.table, NAME, name.strip(), asdict=True)[0]
-        logging.fatal(str(row))
         self.update(row)
         [getattr(self, x)() for x in dir(self) if '_load_' in x]
         return

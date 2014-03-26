@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 import os, sys, pprint, bacula_tools, pkg_resources
-
+bacula_tools.set_debug()
 # This will only work against an installed package.  Sorry.
 sql = pkg_resources.resource_string('bacula_tools','data/bacula_configuration.schema').split(';')
 

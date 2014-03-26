@@ -57,6 +57,7 @@ class Bacula_Config:
         You should not use this for extremely large resultsets.'''
         if asdict: cursor = self.get_cursor(cursorclass=db.cursors.DictCursor)
         else: cursor = self.get_cursor()
+        logging.debug('do_sql: %s:%s', sql, str(args))
         cursor.execute(sql, args)
         return cursor.fetchall()
 

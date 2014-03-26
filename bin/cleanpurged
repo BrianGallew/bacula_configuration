@@ -1,0 +1,63 @@
+#! /usr/local/bin/python
+'''Look through the local on-disk files, determine which of them, if any,
+have been marked Purged in the catalog, and truncate them.
+
+First, search the the bacula-sd.conf for archivedevice lines.  For each
+archivedevice path, list the files in there and compare them to the Media
+table in the Catalog, truncating each Purged one as necessary.
+
+We use our hostname to figure out our Director so that we can, in turn,
+extract the Catalog we need to reference.
+
+ASSUMPTIONS: volume names are unique.  The schema currently has a unique
+key defined on the volume name field which enforces that, but a future
+change *might* lift that restriction.
+
+'''
+from __future__ import print_function
+import bacula_tools, os, optparse, logging, re, glob
+
+media_query = '''
+SELECT m.VolumeName AS VolumeName
+FROM Media m, Pool p
+WHERE m.VolStatus = 'Purged' AND m.PoolId = p.PoolId AND p.Name like %s
+'''
+
+parser = optparse.OptionParser(description='Truncate purged Bacula volumes to reclaim disk space.', usage='usage: %prog [options] hostname')
+parser.add_option('-c', '--config-file', 
+                   default='/etc/bacula/bacula-sd.conf', help='Enable debugging output')
+parser.add_option('-d', '--debug', action='store_true',
+                   default=False, help='Enable debugging output')
+(args, given_arg) = parser.parse_args()
+
+try: hostname = given_arg[0]
+except:
+    parser.print_help()
+    exit(-1)
+
+if args.debug: bacula_tools.set_debug()
+else: logging.basicConfig(level=logging.WARNING)
+
+# Step 1: identify myself.
+myself = bacula_tools.Storage.Find(name=hostname)[0]
+
+# Step 2: discover my director(s)
+director_list = [bacula_tools.Director().search(x.where_arguments[2]) for x in bacula_tools.PasswordStore.Find(myself) if x.where_arguments[3] == bacula_tools.Director.IDTAG]
+
+# Step 3: Get the catalog (finally!)  At some point in the future we may
+# find it desirable to deduplicate this list, though multiple-catalogs may
+# well be a very rare thing.
+catalog_list = [bacula_tools.Catalog({bacula_tools.DIRECTOR_ID: d[bacula_tools.ID]}).search().connect() for d in director_list]
+
+# Step 4: get all of the archivedirs from the configuration file
+# Good grief this is ugly, but Bacula is just a little too liberal in what it accepts.
+ARCHIVE_RE = re.compile('''^\s*a\s*r\s*c\s*h\s*i\s*v\s*e\s*d\s*e\s*v\s*i\s*c\s*e\s*=\s*['"]?(.*?)['"]\s*$''', re.MULTILINE|re.IGNORECASE)
+
+# Step 5: list all of the files in the archivedirs and compare them to what's in the database
+sql = 'SELECT 1 from Media where VolumeName = %s and VolStatus = "Purged"'
+for directory in ARCHIVE_RE.search(open(args.config_file).read()).groups():
+    for filename in glob.glob(os.path.join(directory, '*')):
+        shortname = os.path.basename(filename)
+        for conn in catalog_list:
+            if conn.do_sql(sql, shortname): open(filename, 'w').close()
+                

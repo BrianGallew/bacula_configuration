@@ -94,17 +94,12 @@ class job_tests(unittest.TestCase):
                                {bacula_tools.NAME: 'script3', bacula_tools.ID:4},
         ]
         
-        expected_call_list = [mock.call('SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (1, 3L)),
-                              mock.call('SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (1, 4L)),
-                              mock.call('SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (1, 5L)),
+        expected_call_list = [mock.call('SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (1, 5L)),
+                              mock.call('SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (1, 6L)),
+                              mock.call('SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (1, 7L)),
                           ]
         
         with mock.patch('bacula_tools.Job._load_scripts'),mock.patch('bacula_tools.Job.search'), mock.patch('bacula_tools.Job._set'), mock.patch('bacula_tools.Job._parse_script', new=s):
             j = bacula_tools.Job()
             j.parse_string(self.full_case)
-            #logging.warning(m.mock_calls)
-            #logging.warning('expected calls')
-            #logging.warning(expected_call_list)
-            logging.warning('actual calls')
-            logging.warning(m.mock_calls)
             self.assertEquals(m.do_sql.call_args_list, expected_call_list)

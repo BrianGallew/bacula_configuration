@@ -10,39 +10,6 @@ class Catalog(DbDict):
     SPECIAL_KEYS = [DIRECTOR_ID,]
     table = CATALOGS
 
-    def parse_string(self, string, director):
-        '''Populate a new object from a string.
-        
-        Parsing is hard, so we're going to call out to the pyparsing
-        library here.  I hope you installed it!
-        '''
-        from pyparsing import Suppress, Regex, quotedString, restOfLine, Keyword, nestedExpr, Group, OneOrMore, Word, Literal, alphanums, removeQuotes, replaceWith, nums, printables
-        gr_eq = Literal('=')
-        gr_stripped_string = quotedString.copy().setParseAction( removeQuotes )
-        gr_opt_quoted_string = gr_stripped_string | restOfLine
-        gr_number = Word(nums)
-
-        def np(words, fn = gr_opt_quoted_string, action=None):
-            p = Keyword(words[0], caseless=True).setDebug(logging.root.level < logging.INFO)
-            for w in words[1:]:
-                p = p | Keyword(w, caseless=True).setDebug(logging.root.level < logging.INFO)
-            p = p + gr_eq + fn
-            p.setParseAction(action)
-            return p
-
-        gr_line = np((NAME,), action=lambda x: self._set_name(x[2]))
-        gr_line = gr_line | np((USER, 'dbuser', 'db user'), action=self._parse_setter(USER))
-        gr_line = gr_line | np((PASSWORD, 'dbpassword', 'db password'), action=self._parse_setter(PASSWORD))
-        gr_line = gr_line | np(PList(DBSOCKET), action=self._parse_setter(DBSOCKET))
-        gr_line = gr_line | np(PList(DBPORT), gr_number, action=self._parse_setter(DBPORT))
-        gr_line = gr_line | np(PList('db name'), action=self._parse_setter(DBNAME))
-        gr_line = gr_line | np(PList('db address'), action=self._parse_setter(DBADDRESS))
-        gr_res = OneOrMore(gr_line)
-
-        result = gr_res.parseString(string, parseAll=True)
-        self._set(DIRECTOR_ID, director[ID])
-        return 'Catalog: ' + self[NAME]
-
     def __str__(self):
         '''Convert a Catalog into its string representation.  The result can be
         inserted directly into the configuration of the director.'''

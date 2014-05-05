@@ -19,46 +19,6 @@ class Console(DbDict):
                   POOLACL, SCHEDULEACL, STORAGEACL, WHEREACL, DIRPORT, ADDRESS]
     table = CONSOLES
     IDTAG = 4
-    def parse_string(self, string, director_config, obj):
-        '''Populate a new object from a string.
-        
-        Parsing is hard, so we're going to call out to the pyparsing
-        library here.  I hope you installed it!
-        '''
-        from pyparsing import quotedString, restOfLine, Keyword, nestedExpr, OneOrMore, Word, Literal, removeQuotes, replaceWith
-        gr_eq = Literal('=')
-        gr_stripped_string = quotedString.copy().setParseAction( removeQuotes )
-        gr_opt_quoted_string = gr_stripped_string | restOfLine
-        gr_yn = Keyword('yes', caseless=True).setParseAction(replaceWith('1')) | Keyword('no', caseless=True).setParseAction(replaceWith('0'))
-
-        def np(words, fn = gr_opt_quoted_string, action=None):
-            p = Keyword(words[0], caseless=True).setDebug(logging.root.level < logging.INFO)
-            for w in words[1:]:
-                p = p | Keyword(w, caseless=True).setDebug(logging.root.level < logging.INFO)
-            p = p + gr_eq + fn
-            p.setParseAction(action)
-            return p
-
-        def _handle_monitor(*x): pass
-
-        def _handle_password(*x):
-            a,b,c =  x[2]
-            p = PasswordStore(obj, self)
-            p.password = c
-            p.store()
-            return
-
-        gr_line = np((NAME,), action=lambda x: self._set_name(x[2]))
-        for key in self.SETUP_KEYS:
-            if key == PASSWORD: continue
-            gr_line = gr_line | np((key,), action=self._parse_setter(key))
-        gr_monitor = np((MONITOR,), gr_yn, action=_handle_monitor)
-        gr_pass = np((PASSWORD,), action=_handle_password)
-
-        gr_res = OneOrMore(gr_line|gr_monitor|gr_pass)
-        result = gr_res.parseString(string, parseAll=True)
-        return 'Console: ' + self[NAME]
-
     def __str__(self):
         self.output = ['Console {\n  Name = "%(name)s"' % self, '}']
         

@@ -63,17 +63,9 @@ possible: filesets that use < syntax will be incomplete).
 CURRENT STATUS
 --------------
 
-The import tool works on my decidedly non-trivial installation for director
-and client configurations.  The CLI tools work and are *mostly* complete
-for all currently implemented resources (I tend to add the tools at the
-same time I built the resource class).
-
-The next steps, in no particular order:
-
-- Convenience functions/scripts (e.g. move all clients from one SD to
-another)
-- Wiki updater (this may be too site-specific to be useful, but we'll see)
-
+Modulo any bugs, this seems to be complete as a framework.  Tests are
+incomplete, though, and I think it could use a little more polish
+documentation-wise.  
 
 DEPENDENCIES
 -------------
@@ -83,9 +75,9 @@ dependency.  If you would rather have it installed from an OS package, you
 should do that first.
 
 pyparsing is required if and only if you want to import an existing
-configuration.  Otherwise, it's unneeded.  I should note that this is
-making DRY code difficult, as adding the parsing bits to the base class
-would make pyparsing required everywhere, which is really not desirable.
+configuration.  I should note that this is making DRY code difficult, as
+adding the parsing bits to the base class would make pyparsing required
+everywhere, which is really not desirable.
 
 DATABASE
 ---------

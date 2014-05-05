@@ -20,70 +20,6 @@ class Client(DbDict):
     # resources that are otherwise identically named/numbered.
     IDTAG = 2                   
 
-    # {{{ parse_string(string): Entry point for a recursive descent parser
-
-    def parse_string(self, string):
-        '''Populate a new object from a string.
-        
-        Parsing is hard, so we're going to call out to the pyparsing
-        library here.  I hope you installed it!
-        '''
-        from pyparsing import quotedString, restOfLine, Keyword, nestedExpr, OneOrMore, Word, Literal, removeQuotes, nums, replaceWith, printables
-        gr_eq = Literal('=')
-        gr_stripped_string = quotedString.copy().setParseAction( removeQuotes )
-        gr_opt_quoted_string = gr_stripped_string | restOfLine
-        gr_number = Word(nums)
-        gr_yn = Keyword('yes', caseless=True).setParseAction(replaceWith('1')) | Keyword('no', caseless=True).setParseAction(replaceWith('0'))
-
-        def _handle_ip(*x):
-            a,b,c =  x[2]
-            return '  %s = { %s }' % (a,c[0])
-
-        def _handle_fdaddr(*x):
-            a,b,c =  x[2]
-            self._set(FDADDRESSES, '  %s' % '\n  '.join(c))
-            return
-
-        def np(words, fn = gr_opt_quoted_string, action=None):
-            p = Keyword(words[0], caseless=True).setDebug(logging.root.level < logging.INFO)
-            for w in words[1:]:
-                p = p | Keyword(w, caseless=True).setDebug(logging.root.level < logging.INFO)
-            p = p + gr_eq + fn
-            p.setParseAction(action)
-            return p
-
-        gr_line = np((NAME,), action=lambda x: self._set_name(x[2]))
-        gr_line = gr_line | np((ADDRESS,), action=self._parse_setter(ADDRESS))
-        gr_line = gr_line | np((CATALOG,), action=self._parse_setter(CATALOG_ID, dereference=True))
-        gr_line = gr_line | np((PASSWORD,), action=lambda x: x) # Discard the password here!
-        gr_line = gr_line | np(PList('file retention'), action=self._parse_setter(FILERETENTION))
-        gr_line = gr_line | np(PList('job retention'), action=self._parse_setter(JOBRETENTION))
-        gr_line = gr_line | np((PRIORITY,), gr_number, action=self._parse_setter(PRIORITY))
-        gr_line = gr_line | np(PList('working directory'), action=self._parse_setter(WORKINGDIRECTORY))
-        gr_line = gr_line | np(PList('pid directory'), action=self._parse_setter(PIDDIRECTORY))
-        gr_line = gr_line | np(PList('heart beat interval'), action=self._parse_setter(HEARTBEATINTERVAL))
-        gr_line = gr_line | np(PList('fd address'), action=self._parse_setter(FDADDRESS))
-        gr_line = gr_line | np(PList('fd source address'), action=self._parse_setter(FDSOURCEADDRESS))
-        gr_line = gr_line | np(PList('pki key pair'), action=self._parse_setter(PKIKEYPAIR))
-        gr_line = gr_line | np(PList('pki master key'), action=self._parse_setter(PKIMASTERKEY))
-        gr_line = gr_line | np(PList('fd port'), gr_number, action=self._parse_setter(FDPORT))
-        gr_line = gr_line | np(PList('auto prune'), gr_yn, action=self._parse_setter(AUTOPRUNE))
-        gr_line = gr_line | np(PList('maximum concurrent jobs'), gr_number, action=self._parse_setter(MAXIMUMCONCURRENTJOBS))
-        gr_line = gr_line | np(PList('pki encryption'), gr_yn, action=self._parse_setter(PKIENCRYPTION))
-        gr_line = gr_line | np(PList('pki signatures'), gr_yn, action=self._parse_setter(PKISIGNATURES))
-
-        # This is a complicated one
-        da_addr = np(('Addr','Port'), Word(printables), lambda x,y,z: ' '.join(z))
-        da_ip = np(('IPv4','IPv6','IP'), nestedExpr('{','}', OneOrMore(da_addr).setParseAction(lambda x,y,z: ' ; '.join(z)))).setParseAction(_handle_ip)
-        da_addresses = np(('fd addresses', FDADDRESSES), nestedExpr('{','}', OneOrMore(da_ip)), _handle_fdaddr)
-
-        gr_res = OneOrMore(gr_line|da_addresses)
-        result = gr_res.parseString(string, parseAll=True)
-        return 'Client: ' + self[NAME]
-
-    # }}}
-    # {{{ __str__(): 
-
     def __str__(self):
         '''Convert a Client into a string suitable for inclusion into a Director's configuration.'''
         self.output = ['Client {\n  Name = "%(name)s"' % self,'}']
@@ -98,9 +34,6 @@ class Client(DbDict):
             self._simple_phrase(key)
         self._yesno_phrase(AUTOPRUNE)
         return '\n'.join(self.output)
-
-# }}}
-    # {{{ fd(): return the string that describes the filedaemon configuration for this Client
 
     def fd(self):
         '''Generate the Client configuration as appropriate for a file daemon'''
@@ -119,9 +52,6 @@ class Client(DbDict):
         self._yesno_phrase(PKISIGNATURES)
         return '\n'.join(self.output)
 
-    # }}}
-    # {{{ _cli_special_setup(): add in password support on the CLI
-
     def _cli_special_setup(self):
         '''This is *all* for setting the password.  Client passwords are associated
         with Directors, which in turn may or may not be monitors for this
@@ -137,9 +67,6 @@ class Client(DbDict):
             "restricted to a monitoring role.  Specify a value of 'generate' for an auto-generated password."
             )
         return
-
-    # }}}
-    # {{{ _cli_special_do_parse(args): handle password parsing
 
     def _cli_special_do_parse(self, args):
         '''When setting the password, ensure that a Director is referenced.  If
@@ -160,9 +87,6 @@ class Client(DbDict):
         password.store()
         return
 
-# }}}
-    # {{{ _cli_special_print(): print out passwords
-
     def _cli_special_print(self):
         '''Prints out the passwords and the directors/consoles with which they are associated'''
         print('\nPasswords:')
@@ -175,9 +99,6 @@ class Client(DbDict):
             print(retval)
         return
 
-    # }}}
-    # {{{ _cli_special_clone(oid):
-
     def _cli_special_clone(self, old_id):
         '''When cloning a Client, assume that we want to also clone the passwords'''
         insert ='''INSERT INTO pwords (obj_id, obj_type, director_id, director_type, password)
@@ -185,8 +106,6 @@ class Client(DbDict):
                    WHERE obj_id=%s AND obj_type=%s'''
         self.bc.do_sql(insert, (self[ID], old_id, self.IDTAG))
         return
-
-# }}}
 
 # Implement the CLI for managing Clients
 def main():

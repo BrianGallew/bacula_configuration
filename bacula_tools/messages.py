@@ -10,19 +10,6 @@ class Messages(DbDict):
     _select = 'SELECT ref_id, link_type FROM messages_link WHERE messages_id=%s'
     _insert = 'INSERT INTO messages_link (messages_id, ref_id, link_type) VALUES (%s, %s, %s)'
     _delete = 'DELETE FROM messages_link WHERE messages_id = %s AND ref_id=%s AND link_type=%s'
-    # {{{ parse_string(string, obj=None):
-
-    def parse_string(self, string, obj=None):
-        '''Extend the standard parse_string functionality with object linkage.
-        This is the solution I came up with for associating a Message with
-        a Director, Client, or Storage object.
-        '''
-        retval = DbDict.parse_string(self, string)
-        if obj: self.link(obj)
-        return retval
-
-        # }}}
-    # {{{ link(obj):
 
     def link(self, obj):
         '''If I were willing to really wed this to MySQL, I should switch to REPLACE INTO.
@@ -35,24 +22,15 @@ class Messages(DbDict):
                 print(e)
                 raise
 
-                # }}}
-    # {{{ unlink(obj): unlink the device from a storage daemon
-
     def unlink(self, obj):
         '''Remove the link between this Message and the given object.'''
         self.bc.do_sql(self._delete, (self[ID], obj[ID], obj.IDTAG))
         return
 
-            # }}}
-    # {{{ __str__(): 
-
     def __str__(self):
         '''String representation suitable for inclustion in any config file.'''
         output = 'Messages {\n  Name = "%(name)s"\n  %(data)s\n}' % self
         return output
-
-# }}}
-    # {{{ _cli_special_setup(): add in linkage support
 
     def _cli_special_setup(self):
         '''Add CLI switches to link objects to this.  The object-type is required
@@ -66,9 +44,6 @@ class Messages(DbDict):
         group.add_option('--object-type', help='Optional device type to disambiguate the desired linkage')
         self.parser.add_option_group(group)
         return
-
-    # }}}
-    # {{{ _cli_special_do_parse(args): handle password parsing
 
     def _cli_special_do_parse(self, args):
         '''Handle the CLI switches for linkage.  Use the object type to provide a context
@@ -96,9 +71,6 @@ class Messages(DbDict):
 
         return
 
-# }}}
-    # {{{ _cli_special_print(): print out passwords
-
     def _cli_special_print(self):
         '''Print out the linked objects.'''
         resultset = self.bc.do_sql(self._select, self[ID])
@@ -108,8 +80,6 @@ class Messages(DbDict):
             for key in [Client, Storage, Director]:
                 if key.IDTAG == row[1]: print(fmt % key().search(row[0])[NAME])
         return
-
-    # }}}
 
 def main():
     s = Messages()

@@ -13,7 +13,6 @@ class Fileset(DbDict):
         DbDict.__init__(self, row, string)
         self.entries = []
         return
-    # {{{ _load_parts(): helper for loading self from the database
 
     def _load_parts(self):
         '''Load up the rules from the table.'''
@@ -23,9 +22,6 @@ class Fileset(DbDict):
                  WHERE a.file_id = b.id AND a.fileset_id = %s'''
         self.entries = list(self.bc.do_sql(sql, self[ID]))
         return self
-
-    # }}}
-    # {{{ _parse_add_entry(*args): adds various entries into this fileset
 
     def _parse_add_entry(self, *args):
         '''Supports the string parser.  Extracts fileset Include/Exclude phrases.
@@ -46,52 +42,6 @@ class Fileset(DbDict):
             else:
                 self._add_entry(' '.join([x.strip() for x in row]), 0, exclude)
         return
-
-    # }}}
-    # {{{ parse_string(string): Entry point for a recursive descent parser
-
-    def parse_string(self, string):
-        '''Populate a new object from a string.
-        
-        Parsing is hard, so we're going to call out to the pyparsing
-        library here.  I hope you installed it!
-        '''
-        from pyparsing import Suppress, Regex, quotedString, restOfLine, Keyword, nestedExpr, Group, OneOrMore, Word, Literal, alphanums, removeQuotes, replaceWith
-        gr_eq = Literal('=')
-        gr_stripped_string = quotedString.copy().setParseAction( removeQuotes )
-        gr_opt_quoted_string = gr_stripped_string | restOfLine
-        gr_name = Keyword('name', caseless=True) + gr_eq + gr_opt_quoted_string
-        gr_name.setParseAction(lambda x, y=self: y._set_name(x[2]))
-        gr_yn = Keyword('yes', caseless=True).setParseAction(replaceWith('1')) | Keyword('no', caseless=True).setParseAction(replaceWith('0'))
-        gr_phrase = Group(OneOrMore(gr_stripped_string | Word(alphanums)) + gr_eq + gr_opt_quoted_string)
-
-        def np(words, fn = gr_opt_quoted_string, action=print):
-            p = Keyword(words[0], caseless=True).setDebug(logging.root.level < logging.INFO)
-            for w in words[1:]:
-                p = p | Keyword(w, caseless=True).setDebug(logging.root.level < logging.INFO)
-            p = p + gr_eq + fn
-            p.setParseAction(action)
-            return p
-        
-        gr_ifsc = np(PList('Ignore File Set Changes'), gr_yn, action=self._parse_setter(IGNOREFILESETCHANGES))
-        gr_evss = np(PList('Enable VSS'), gr_yn, action=self._parse_setter(ENABLEVSS))
-
-        gr_i_option = Group(Keyword(OPTIONS, caseless=True) + nestedExpr('{','}', Regex('[^\}]+', re.MULTILINE)))
-        gr_e_option = gr_i_option.copy()
-        gr_i_file = gr_phrase.copy()
-        gr_e_file = gr_phrase.copy()
-
-        gr_inc = Keyword('include', caseless=True) + nestedExpr('{','}', OneOrMore(gr_i_option | gr_i_file))
-        gr_inc.addParseAction(self._parse_add_entry)
-        gr_exc = Keyword('exclude', caseless=True) + nestedExpr('{','}', OneOrMore(gr_e_option | gr_e_file))
-        gr_exc.addParseAction(self._parse_add_entry)
-
-        gr_res = OneOrMore(gr_name | gr_inc | gr_exc | gr_ifsc | gr_evss)
-        result = gr_res.parseString(string, parseAll=True)
-        return 'Fileset: ' + self[NAME]
-
-    # }}}
-    # {{{ _add_entry(entry, option, exclude): add another entry
 
     def _add_entry(self, entry, option=0, exclude=0):
         '''This holds the SQL that manages writing entries.  It probably needs a
@@ -117,9 +67,6 @@ class Fileset(DbDict):
         self._load_parts()
         return
 
-    # }}}
-    # {{{ _delete_entry(entry): delete an entry
-
     def _delete_entry(self, entry):
         '''Remove an entry.'''
         for row in self.entries:
@@ -130,9 +77,6 @@ class Fileset(DbDict):
             return
         print('I cannot delete entries that do not exist!')
         return
-
-    # }}}
-    # {{{ __str__(): 
 
     def __str__(self):
         '''Stringify into a form suitable for dropping into a Director configuration.'''
@@ -152,9 +96,6 @@ class Fileset(DbDict):
                 self.output.insert(-1,'  }')
         return '\n'.join(self.output)
 
-# }}}
-    # {{{ _cli_special_setup(): setup the weird phrases that go with filesets
-
     def _cli_special_setup(self):
         '''Add CLI options to add file/option inclusion/exclusion rules.'''
         group = optparse.OptionGroup(self.parser,
@@ -168,9 +109,6 @@ class Fileset(DbDict):
         self.parser.add_option_group(group)
         return
 
-    # }}}
-    # {{{ _cli_special_do_parse(args): handle the weird phrases that go with filesets
-
     def _cli_special_do_parse(self, args):
         '''Handle the args for adding/removing entries'''
         for stanza in args.add_file: self._add_entry(stanza, 0, 0)
@@ -179,9 +117,6 @@ class Fileset(DbDict):
         for stanza in args.add_exclusion_option: self._add_entry(stanza, 1, 1)
         for stanza in args.remove: self._delete_entry(stanza)
         return
-
-# }}}
-    # {{{ _cli_special_print(): print out the weird phrases that go with filesets
 
     def _cli_special_print(self):
         '''Print out the Inclusion and Exclusion rules'''
@@ -194,9 +129,6 @@ class Fileset(DbDict):
                 if options:
                     print(fmt % ('Options', ','.join([x[1] for x in options])))
                 [print(fmt % ('',x[1])) for x in subset if not x[2]]
-                
-    # }}}
-    # {{{ _cli_special_clone(oid):
 
     def _cli_special_clone(self, oid):
         '''When cloning, ensure that all of the rules get copied into the cloned Fileset.'''
@@ -205,9 +137,6 @@ class Fileset(DbDict):
         for row in self.bc.do_sql(select, oid): self.bc.do_sql(insert, row)
         self._load_parts()
         return
-
-# }}}
-        
 
 def main():
     s = Fileset()

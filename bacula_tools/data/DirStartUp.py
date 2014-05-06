@@ -10,8 +10,11 @@ numarray = range(0,100)
 #  can receive.
 class BaculaEvents(object):
     def __init__(self):
-        # Called here when a new Bacula Events class is
-        #  is created. Normally not used
+        '''Called here when a new Bacula Events class is is created. Normally not
+         used
+
+        '''
+        object.__init__(self)
         noop = 1
         return
 
@@ -24,9 +27,20 @@ class BaculaEvents(object):
         noop = 1
         return
 
-  # Bacula Job is going to terminate
     def JobEnd(self, job):
-        # If this is a verify job, bail
+        '''Bacula Job is going to terminate'''
+        noop = 1
+        return
+
+        # Bacula let's you do various things in Python.  To enable this
+        # example code, remove the previous two lines.  When enabled, this
+        # code does two things upon job completion (excluding jobs with
+        # Verify or Snap in the name):
+        #
+        # 1) Run a purge on the Storage associated with this job.
+        # 2) 5% of the time (roughly) start a Verification job against the one that just ran.
+        
+        # If this is a verify job or snapshot, bail
         if 'Verify' in job.Job: return
         if 'Snap' in job.Job: return # cannot verify snapshot backups
 
@@ -51,8 +65,8 @@ class BaculaEvents(object):
             job.JobReport="%s: jobid=%d\n" % (runcmd, newjob)
         return
 
-  # Called here when the Bacula daemon is going to exit
     def Exit(self, job):
+        '''Called here when the Bacula daemon is going to exit'''
         noop = 1
         return
 

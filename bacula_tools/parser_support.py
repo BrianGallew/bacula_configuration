@@ -189,7 +189,9 @@ def handle_monitor(*x):
     '''
     pass
 
-
+# Class-specific parsers.  There are a couple classes that use the default
+# parser, or even have an in-class declaration.  Those classes are so
+# because their parsing requirements are very lightweight.
 def catalog_parse_string(self, string, director):
     '''Parsing for the Catalog resource.
     '''

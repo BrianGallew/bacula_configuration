@@ -71,7 +71,9 @@ _INTERNED = [
     'randomaccess', 'blockchecksum', 'hardwareendofmedium', 'fastforwardspacefile', 'usemtiocget',
     'bsfateom', 'twoeof', 'backwardspacerecord', 'backwardspacefile', 'forwardspacerecord',
     'forwardspacefile', 'offlineonunmount', 'blockpositioning', 'labelmedia', 'automaticmount',
-    'clientconnectwait','fd','sd', 'bconsole', 'dirport', 'generate'
+    'clientconnectwait','fd','sd', 'bconsole', 'dirport', 'generate',
+
+    'minimum', 'maximum', 'counter_id', 'counters', 'counter'
     ]
 
 for w in _INTERNED: locals()[w.upper()] = w
@@ -137,6 +139,7 @@ from storage import Storage
 from job import Job, JobDef
 from scripts import Script
 from device import Device
+from counter import Counter
 
 # bconsole/daemon bits
 from fd import FDaemon
@@ -162,4 +165,5 @@ _DISPATCHER = {
     JOBDEF: JobDef,
     JOBDEFS: JobDef,
     DEVICE: Device,
+    COUNTER: Counter,
     }

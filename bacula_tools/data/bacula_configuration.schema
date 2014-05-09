@@ -1,6 +1,7 @@
 -- -*- sql -*-
 -- select 'Creating table templates';
 -- Order matters!
+DROP TABLE IF EXISTS `counters` ;
 DROP TABLE IF EXISTS `device_link` ;
 DROP TABLE IF EXISTS `messages_link` ;
 DROP TABLE IF EXISTS `device` ;
@@ -453,4 +454,21 @@ CREATE TABLE `device_link` (
   UNIQUE KEY `device_link_did_sid` (`device_id`, `storage_id`),
   CONSTRAINT `device_link_fk_device_id` FOREIGN KEY (`device_id`) REFERENCES `device` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `device_link_fk_storage_id` FOREIGN KEY (`storage_id`) REFERENCES `storage` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) DEFAULT CHARSET=latin1;
+
+
+-- select 'Creating table counters';
+CREATE TABLE `counters` (
+  `id` int(11) NOT NULL auto_increment,
+  `name` varchar(255) NOT NULL,
+  `maximum` int(11),
+  `minimum` int(11),
+  `catalog_id` int(11),
+  `counter_id` int(11),
+
+  -- extensions
+  PRIMARY KEY `PRIMARY` (`id`),
+  UNIQUE KEY `counter_name` (`name`),
+  CONSTRAINT `counters_fk_catalog_id` FOREIGN KEY (`catalog_id`) REFERENCES `catalogs` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+  CONSTRAINT `counters_fk_counter_id` FOREIGN KEY (`counter_id`) REFERENCES `counters` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) DEFAULT CHARSET=latin1;

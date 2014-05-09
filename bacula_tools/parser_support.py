@@ -1,7 +1,6 @@
 from __future__ import print_function
-import re
-from . import *
-import bacula_tools
+import re, bacula_tools, traceback
+from bacula_tools import *
 
 # I know this is poor style, but pyparsing declares a lot of stuff that we'll be referencing.
 from pyparsing import *
@@ -27,7 +26,6 @@ class StringParseSupport:
     semicolon_re = re.compile(r';', re.MULTILINE)
     blankline_re = re.compile(r'^\s+$', re.MULTILINE)
     monitor_re = re.compile(r'^\s*m\s*o\s*n\s*i\s*t\s*o\s*r\s*=\s*yes\s*$', re.MULTILINE|re.I)
-    # {{{ __init__(output):
 
     def __init__(self, output):
         '''Initialize the instance variables, and set the output device.  There
@@ -39,9 +37,6 @@ class StringParseSupport:
         self.sd_config = False
         self.fd_config = False
         return
-
-        # }}}
-    # {{{ file_replacement(string): Replace file import statements with the contents of the files.
 
     def file_replacement(self, string):
         ''' Do a quick pass through the string looking for file imports.  If/When
@@ -63,9 +58,6 @@ class StringParseSupport:
             # Look again for import statements
             groups = self.file_re.search(string)
         return string
-
-        # }}}
-    # {{{ break_into_stanzas(string): segment the configuration data in individual resources
 
     def break_into_stanzas(self, string):
         '''Split up the input string into resources, and drop each resource into a
@@ -91,9 +83,6 @@ class StringParseSupport:
             while parts and parts[0] == '\n': del parts[0]
         return
 
-        # }}}
-    # {{{ analyze_queue(): Determine what kind of configuration file we're parsing
-
     def analyze_queue(self):
         '''Determine what kind of configuration file this is, as that affects the
         parsing process greatly.'''
@@ -101,9 +90,6 @@ class StringParseSupport:
         elif DEVICE in self.parse_queue: self.sd_config = True
         else: self.fd_config = True
         return
-
-        # }}}
-    # {{{ parse_one_stanza_type(key):
 
     def parse_one_stanza_type(self, key):
         '''Parse all of the stanzas of one type.  e.g. all of the Clients  '''
@@ -123,9 +109,6 @@ class StringParseSupport:
                 self.output(msg)
         del self.parse_queue[key]
         return
-
-        # }}}
-    # {{{ parse_it_all(string): Main parser driver
 
     def parse_it_all(self, string):
         '''Takes a string resulting from reading in a file, and parse it out.
@@ -152,8 +135,6 @@ class StringParseSupport:
         for name in self.parse_queue.keys(): self.parse_one_stanza_type(name)
 
         return self.parsed
-
-        # }}}
     
 
 
@@ -599,6 +580,18 @@ def storage_parse_string(self, string):
 
 
     
+def counter_parse_string(self, string):
+    '''Parser for the Counter resource.
+    '''
+    gr_line =           np((NAME,), action=lambda x: self._set_name(x[2]))
+    gr_line = gr_line | np((MINIMUM,), action=self._parse_setter(MINIMUM))
+    gr_line = gr_line | np((MAXIMUM,), action=self._parse_setter(MAXIMUM))
+    gr_line = gr_line | np(PList('wrap counter'), action=self._parse_setter(COUNTER_ID, dereference=True))
+    gr_line = gr_line | np((CATALOG,), action=self._parse_setter(CATALOG_ID, dereference=True))
+    gr_res = OneOrMore(gr_line)
+    result = gr_res.parseString(string, parseAll=True)
+    return 'Counter: ' + self[NAME]
+
 def setup_for_parsing():
     '''Monkeypatch real parsing support into all of the classes that need it.
     These were originally all in the actual class definition, but I pulled
@@ -624,6 +617,7 @@ def setup_for_parsing():
     bacula_tools.Pool.parse_string = pool_parse_string
     bacula_tools.Schedule.parse_string = schedule_parse_string
     bacula_tools.Storage.parse_string = storage_parse_string
+    bacula_tools.Counter.parse_string = counter_parse_string
     pass
 
 def parser(string, output=print):

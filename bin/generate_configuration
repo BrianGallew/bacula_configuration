@@ -106,6 +106,8 @@ if args.director:               # Director configuration stanzas
     query_id_thing('SELECT id FROM pools ORDER BY name', Pool, cf)
     # Consoles
     query_id_thing('SELECT id FROM consoles ORDER BY name', Console, cf)
+    # Counters
+    query_id_thing('SELECT id FROM counters ORDER BY name', Counter, cf)
     if cf.close(): reload_director(d)
 
 if args.fd:                     # File Daemon configuration stanzas

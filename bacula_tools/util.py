@@ -317,7 +317,7 @@ class DbDict(dict):
         self.bc.do_sql('DELETE FROM %s WHERE id = %%s' % self.table, self[ID])
         return
 
-    def _set(self, field, value, boolean=False, dereference=False):
+    def set(self, field, value, boolean=False, dereference=False):
         '''Instead of overriding the standard setter, I chose to add a separate
         function that will set and save.  We also do some special processing of
         boolean values.'''
@@ -353,7 +353,7 @@ class DbDict(dict):
             print(e)            #pragma: no cover
             raise               #pragma: no cover
 
-    def _set_name(self, name):
+    def set_name(self, name):
         '''Search the database for an existing element associated with name and
         load it up.  Also, run any _load_ hooks that exist.
 
@@ -371,17 +371,17 @@ class DbDict(dict):
         passwords.  Sigh.
         '''
         g = self.name_re.search(string).groups()
-        self._set_name(g[0].strip().replace('"','').replace("'", ''))
+        self.set_name(g[0].strip().replace('"','').replace("'", ''))
         string = self.name_re.sub('', string)
         data = '\n  '.join([x.strip() for x in string.split('\n') if x])
-        self._set(DATA, data)
+        self.set(DATA, data)
         return "%s: %s" % (self.table.capitalize(), self[NAME])
 
     def _parse_setter(self, key, c_int=False, dereference=False):
         '''Shortcut called by parser for setting values'''
         def rv(value):
-            if c_int: self._set(key, int(value[2].strip()), dereference=dereference)
-            else: self._set(key, value[2].strip(), dereference=dereference)
+            if c_int: self.set(key, int(value[2].strip()), dereference=dereference)
+            else: self.set(key, value[2].strip(), dereference=dereference)
         return rv
 
     def _simple_phrase(self, key, quoted=True):
@@ -419,8 +419,8 @@ class DbDict(dict):
         obj = bacula_tools._DISPATCHER[fk.replace('_id','')]()
         if string:
             obj.search(string.strip())
-            if not obj[ID]: obj._set_name(string.strip())
-            if not self[fk] == obj[ID]: self._set(fk, obj[ID])
+            if not obj[ID]: obj.set_name(string.strip())
+            if not self[fk] == obj[ID]: self.set(fk, obj[ID])
         else: obj.search(self[fk])
         return obj
 
@@ -486,7 +486,7 @@ class DbDict(dict):
             exit()
 
         name_or_num = client_arg[0]
-        if args.create: self._set_name(name_or_num)
+        if args.create: self.set_name(name_or_num)
 
         self.search(name_or_num)
         
@@ -499,7 +499,7 @@ class DbDict(dict):
             print('Deleted %s' % name_or_num)
             exit()                      # Nothing to print out now
 
-        if args.rename: self._set(NAME, args.rename)
+        if args.rename: self.set(NAME, args.rename)
 
         if args.clone:
             oid = self[ID]
@@ -554,7 +554,7 @@ class DbDict(dict):
             value = getattr(args, key)
             if value == None: continue
             if value == '': value = None
-            try: self._set(key, value, boolean, dereference)
+            try: self.set(key, value, boolean, dereference)
             except: pass
         return
         

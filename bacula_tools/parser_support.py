@@ -176,7 +176,7 @@ def handle_monitor(*x):
 def catalog_parse_string(self, string, director):
     '''Parsing for the Catalog resource.
     '''
-    gr_line = np((NAME,), action=lambda x: self._set_name(x[2]))
+    gr_line = np((NAME,), action=lambda x: self.set_name(x[2]))
     gr_line = gr_line | np((USER, 'dbuser', 'db user'), action=self._parse_setter(USER))
     gr_line = gr_line | np((PASSWORD, 'dbpassword', 'db password'), action=self._parse_setter(PASSWORD))
     gr_line = gr_line | np(PList(DBSOCKET), action=self._parse_setter(DBSOCKET))
@@ -185,7 +185,7 @@ def catalog_parse_string(self, string, director):
     gr_line = gr_line | np(PList('db address'), action=self._parse_setter(DBADDRESS))
     gr_res = OneOrMore(gr_line)
     result = gr_res.parseString(string, parseAll=True)
-    self._set(DIRECTOR_ID, director[ID])
+    self.set(DIRECTOR_ID, director[ID])
     return 'Catalog: ' + self[NAME]
 
 def client_parse_string(self, string):
@@ -195,10 +195,10 @@ def client_parse_string(self, string):
         '''Docment this.
         '''
         a,b,c =  x[2]
-        self._set(FDADDRESSES, '  %s' % '\n  '.join(c))
+        self.set(FDADDRESSES, '  %s' % '\n  '.join(c))
         return
 
-    gr_line = np((NAME,), action=lambda x: self._set_name(x[2]))
+    gr_line = np((NAME,), action=lambda x: self.set_name(x[2]))
     gr_line = gr_line | np((ADDRESS,), action=self._parse_setter(ADDRESS))
     gr_line = gr_line | np((CATALOG,), action=self._parse_setter(CATALOG_ID, dereference=True))
     gr_line = gr_line | np((PASSWORD,), action=lambda x: x) # Discard the password here!
@@ -240,7 +240,7 @@ def console_parse_string(self, string, director_config, obj):
         p.store()
         return
 
-    gr_line = np((NAME,), action=lambda x: self._set_name(x[2]))
+    gr_line = np((NAME,), action=lambda x: self.set_name(x[2]))
     for key in self.SETUP_KEYS:
         if key == PASSWORD: continue
         gr_line = gr_line | np((key,), action=self._parse_setter(key))
@@ -254,7 +254,7 @@ def console_parse_string(self, string, director_config, obj):
 def device_parse_string(self, string, obj=None):
     '''Parser for the Device resource.
     '''
-    gr_line =           np(PList(NAME), action=lambda x: self._set_name(x[2]))
+    gr_line =           np(PList(NAME), action=lambda x: self.set_name(x[2]))
     gr_line = gr_line | np(PList('alert command'), action=self._parse_setter(ALERTCOMMAND))
     gr_line = gr_line | np(PList('archive device'), action=self._parse_setter(ARCHIVEDEVICE))
     gr_line = gr_line | np(PList('changer command'), action=self._parse_setter(CHANGERCOMMAND))
@@ -322,10 +322,10 @@ def director_parse_string(self, string, director_config, obj):
 
     def _handle_diraddr(*x):
         a,b,c =  x[2]
-        self._set(DIRADDRESSES, '  %s' % '\n  '.join(c))
+        self.set(DIRADDRESSES, '  %s' % '\n  '.join(c))
         return
 
-    gr_name = np((NAME,), action=lambda x: self._set_name(x[2]))
+    gr_name = np((NAME,), action=lambda x: self.set_name(x[2]))
     gr_address = np((ADDRESS,), action=self._parse_setter(ADDRESS))
     gr_fd_conn = np(PList('fd connect timeout'), gr_number, self._parse_setter(FD_CONNECT_TIMEOUT, True))
     gr_heart = np(PList('heartbeat interval'), gr_number, self._parse_setter(HEARTBEATINTERVAL, True))
@@ -360,7 +360,7 @@ def fileset_parse_string(self, string):
     '''Parser for the Fileset resource.
     '''
     # why dos this one use lambda x,y, and other parsers only use lambda x?
-    gr_name = np((NAME,), action=lambda x, y=self: y._set_name(x[2]))
+    gr_name = np((NAME,), action=lambda x, y=self: y.set_name(x[2]))
     gr_ifsc = np(PList('Ignore File Set Changes'), gr_yn, action=self._parse_setter(IGNOREFILESETCHANGES))
     gr_evss = np(PList('Enable VSS'), gr_yn, action=self._parse_setter(ENABLEVSS))
 
@@ -383,7 +383,7 @@ def job_parse_string(self, string):
     '''
 
     # Easy ones that go don't take embedded spaces because I say so.
-    gr_line = np((NAME,), action=lambda x: self._set_name(x[2]))
+    gr_line = np((NAME,), action=lambda x: self.set_name(x[2]))
     for key in [TYPE, LEVEL, REPLACE, BASE, RUN, WHERE]:
         gr_line = gr_line | np((key,), action=self._parse_setter(key))
 
@@ -491,7 +491,7 @@ def pool_parse_string(self, string):
     '''Parse a tring into a Pool object.
     '''
 
-    gr_line = np((NAME,), action=lambda x: self._set_name(x[2]))
+    gr_line = np((NAME,), action=lambda x: self.set_name(x[2]))
     gr_line = gr_line | np(PList('pool type'), action=self._parse_setter(POOLTYPE))
     gr_line = gr_line | np(PList('maximum volumes'), action=self._parse_setter(MAXIMUMVOLUMES))
     gr_line = gr_line | np((STORAGE,), action=self._parse_setter(STORAGE_ID, dereference=True))
@@ -532,7 +532,7 @@ def schedule_parse_string(self, string):
     s = g[0].strip()
     if s[0] == '"' and  s[-1] == '"': s = s[1:-1]
     if s[0] == "'" and  s[-1] == "'": s = s[1:-1]
-    self._set_name(s)
+    self.set_name(s)
     data = self.name_re.sub('', data)
     while True:
         g = run_re.search(data)
@@ -550,10 +550,10 @@ def storage_parse_string(self, string):
 
     def _handle_addr(*x):
         a,b,c =  x[2]
-        self._set(SDADDRESSES, '  %s' % '\n  '.join(c))
+        self.set(SDADDRESSES, '  %s' % '\n  '.join(c))
         return
 
-    gr_line = np((NAME,), action=lambda x: self._set_name(x[2]))
+    gr_line = np((NAME,), action=lambda x: self.set_name(x[2]))
     gr_line = gr_line | np(PList('sd port'), gr_number, action=self._parse_setter(SDPORT))
     gr_line = gr_line | np((ADDRESS,'sd address', SDADDRESS), action=self._parse_setter(ADDRESS))
     gr_line = gr_line | np((PASSWORD,), action=lambda x: x)
@@ -583,7 +583,7 @@ def storage_parse_string(self, string):
 def counter_parse_string(self, string):
     '''Parser for the Counter resource.
     '''
-    gr_line =           np((NAME,), action=lambda x: self._set_name(x[2]))
+    gr_line =           np((NAME,), action=lambda x: self.set_name(x[2]))
     gr_line = gr_line | np((MINIMUM,), action=self._parse_setter(MINIMUM))
     gr_line = gr_line | np((MAXIMUM,), action=self._parse_setter(MAXIMUM))
     gr_line = gr_line | np(PList('wrap counter'), action=self._parse_setter(COUNTER_ID, dereference=True))

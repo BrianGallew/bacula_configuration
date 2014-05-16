@@ -99,7 +99,7 @@ class job_tests(unittest.TestCase):
                               mock.call('SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (1, 7L)),
                           ]
         
-        with mock.patch('bacula_tools.Job._load_scripts'),mock.patch('bacula_tools.Job.search'), mock.patch('bacula_tools.Job._set'), mock.patch('bacula_tools.Job._parse_script', new=s):
+        with mock.patch('bacula_tools.Job._load_scripts'),mock.patch('bacula_tools.Job.search'), mock.patch('bacula_tools.Job.set'), mock.patch('bacula_tools.Job._parse_script', new=s):
             j = bacula_tools.Job()
             j.parse_string(self.full_case)
             self.assertEquals(m.do_sql.call_args_list, expected_call_list)

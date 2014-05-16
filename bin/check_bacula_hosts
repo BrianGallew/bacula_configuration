@@ -3,12 +3,17 @@
 from __future__ import print_function
 import bacula_tools
 
-bc = bacula_tools.Bacula_Factory()
+bacula_config_object = bacula_tools.Bacula_Factory()
 
 # This loop will iterate through the pword table
 dirlist = {}
 prevent_duplicates = {}
-for row in bc.do_sql('SELECT obj_id, obj_type, director_id, director_type FROM pwords ORDER BY obj_type, director_type'):
+select_query = '''
+SELECT obj_id, obj_type, director_id, director_type
+  FROM pwords
+  ORDER BY obj_type, director_type
+'''
+for row in bacula_config_object.do_sql(select_query):
     if prevent_duplicates.has_key((row[0], row[1])): continue
     prevent_duplicates[(row[0], row[1])] = True
     if row[1] == bacula_tools.Client.IDTAG:
@@ -38,13 +43,13 @@ for row in bc.do_sql('SELECT obj_id, obj_type, director_id, director_type FROM p
     except:
         print('%s: connection refused (firewall or dead)' % obj[bacula_tools.NAME])
 
-for row in bc.do_sql('SELECT id from %s order by id ASC' % bacula_tools.Director.table):
+for row in bacula_config_object.do_sql('SELECT id from %s order by id ASC' % bacula_tools.Director.table):
     obj = bacula_tools.Director().search(row[0])
     try:
         connection = bacula_tools.BDirector(obj)
         connection.auth()
         print(connection.version())
-    except Exception as e:
+    except:
         print('%s: connection refused (firewall or dead)' % obj[bacula_tools.NAME])
 
 exit()

@@ -14,17 +14,15 @@ It must be run as a user with sufficent permissions to access bconsole.conf.
 
 '''
 
+import sys, subprocess, logging, optparse, bacula_tools
 
-import sys, os, subprocess, logging, optparse
-from stat import *
-
-def LameProgressSpinner(iterable, **kwargs):
+def lame_progress_spinner(iterable, **kwargs):
     '''Add spinner output to consumption of iterator items.
 
     When you're printing stuff out with a long-running process, it's nice
     to see that you're making progress.
     '''
-    spinlist = ['|','/','-','\\']
+    spinlist = ['|', '/', '-', '\\']
     index = 1
     sys.stdout.write(spinlist[0])
     for item in iterable:
@@ -32,42 +30,59 @@ def LameProgressSpinner(iterable, **kwargs):
         sys.stdout.write('\b' + spinlist[index])
         sys.stdout.flush()
         index = (index + 1) % len(spinlist)
-        
-try: from clint.textui.progress import bar
-except: bar = LameProgressSpinner
+
+try:
+    from clint.textui.progress import bar
+except:
+    bar = lame_progress_spinner
+
 class BConsole(subprocess.Popen):
+    '''Wrapper around the bconsole command.  Will some day be refactored to use
+    the bacula_tools class.
+    '''
     prompt = '@# bconsole prompt\n'
     def __init__(self):
-        subprocess.Popen.__init__(self, 'bconsole', universal_newlines=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        '''Constructor.'''
+        subprocess.Popen.__init__(self, 'bconsole', universal_newlines=True,
+                                  stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         logging.debug(str(self.execute('version')))
         return
 
     def execute(self, cmd):
+        '''Dispatch commands to bconsole and return the result.  Poor man's expect.'''
         retval = []
         logging.info('executing cmd: "%s"', cmd)
         self.stdin.write(cmd+'\n.\n' + self.prompt)
         while True:
             line = self.stdout.readline()
             logging.debug('got line: "%s"', line)
-            if line == self.prompt: break
+            if line == self.prompt:
+                break
             retval.append(line)
         return retval
 
     def data_cleaner(self, raw):
+        '''Convert columnar, pipe-separated data into a list of lists.
+        '''
         data = []
         logging.info(str(raw))
         for line in raw:
-            if not line[0] == '|': continue
+            if not line[0] == '|':
+                continue
             bits = [x.strip() for x in line.split('|')]
-            if 'Id' in bits[1]: continue # This field is numeric, so 'Id' indicates a header row
+            # bits[1] is numeric, so 'Id' indicates a header row
+            if 'Id' in bits[1]:
+                continue
             data.append(bits)
         return sorted(data)
 
-    def get_pools(self, filter=[]):
+    def get_pools(self):
+        'List all of the pools.'
         raw = self.execute('list pool')
         return self.data_cleaner(raw)
 
     def get_media(self, pool):
+        'List all the media in the given pool.'
         raw = self.execute('list media pool=%s' % pool)
         return self.data_cleaner(raw)
 
@@ -81,28 +96,30 @@ def prune_commands(medialist):
     retval = []
     if medialist:
         for volume in medialist:
-            if volume[3] in ('Purged', 'Archive', 'Recycle', 'Disabled', 'Busy', 'Cleaning'): continue
+            if volume[3] in ('Purged', 'Archive', 'Recycle', 'Disabled', 'Busy', 'Cleaning'):
+                continue
             retval.append('prune volume=%s yes' % volume[2])
     return retval
 
-def clean(filter=None):
-    # Pools to clean
+def clean(pool_filter=None):
+    '''Iterate through all pools that match the given filter, pruning all the media in each one.'''
     bc = BConsole()
     pools = bc.get_pools()
     commands = []
     for p in pools:
         poolname = p[2]
-        if filter:
+        if pool_filter:
             # This checks to see if True is returned for any 'x in poolname'
-            acceptable = True in [x in poolname for x in filter]
-        else: acceptable = True # Not trying to filter at all
-        if not acceptable: continue
+            acceptable = True in [x in poolname for x in pool_filter]
+        else:
+            acceptable = True # Not trying to filter at all
+        if not acceptable:
+            continue
         print "searching through %20s" % poolname,
         media = bc.get_media(poolname)
         sys.stdout.flush()
         commands.append((poolname, prune_commands(media)))
         print " found %d(%d) records" % (len(commands[-1][-1]), len(media))
-        pass
 
     # Actually do the pruning here
     for poolname, pool in commands:
@@ -110,12 +127,19 @@ def clean(filter=None):
             bc.execute(cmd)
     return
 
+def main():
+    '''Main entry point.'''
 
-parser = optparse.OptionParser(description='Prune Bacula volumes.',
-                               usage='usage: %prog [options] [pools]',
-                               epilog='''By default prune the media in all of the pools.  If you pass pool names on the command-line, the only pools that will be pruned are those whose names CONTAIN the passed-in names, e.g. if you pass "pool1" in, then it will prune pool1, pool10, pool11, etc.''')
-parser.add_option('-d', '--debug', action='store_true', default=False)
-options, args = parser.parse_args()
-if options.debug: bacula_tools.set_debug()
-else: logging.basicConfig(level=logging.WARNING)
-clean(args)
+    parser = optparse.OptionParser(description='Prune Bacula volumes.',
+                                   usage='usage: %prog [options] [pools]',
+                                   epilog='''By default prune the media in all of the pools.  If you pass pool names on the command-line, the only pools that will be pruned are those whose names CONTAIN the passed-in names, e.g. if you pass "pool1" in, then it will prune pool1, pool10, pool11, etc.''')
+    parser.add_option('-d', '--debug', action='store_true', default=False)
+    options, args = parser.parse_args()
+    if options.debug:
+        bacula_tools.set_debug()
+    else:
+        logging.basicConfig(level=logging.WARNING)
+    clean(args)
+
+if __name__ == '__main__':
+    main()

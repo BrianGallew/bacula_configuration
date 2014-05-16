@@ -1,13 +1,14 @@
 #! /usr/local/bin/python
-# Add/remove/update/dump directors
+'''Generate various configuration files.'''
+
 from __future__ import print_function
 
-import sys, os, optparse, logging
-from bacula_tools import *
+import os, optparse, logging
+import bacula_tools
 
-def reload_director(d):
+def reload_director(target_director):
     '''use bconsole to reload the config'''
-    handle = BDirector(d)
+    handle = bacula_tools.BDirector(target_director)
     handle.auth()
     handle.send('reload')
     handle.recv_all()
@@ -17,8 +18,8 @@ def reload_director(d):
 def reload_storage():
     '''Restart bacula-sd with appropriate precautions.  Relies on at(1).'''
     atjob = "/tmp/restart_storage.sh"
-    cf = ConfigFile(atjob)
-    resubmit = cf.close('''
+    config_file = bacula_tools.ConfigFile(atjob)
+    resubmit = config_file.close('''
 exec > %(atjob)s.log 2>&1
 set -x
 status=`echo status dir days=0 | bconsole | grep -i "No Jobs running"`
@@ -33,130 +34,235 @@ service bacula-sd restart
     if resubmit: os.system("at -f %(atjob)s now + 1 minute" % locals())
     return
 
-# Parser configuration and sanity checking.  Also, "bacula" is instantiated in here
+# pylint: disable=too-many-arguments
+def query_id_thing(self, sql, obj, output, fun=None, args=(), **kwargs):
+    '''Query the database for information to use in constructing various
+    objects, returning either the string representation or else the result
+    of a passed-in method name.
 
-parser = optparse.OptionParser(description='Print Bacula configuration.', usage='usage: %prog --(director|fd|sd) hostname [subsidiary hostnames]')
-parser.add_option('--bconsole', action='store_true',
-                   default=False, help='Produce a configuration for using bconsole')
-parser.add_option('--director', action='store_true',
-                   default=False, help='Produce a configuration for the given director')
-parser.add_option('--fd', action='store_true',
-                   default=False, help='Produce a configuration for the given file daemon')
-parser.add_option('--sd', action='store_true',
-                   default=False, help='Produce a configuration for the given storage daemon')
-parser.add_option('-d', '--debug', action='store_true',
-                   default=False, help='Enable debugging output')
+    In theory we *could* just use the built-in enumeration/search methods
+    for each function, but in practice there are some scoping issues to
+    deal with.  For example, we don't want *all* of the clients, only the
+    ones associated with a particular director.
 
-keylist = [DIRECTOR, FD, SD, BCONSOLE]
-(args, given_arg) = parser.parse_args()
-foo = [x for x in keylist if getattr(args, x)]
-
-if len(foo) != 1:
-    print('You must use one, and only one, option\n')
-    parser.print_help()
-    exit()
-
-if (not given_arg) or not len(given_arg) > 0:
-    print('You must supply the name of the configuration host\n')
-    parser.print_help()
-    exit()
-
-if len(given_arg) > 1 and (not args.bconsole):
-    print('Only the bconsole option accepts multiple hostames\n')
-    parser.print_help()
-    exit()
-
-if args.debug: bacula_tools.set_debug()
-else: logging.basicConfig(level=logging.WARNING)
-
-bacula = Bacula_Factory()        # Instantiate our DB connection thingy
-def query_id_thing(sql, obj, output, fun=None, args=(), **kwargs):
+    This should be monkeypatched onto the Bacula_Config class
+    '''
     logging.debug('%s:%s:%s:%s', sql, obj, args, kwargs)
-    for id in bacula.do_sql(sql, args):
-        o = obj(**kwargs)
-        o.search(id)
+    for object_id in self.do_sql(sql, args):
+        created_object = obj(**kwargs)
+        created_object.search(object_id)
         if fun:
-            output.write(getattr(o, fun)(), '\n')
+            output.write(getattr(created_object, fun)(), '\n')
         else:
-            output.write(o, '\n')
+            output.write(created_object, '\n')
+    return
+# This line is here because I think it'll be more obvious that way.
+bacula_tools.Bacula_Config.query_id_thing = query_id_thing
+
+def parse_command_line_arguments():
+    '''Parser configuration and sanity checking.'''
+
+    parser = optparse.OptionParser(
+        description='Print Bacula configuration.',
+        usage='usage: %prog --(director|fd|sd) hostname [subsidiary hostnames]')
+    parser.add_option('--bconsole', action='store_true',
+                      default=False,
+                      help='Produce a configuration for using bconsole')
+    parser.add_option('--director', action='store_true',
+                      default=False,
+                      help='Produce the configuration for the director')
+    parser.add_option('--fd', action='store_true',
+                      default=False,
+                      help='Produce the configuration for the file daemon')
+    parser.add_option('--sd', action='store_true',
+                      default=False,
+                      help='Produce the configuration for the storage daemon')
+    parser.add_option('-d', '--debug', action='store_true',
+                      default=False,
+                      help='Enable debugging output')
+
+    keylist = [bacula_tools.DIRECTOR,
+               bacula_tools.FD,
+               bacula_tools.SD,
+               bacula_tools.BCONSOLE]
+    (args, given_arg) = parser.parse_args()
+    option_count = [x for x in keylist if getattr(args, x)]
+
+    if len(option_count) != 1:
+        print('You must use one, and only one, option\n')
+        parser.print_help()
+        exit()
+
+    if (not given_arg) or not len(given_arg) > 0:
+        print('You must supply the name of the configuration host\n')
+        parser.print_help()
+        exit()
+
+    if len(given_arg) > 1 and (not args.bconsole):
+        print('Only the bconsole option accepts multiple hostames\n')
+        parser.print_help()
+        exit()
+
+    if args.debug: bacula_tools.set_debug()
+    else: logging.basicConfig(level=logging.WARNING)
+    return args, given_arg
+
+def director_config(bc_object, myname):
+    '''Write the director configuration out to a file.
+    '''
+    # First, the basics
+    config_file = bacula_tools.ConfigFile(bacula_tools.BACULA_DIR_CONF)
+    director_object = bacula_tools.Director().search(myname)
+    config_file.write(director_object, '\n')
+    catalog_object = bacula_tools.Catalog(
+        {bacula_tools.DIRECTOR_ID: director_object[bacula_tools.ID]}).search()
+    config_file.write(catalog_object, '\n')
+    bc_object.query_id_thing('SELECT messages_id'
+                             '  FROM messages_link'
+                             '  WHERE ref_id = %s AND link_type = %s',
+                             bacula_tools.Messages, config_file,
+                             args=(director_object[bacula_tools.ID],
+                                   director_object.IDTAG))
+    # Now, for a little more interesting stuff (and we're cheating hard)
+    bc_object.query_id_thing('SELECT id FROM filesets ORDER BY name',
+                             bacula_tools.Fileset, config_file)
+    bc_object.query_id_thing('SELECT id FROM schedules ORDER BY name',
+                             bacula_tools.Schedule, config_file)
+    # clients
+    bc_object.query_id_thing('SELECT id FROM clients ORDER BY name',
+                             bacula_tools.Client, config_file,
+                             director_id=director_object[bacula_tools.ID])
+    # jobs
+    bc_object.query_id_thing('SELECT id FROM jobs'
+                             '  WHERE jobdef=1 ORDER BY name',
+                             bacula_tools.JobDef, config_file)
+    bc_object.query_id_thing('SELECT id FROM jobs'
+                             '  WHERE NOT jobdef=1 OR jobdef IS NULL'
+                             '  ORDER BY name',
+                             bacula_tools.Job, config_file)
+    # storage
+    bc_object.query_id_thing('SELECT id FROM storage ORDER BY name',
+                             bacula_tools.Storage, config_file,
+                             director_id=director_object[bacula_tools.ID])
+    # Pools
+    bc_object.query_id_thing('SELECT id FROM pools ORDER BY name',
+                             bacula_tools.Pool, config_file)
+    # Consoles
+    bc_object.query_id_thing('SELECT id FROM consoles ORDER BY name',
+                             bacula_tools.Console, config_file)
+    # Counters
+    bc_object.query_id_thing('SELECT id FROM counters ORDER BY name',
+                             bacula_tools.Counter, config_file)
+    if config_file.close(): reload_director(director_object)
     return
 
-hostname = given_arg[0].strip()
+def file_daemon_config(bc_object, myname):
+    '''Write the file daemon configuration out to the file.
+    '''
+    config_file = bacula_tools.ConfigFile(bacula_tools.BACULA_FD_CONF)
+    client_object = bacula_tools.Client().search(myname)
+    config_file.write(client_object.fd(), '\n')
 
-if args.director:               # Director configuration stanzas
+    bc_object.query_id_thing('SELECT director_id'
+                             '  FROM pwords'
+                             '  WHERE obj_id = %s AND obj_type = %s'
+                             '                    AND director_type = %s'
+                             '  ORDER BY director_id',
+                             bacula_tools.Director, config_file, fun='fd',
+                             args=(client_object[bacula_tools.ID],
+                                   client_object.IDTAG,
+                                   bacula_tools.Director.IDTAG),
+                             client_id=client_object[bacula_tools.ID])
 
-    # First, the basics
-    cf = ConfigFile(BACULA_DIR_CONF)
-    d = Director().search(hostname)
-    cf.write(d, '\n')
-    c = Catalog({DIRECTOR_ID: d[ID]}).search()
-    cf.write(c, '\n')
-    query_id_thing('SELECT messages_id FROM messages_link where ref_id = %s and link_type = %s', Messages, cf, args=(d[ID], d.IDTAG))
-    # Now, for a little more interesting stuff (and we're cheating hard)
-    query_id_thing('SELECT id FROM filesets ORDER BY name', Fileset, cf)
-    query_id_thing('SELECT id FROM schedules ORDER BY name', Schedule, cf)
-    # clients
-    query_id_thing('SELECT id FROM clients ORDER BY name', Client, cf, director_id = d[ID])
-    # jobs
-    query_id_thing('SELECT id FROM jobs WHERE jobdef=1 ORDER BY name', JobDef, cf)
-    query_id_thing('SELECT id FROM jobs WHERE NOT jobdef=1 OR jobdef IS NULL ORDER BY name', Job, cf)
-    # storage
-    query_id_thing('SELECT id FROM storage ORDER BY name', Storage, cf, director_id = d[ID])
-    # Pools
-    query_id_thing('SELECT id FROM pools ORDER BY name', Pool, cf)
-    # Consoles
-    query_id_thing('SELECT id FROM consoles ORDER BY name', Console, cf)
-    # Counters
-    query_id_thing('SELECT id FROM counters ORDER BY name', Counter, cf)
-    if cf.close(): reload_director(d)
+    bc_object.query_id_thing('SELECT director_id'
+                             '  FROM pwords'
+                             '  WHERE obj_id = %s AND obj_type = %s'
+                             '                    AND director_type = %s'
+                             '  ORDER BY director_id',
+                             bacula_tools.Console, config_file, fun='fd',
+                             args=(client_object[bacula_tools.ID],
+                                   client_object.IDTAG,
+                                   bacula_tools.Console.IDTAG),
+                             client_id=client_object[bacula_tools.ID])
 
-if args.fd:                     # File Daemon configuration stanzas
+    bc_object.query_id_thing('SELECT messages_id'
+                             '  FROM messages_link'
+                             '  WHERE ref_id = %s AND link_type = %s',
+                             bacula_tools.Messages, config_file,
+                             args=(client_object[bacula_tools.ID],
+                                   client_object.IDTAG))
 
-    cf = ConfigFile(BACULA_FD_CONF)
-    cl = Client().search(hostname)
-    cf.write(cl.fd(), '\n')
+    if config_file.close(): pass
+    return
 
-    query_id_thing('SELECT director_id FROM pwords where obj_id = %s and obj_type = %s AND director_type = %s ORDER BY director_id',
-                   Director, cf, fun='fd', args= (cl[ID], cl.IDTAG, Director.IDTAG), client_id = cl[ID])
+def storage_daemon_config(bc_object, myname):
+    '''Write the file daemon configuration out to the file.
+    '''
+    configuration_file = bacula_tools.ConfigFile(bacula_tools.BACULA_SD_CONF)
+    storage_daemon = bacula_tools.Storage().search(myname)
+    configuration_file.write(storage_daemon.sd(), '\n')
 
+    bc_object.query_id_thing('SELECT director_id'
+                             '  FROM pwords'
+                             '  WHERE obj_id = %s AND obj_type = %s'
+                             '                    AND director_type = %s'
+                             '  ORDER BY director_id',
+                             bacula_tools.Director, configuration_file,
+                             fun='fd',
+                             args=(storage_daemon[bacula_tools.ID],
+                                   storage_daemon.IDTAG,
+                                   bacula_tools.Director.IDTAG),
+                             client_id=storage_daemon[bacula_tools.ID])
 
-    query_id_thing('SELECT director_id FROM pwords where obj_id = %s and obj_type = %s AND director_type = %s ORDER BY director_id',
-                   Console, cf, fun='fd',
-                   args = (cl[ID], cl.IDTAG, Console.IDTAG), client_id = cl[ID])
+    bc_object.query_id_thing('SELECT director_id'
+                             '  FROM pwords'
+                             '  WHERE obj_id = %s AND obj_type = %s'
+                             '                    AND director_type = %s'
+                             '  ORDER BY director_id',
+                             bacula_tools.Console, configuration_file,
+                             fun='fd',
+                             args=(storage_daemon[bacula_tools.ID],
+                                   storage_daemon.IDTAG,
+                                   bacula_tools.Console.IDTAG),
+                             client_id=storage_daemon[bacula_tools.ID])
 
-    query_id_thing('SELECT messages_id FROM messages_link WHERE ref_id = %s AND link_type = %s',
-                   Messages, cf,
-                   args = (cl[ID], cl.IDTAG))
+    bc_object.query_id_thing('SELECT device_id FROM device_link'
+                             '  WHERE storage_id = %s',
+                             bacula_tools.Device, configuration_file,
+                             args=(storage_daemon[bacula_tools.ID],))
 
-    if cf.close(): pass
+    bc_object.query_id_thing('SELECT messages_id'
+                             '  FROM messages_link'
+                             '  WHERE ref_id = %s AND link_type = %s',
+                             bacula_tools.Messages, configuration_file,
+                             args=(storage_daemon[bacula_tools.ID],
+                                   storage_daemon.IDTAG))
 
-if args.sd:
-    cf = ConfigFile(BACULA_SD_CONF)
-    sd = Storage().search(hostname)
-    cf.write(sd.sd(), '\n')
+    if configuration_file.close(): pass
+    return
 
-    query_id_thing('SELECT director_id FROM pwords where obj_id = %s and obj_type = %s AND director_type = %s ORDER BY director_id',
-                   Director, cf, fun='fd',
-                   args = (sd[ID], sd.IDTAG, Director.IDTAG), client_id = sd[ID])
+def bconsole_config(name_list):
+    '''Write the bconsole configuration out to the file.
+    '''
+    configuration_file = bacula_tools.ConfigFile(bacula_tools.BCONSOLE_CONF)
+    for myname in name_list:
+        director_object = bacula_tools.Director().search(myname.strip())
+        if not director_object[bacula_tools.ID]:
+            director_object = bacula_tools.Console().search(myname.strip())
+        configuration_file.write(director_object.bconsole(), '\n')
+    configuration_file.close()
+    return
 
-    query_id_thing('SELECT director_id FROM pwords where obj_id = %s and obj_type = %s AND director_type = %s ORDER BY director_id',
-                   Console, cf, fun='fd',
-                   args = (sd[ID], sd.IDTAG, Console.IDTAG), client_id = sd[ID])
-    
-    query_id_thing('SELECT device_id FROM device_link WHERE storage_id = %s',
-                   Device, cf, args = (sd[ID],))
-        
-    query_id_thing('SELECT messages_id FROM messages_link WHERE ref_id = %s AND link_type = %s',
-                   Messages, cf, args = (sd[ID], sd.IDTAG))
+bacula = bacula_tools.Bacula_Factory() # Instantiate our DB connection thingy
 
-    if cf.close(): pass
+arguments, hostname_list = parse_command_line_arguments()
+hostname = hostname_list[0].strip()
 
-if args.bconsole:               # bconsole setup
-    print('setting up bconsole')
-    # First, the basics
-    cf = ConfigFile(BCONSOLE_CONF)
-    for hostname in given_arg:
-        d = Director().search(hostname.strip())
-        if not d[bacula_tools.ID]: d = Console().search(hostname.strip())
-        cf.write(d.bconsole(), '\n')
-    cf.close()
+if arguments.director:               # Director configuration stanzas
+    director_config(bacula, hostname)
+if arguments.fd:                     # File Daemon configuration stanzas
+    file_daemon_config(bacula, hostname)
+if arguments.sd:
+    storage_daemon_config(bacula, hostname)
+if arguments.bconsole:               # bconsole setup
+    bconsole_config(hostname_list)

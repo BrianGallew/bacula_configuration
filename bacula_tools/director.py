@@ -71,9 +71,9 @@ class Director(DbDict):
     def _cli_special_do_parse(self, args):
         '''Enable the CLI to set the Message to be used by this Director.'''
         if args.message_set == None: return
-        if args.message_set =='': return self._set(MESSAGES_ID, None)
+        if args.message_set =='': return self.set(MESSAGES_ID, None)
         target = Messages().search(args.message_set)
-        if target[ID]: self._set(MESSAGES_ID, target[ID])
+        if target[ID]: self.set(MESSAGES_ID, target[ID])
         else: print('Unable to find a match for %s, continuing' % args.message_set)
         return
 

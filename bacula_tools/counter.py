@@ -14,7 +14,7 @@ class Counter(DbDict):
         self.output = ['Counter {\n  Name = "%(name)s"' % self, '}']
         
         for key in self.SETUP_KEYS: self._simple_phrase(key)
-        if self[CATLOG_ID] != None:
+        if self[CATALOG_ID] != None:
             self.output.insert(-1, '  %s = "%s"' % (CATALOG.capitalize(), self._fk_reference(CATALOG_ID)[NAME]))
         if self[COUNTER_ID] != None:
             self.output.insert(-1, '  Wrap Counter = "%s"' % self._fk_reference(COUNTER_ID)[NAME])

@@ -82,9 +82,9 @@ class database_storage_tests(unittest.TestCase):
             #if 'DROP TABLE' in s: continue
             row = self.bc.do_sql(s)
         self.client = bacula_tools.Client()
-        self.client._set_name('Client')
+        self.client.set_name('Client')
         self.director = bacula_tools.Director()
-        self.director._set_name('Director')
+        self.director.set_name('Director')
         sys.stderr = foo
         return
 
@@ -142,11 +142,11 @@ class database_storage_tests(unittest.TestCase):
         return
 
     def test_default_jobs(self):
-        bacula_tools.Messages()._set_name('Standard')
-        bacula_tools.Pool()._set_name('Default')
-        bacula_tools.Storage()._set_name('File')
-        bacula_tools.Schedule()._set_name('Daily')
-        bacula_tools.Fileset()._set_name('FullUnix')
+        bacula_tools.Messages().set_name('Standard')
+        bacula_tools.Pool().set_name('Default')
+        bacula_tools.Storage().set_name('File')
+        bacula_tools.Schedule().set_name('Daily')
+        bacula_tools.Fileset().set_name('FullUnix')
         bacula_tools.default_jobs(self.client)
         self.assertEquals(len(self.bc.do_sql('select * from jobs')), 1)
         self.bc.do_sql('delete from jobs')
@@ -173,31 +173,31 @@ class database_storage_tests(unittest.TestCase):
         oldid = self.client[bacula_tools.ID]
         self.client.delete()
         self.client = bacula_tools.Client()
-        self.client._set_name('Client')
+        self.client.set_name('Client')
         newid = self.client[bacula_tools.ID]
         self.assertNotEquals(oldid, newid)
         return
 
     def test_dbdict_set_boolean(self):
         self.client[bacula_tools.PKIENCRYPTION] = 0
-        self.client._set(bacula_tools.PKIENCRYPTION, 'hi', boolean=True)
+        self.client.set(bacula_tools.PKIENCRYPTION, 'hi', boolean=True)
         self.assertEquals(self.client[bacula_tools.PKIENCRYPTION], 0)
-        self.client._set(bacula_tools.PKIENCRYPTION, '1', boolean=True)
+        self.client.set(bacula_tools.PKIENCRYPTION, '1', boolean=True)
         result = self.bc.do_sql('select pkiencryption from clients where id = %s', self.client[bacula_tools.ID])
         self.assertEquals(result[0][0], 1)
-        self.client._set(bacula_tools.PKIENCRYPTION, 'off', boolean=True)
+        self.client.set(bacula_tools.PKIENCRYPTION, 'off', boolean=True)
         result = self.bc.do_sql('select pkiencryption from clients where id = %s', self.client[bacula_tools.ID])
         self.assertEquals(result[0][0], 0)
-        self.client._set(bacula_tools.PKIENCRYPTION, 'yes', boolean=True)
+        self.client.set(bacula_tools.PKIENCRYPTION, 'yes', boolean=True)
         result = self.bc.do_sql('select pkiencryption from clients where id = %s', self.client[bacula_tools.ID])
         self.assertEquals(result[0][0], 1)
         return
 
     def test_dbdict_set_password(self):
-        self.director._set(bacula_tools.PASSWORD, 'fred')
+        self.director.set(bacula_tools.PASSWORD, 'fred')
         result = self.bc.do_sql('select password from directors where id = %s', self.director[bacula_tools.ID])
         self.assertEquals(result[0][0], 'fred')
-        self.director._set(bacula_tools.PASSWORD, bacula_tools.GENERATE)
+        self.director.set(bacula_tools.PASSWORD, bacula_tools.GENERATE)
         result = self.bc.do_sql('select password from directors where id = %s', self.director[bacula_tools.ID])
         self.assertNotEquals(result[0][0], bacula_tools.GENERATE)
         return

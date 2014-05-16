@@ -2,12 +2,14 @@
 '''Change or list the hosts using a given storage server.'''
 
 from __future__ import print_function
-import os, sys, bacula_tools
+import sys, bacula_tools
 
 def usage():
-    print('Usage: %s storageserver [client [client...]]' % sys.argv[0])
-    print('Given just a storageserver, list all of the clients using this storageserver.\n'
-          'If given one or more clients, switch them to this storageserver.')
+    '''Usage: %s storageserver [client [client...]]
+    Given just a storageserver, list all of the clients using this storageserver.
+
+    If given one or more clients, switch them to this storageserver.'''
+    print(usage.__doc__  % sys.argv[0])
     exit()
 
 # Actual program is here.

@@ -23,11 +23,13 @@ FROM Media m, Pool p
 WHERE m.VolStatus = 'Purged' AND m.PoolId = p.PoolId AND p.Name like %s
 '''
 
-parser = optparse.OptionParser(description='Truncate purged Bacula volumes to reclaim disk space.', usage='usage: %prog [options] hostname')
-parser.add_option('-c', '--config-file', 
-                   default='/etc/bacula/bacula-sd.conf', help='Enable debugging output')
+parser = optparse.OptionParser(
+    description='Truncate purged Bacula volumes to reclaim disk space.',
+    usage='usage: %prog [options] hostname')
+parser.add_option('-c', '--config-file',
+                  default='/etc/bacula/bacula-sd.conf', help='Enable debugging output')
 parser.add_option('-d', '--debug', action='store_true',
-                   default=False, help='Enable debugging output')
+                  default=False, help='Enable debugging output')
 (args, given_arg) = parser.parse_args()
 
 try: hostname = given_arg[0]
@@ -51,13 +53,12 @@ catalog_list = [bacula_tools.Catalog({bacula_tools.DIRECTOR_ID: d[bacula_tools.I
 
 # Step 4: get all of the archivedirs from the configuration file
 # Good grief this is ugly, but Bacula is just a little too liberal in what it accepts.
-ARCHIVE_RE = re.compile('''^\s*a\s*r\s*c\s*h\s*i\s*v\s*e\s*d\s*e\s*v\s*i\s*c\s*e\s*=\s*['"]?(.*?)['"]\s*$''', re.MULTILINE|re.IGNORECASE)
+archive_re = re.compile(r'''^\s*a\s*r\s*c\s*h\s*i\s*v\s*e\s*d\s*e\s*v\s*i\s*c\s*e\s*=\s*['"]?(.*?)['"]\s*$''', re.MULTILINE|re.IGNORECASE)
 
 # Step 5: list all of the files in the archivedirs and compare them to what's in the database
 sql = 'SELECT 1 from Media where VolumeName = %s and VolStatus = "Purged"'
-for directory in ARCHIVE_RE.search(open(args.config_file).read()).groups():
+for directory in archive_re.search(open(args.config_file).read()).groups():
     for filename in glob.glob(os.path.join(directory, '*')):
         shortname = os.path.basename(filename)
         for conn in catalog_list:
             if conn.do_sql(sql, shortname): open(filename, 'w').close()
-                

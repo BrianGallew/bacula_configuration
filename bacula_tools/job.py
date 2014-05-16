@@ -68,8 +68,8 @@ class Job(DbDict):
         obj = bacula_tools._DISPATCHER[key]()
         if string:
             obj.search(string.strip())
-            if not obj[ID]: obj._set_name(string.strip())
-            if not self[fk] == obj[ID]: self._set(fk, obj[ID])
+            if not obj[ID]: obj.set_name(string.strip())
+            if not self[fk] == obj[ID]: self.set(fk, obj[ID])
         else: obj.search(self[fk])
         return obj
 
@@ -156,9 +156,9 @@ class Job(DbDict):
     def _cli_deref_helper(self, key, value, obj):
         '''Shortcut function to make _cli_special_do_parse() a lot cleaner.'''
         if value == None: return
-        if value=='': return self._set(key, None)
+        if value=='': return self.set(key, None)
         target = obj().search(value)
-        if target[ID]: self._set(key, target[ID])
+        if target[ID]: self.set(key, target[ID])
         else: print('Unable to find a match for %s, continuing' % value)
         pass
 

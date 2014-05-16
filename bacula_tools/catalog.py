@@ -47,7 +47,7 @@ class Catalog(DbDict):
         if not d[ID]:
             print('\n***WARNING***: Unable to find a director using "%s".  Association not changed\n' % args.director)
             return
-        self._set(DIRECTOR_ID, d[ID])
+        self.set(DIRECTOR_ID, d[ID])
         return
 
     def _cli_special_print(self):

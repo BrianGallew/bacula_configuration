@@ -1,11 +1,20 @@
 #! /usr/local/bin/python
-# Dump statistics for all storage pools in all Catalogs.  Run it from a host with appropriate mysql connectivity.
+'''Dump statistics for all storage pools in all Catalogs.  Run it from a
+host with appropriate mysql connectivity.'''
+
 from __future__ import print_function
 import bacula_tools
 
 class FormattedResult(dict):
-    keylist = ['Full','Archive','Append','Recycle','Purged','Read-Only','Disabled','Error','Busy','Used','Cleaning']
+    '''Prints a nicely-formatted collection of statistics for a pool.
+    Instantiate once per pool, use the add method for each media volume in
+    the pool.
+
+    '''
+    keylist = ['Full', 'Archive', 'Append', 'Recycle', 'Purged', 'Read-Only',
+               'Disabled', 'Error', 'Busy', 'Used', 'Cleaning']
     def __init__(self, name):
+        '''Set up initial values.'''
         dict.__init__(self)
         self['NAME'] = name
         self.fmt = "{NAME:15} "
@@ -14,22 +23,28 @@ class FormattedResult(dict):
             self.fmt += '{%s:%s} ' % (key, len(key))
         self.updated = False
         return
-    def add(self, row):
+    def add(self, pair):
+        '''Add an item for this pool.  Call this with a (name, value) tuple.'''
         self.updated = True
-        self[row[0]] += row[1]
+        self[pair[0]] += pair[1]
     def print(self):
-        if not self.updated: return 
+        '''Print one row(pool), but only if we have some data.'''
+        if not self.updated: return
         return print(self.fmt.format(**self))
     @classmethod
-    def print_titles(kls):
-        return print(' '*15, ' '.join(kls.keylist))
+    def print_titles(cls):
+        '''Prints the keys as a title string '''
+        return print(' '*15, ' '.join(cls.keylist))
     def __add__(self, other):
+        '''Operator to allow (sub)totalling pools.
+        '''
         self.updated = True
         for key in self.keylist: self[key] += other[key]
         return self
-        
+
 pool_sql = 'SELECT PoolId, Name FROM Pool ORDER BY Name'
-media_sql = 'select VolStatus, count(MediaId) from Media where PoolId=%s group by VolStatus'
+media_sql = '''select VolStatus, count(MediaId) from Media
+                      where PoolId=%s group by VolStatus'''
 for catalog in bacula_tools.Catalog().Find():
     conn = catalog.connect()
     print('\n' + catalog[bacula_tools.NAME])

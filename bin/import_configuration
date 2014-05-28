@@ -1,7 +1,13 @@
 #! /usr/bin/env python
+'''Import an existing set of configuration files.  If you can collect all
+of the files into one place, you can import your entire configuration in a
+single go.
+'''
+
 from __future__ import print_function
 
 import sys
+# pylint: disable=no-name-in-module
 from bacula_tools import Director, Catalog, ID, DIRECTOR_ID, parser_support
 import curses, curses.wrapper, pprint
 
@@ -10,14 +16,18 @@ if len(sys.argv) < 2:
     print("Usage: %s configfile.conf [configfile2.conf...]" % sys.argv[0])
     exit()
 
-def screen_setup(screen):
-    pass
+# pylint: disable=too-few-public-methods
+class Writer(object):
+    '''Convenience class for displaying the results of parsing the
+    configuration files.
 
-class Writer():
+    '''
     def __init__(self, screen):
+        '''Constructor.  Needs a curses screen object.
+        '''
         self.screen = screen
-        (self.RESTY, self.RESTX) = screen.getmaxyx()
-        self.RESTX = self.RESTX - 5
+        (_, self.restx) = screen.getmaxyx()
+        self.restx = self.restx - 5
         self.rows = {}
         self.rows['empty'] = []
         curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
@@ -32,55 +42,68 @@ class Writer():
         return
 
     def __call__(self, msg):
-        (key, value) = msg.split(': ',1)
+        '''Write a message to the screen.
+
+        Since what we're displaying is a series of classes and the
+        success/failure of each one, we need to figure out how many we've
+        parsed, along with failures.  We also need to keep track of where
+        on the screen we're drawing a particular class.  Because we do all
+        of the book keeping in here, we're perfectly able to hande
+        completely random ordering of result.
+        '''
+        (key, value) = msg.split(': ', 1)
         row = self.rows.setdefault(key, [len(self.rows)+2, 0, 0, ''])
-        row[3] = value.replace('\n',' ')
+        row[3] = value.replace('\n', ' ')
         if 'Unable to handle' in value:
             row[2] += 1
             errorlog.append(value)
         else:
             row[1] += 1
-        self.screen.addstr(row[0], 3, '%s: %d/' % (key, row[1]), self.normal )
+        self.screen.addstr(row[0], 3, '%s: %d/' % (key, row[1]), self.normal)
         if row[2]: self.screen.addstr(str(row[2]), self.problem)
         else: self.screen.addstr('0', self.normal)
-        (y,x) = self.screen.getyx()
-        self.screen.addstr('  ' + row[3][:self.RESTX - x], self.normal)
-        (y,x) = self.screen.getyx()
-        self.screen.addstr(' ' * ((self.RESTX - x) - 2), self.normal)
+        (_, x) = self.screen.getyx()
+        self.screen.addstr('  ' + row[3][:self.restx - x], self.normal)
+        (_, x) = self.screen.getyx()
+        self.screen.addstr(' ' * ((self.restx - x) - 2), self.normal)
         self.screen.refresh()
         return
 
     def finish(self):
-        self.screen.addstr(0, 1, 'Finished processing, press any key to exit', self.good)
+        '''Print a completion message wait for a keypress.
+        '''
+        self.screen.addstr(0, 1,
+                           'Finished processing, press any key to exit',
+                           self.good)
         self.screen.getkey()
 
-w = None
+writer = None
 errorlog = []
-def display_all(stdscreen):
-    global w
-    screen_setup(stdscreen)
-    w = Writer(stdscreen)
-    for f in sys.argv[1:]:
-        try: stuff = parser_support.parser(open(f).read(), w)
+def main(stdscreen):
+    '''Main entry poing for the program.
+    '''
+    global writer
+    writer = Writer(stdscreen)
+    for argument in sys.argv[1:]:
+        try: stuff = parser_support.parser(open(argument).read(), writer)
         except: stuff = []
     director = None
-    for d in stuff:
-        if type(d) == Director:
-            director = d
+    for director_object in stuff:
+        if type(director_object) == Director:
+            director = director_object
             break
-    for d in stuff:
-        if type(d) == Catalog:
-            d.set(DIRECTOR_ID, director[ID])
-        
-    w.finish()
-    return 
+    for catalog_object in stuff:
+        if type(catalog_object) == Catalog:
+            catalog_object.set(DIRECTOR_ID, director[ID])
+    writer.finish()
+    return
 
 try:
-    curses.wrapper(display_all)
+    curses.wrapper(main)
 except:
-    pprint.pprint(w.rows)
+    pprint.pprint(writer.rows)
     raise
 
 if errorlog:
-    print( "Encountered these errors")
-    for e in errorlog: print(e)
+    print("Encountered these errors")
+    for err in errorlog: print(err)

@@ -16,11 +16,15 @@ It must be run as a user with sufficent permissions to access bconsole.conf.
 
 import sys, subprocess, logging, optparse, bacula_tools
 
+# pylint: disable=unused-argument
 def lame_progress_spinner(iterable, **kwargs):
     '''Add spinner output to consumption of iterator items.
 
     When you're printing stuff out with a long-running process, it's nice
-    to see that you're making progress.
+    to see that you're making progress.  The **kwargs argument is for
+    compatibility with the clint constructor, which will let you select the
+    spinner style.  It is ignored here.
+
     '''
     spinlist = ['|', '/', '-', '\\']
     index = 1
@@ -32,9 +36,10 @@ def lame_progress_spinner(iterable, **kwargs):
         index = (index + 1) % len(spinlist)
 
 try:
-    from clint.textui.progress import bar
-except:
-    bar = lame_progress_spinner
+    # pylint: disable=import-error
+    from clint.textui.progress import progress_bar
+except ImportError:
+    progress_bar = lame_progress_spinner
 
 class BConsole(subprocess.Popen):
     '''Wrapper around the bconsole command.  Will some day be refactored to use
@@ -49,7 +54,8 @@ class BConsole(subprocess.Popen):
         return
 
     def execute(self, cmd):
-        '''Dispatch commands to bconsole and return the result.  Poor man's expect.'''
+        '''Dispatch commands to bconsole and return the result.
+        Poor man's expect.'''
         retval = []
         logging.info('executing cmd: "%s"', cmd)
         self.stdin.write(cmd+'\n.\n' + self.prompt)
@@ -96,18 +102,22 @@ def prune_commands(medialist):
     retval = []
     if medialist:
         for volume in medialist:
-            if volume[3] in ('Purged', 'Archive', 'Recycle', 'Disabled', 'Busy', 'Cleaning'):
+            if volume[3] in ('Purged', 'Archive', 'Recycle',
+                             'Disabled', 'Busy', 'Cleaning'):
                 continue
             retval.append('prune volume=%s yes' % volume[2])
     return retval
 
 def clean(pool_filter=None):
-    '''Iterate through all pools that match the given filter, pruning all the media in each one.'''
-    bc = BConsole()
-    pools = bc.get_pools()
+    '''Iterate through all pools that match the given filter, pruning all the
+    media in each one.
+
+    '''
+    bconsole = BConsole()
+    pools = bconsole.get_pools()
     commands = []
-    for p in pools:
-        poolname = p[2]
+    for pool in pools:
+        poolname = pool[2]
         if pool_filter:
             # This checks to see if True is returned for any 'x in poolname'
             acceptable = True in [x in poolname for x in pool_filter]
@@ -116,15 +126,16 @@ def clean(pool_filter=None):
         if not acceptable:
             continue
         print "searching through %20s" % poolname,
-        media = bc.get_media(poolname)
+        media = bconsole.get_media(poolname)
         sys.stdout.flush()
         commands.append((poolname, prune_commands(media)))
         print " found %d(%d) records" % (len(commands[-1][-1]), len(media))
 
     # Actually do the pruning here
     for poolname, pool in commands:
-        for cmd in bar(pool, label="  cleaning the %s pool " % poolname):
-            bc.execute(cmd)
+        for cmd in progress_bar(pool,
+                                label="  cleaning the %s pool " % poolname):
+            bconsole.execute(cmd)
     return
 
 def main():

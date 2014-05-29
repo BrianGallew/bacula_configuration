@@ -149,7 +149,8 @@ def director_config(bc_object, myname):
                              bacula_tools.Pool, config_file)
     # Consoles
     bc_object.query_id_thing('SELECT id FROM consoles ORDER BY name',
-                             bacula_tools.Console, config_file)
+                             bacula_tools.Console, config_file,
+                             director_id=director_object[bacula_tools.ID])
     # Counters
     bc_object.query_id_thing('SELECT id FROM counters ORDER BY name',
                              bacula_tools.Counter, config_file)

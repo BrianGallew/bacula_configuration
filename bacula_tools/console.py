@@ -25,6 +25,10 @@ class Console(DbDict):
         for key in self.SETUP_KEYS:
             if key in [DIRPORT, ADDRESS]: continue
             self._simple_phrase(key)
+        if getattr(self,DIRECTOR_ID, None):
+            c = bacula_tools.Director().search(self.director_id)
+            a = PasswordStore(c, self)
+            self.output.insert(-1,'  Password = "%s"' % a.password)
         return '\n'.join(self.output)
 
     def fd(self):

@@ -15,7 +15,7 @@ class Console(DbDict):
     really quite stupid.
 
     '''
-    SETUP_KEYS = [PASSWORD, CATALOGACL, CLIENTACL, COMMANDACL, FILESETACL, JOBACL,
+    SETUP_KEYS = [CATALOGACL, CLIENTACL, COMMANDACL, FILESETACL, JOBACL,
                   POOLACL, SCHEDULEACL, STORAGEACL, WHEREACL, DIRPORT, ADDRESS]
     table = CONSOLES
     IDTAG = 4
@@ -44,7 +44,10 @@ class Console(DbDict):
         self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
         self._simple_phrase(DIRPORT)
         self._simple_phrase(ADDRESS)
-        self._simple_phrase(PASSWORD)
+        if getattr(self,DIRECTOR_ID, None):
+            c = bacula_tools.Director().search(self.director_id)
+            a = PasswordStore(c, self)
+            self.output.insert(-1,'  Password = "%s"' % a.password)
         return '\n'.join(self.output)
 
 

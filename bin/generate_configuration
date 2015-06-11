@@ -250,7 +250,11 @@ def bconsole_config(name_list):
         director_object = bacula_tools.Director().search(myname.strip())
         if not director_object[bacula_tools.ID]:
             director_object = bacula_tools.Console().search(myname.strip())
-        configuration_file.write(director_object.bconsole(), '\n')
+            for related_director in bacula_tools.PasswordStore.Find(director_object, director_type=True):
+                director_object.director_id = related_director
+                configuration_file.write(director_object.bconsole(), '\n')
+        else:
+            configuration_file.write(director_object.bconsole(), '\n')
     configuration_file.close()
     return
 

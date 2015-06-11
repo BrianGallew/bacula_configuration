@@ -86,7 +86,6 @@ CREATE TABLE `consoles`
  (
   `id` int(11) NOT NULL auto_increment,
   `name` varchar(255) NOT NULL,
-  `password` varchar(255),
   `catalogacl` varchar(4096),	
   `clientacl` varchar(4096),
   `commandacl` varchar(4096),

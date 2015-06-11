@@ -1,27 +1,34 @@
 #! /usr/bin/env python
 
 from __future__ import print_function
-import os, sys, pprint, bacula_tools, pkg_resources
+import os
+import sys
+import pprint
+import bacula_tools
+import pkg_resources
 bacula_tools.set_debug()
 # This will only work against an installed package.  Sorry.
-sql = pkg_resources.resource_string('bacula_tools','data/bacula_configuration.schema').split(';')
+sql = pkg_resources.resource_string(
+    'bacula_tools', 'data/bacula_configuration.schema').split(';')
 
 # First, (re-)create the schema
 try:
-    bc = bacula_tools.Bacula_Factory() # get a hand for doing SQL
+    bc = bacula_tools.Bacula_Factory()  # get a hand for doing SQL
     for s in sql:
         s = s.strip()
-        if not s: continue
+        if not s:
+            continue
         row = bc.do_sql(s)
 except Exception as e:
     print('''Unable to rebuild the configuration database.  Please ensure the schema''',
           '''and credentials all exist and are accessible in one of the following locations.''',
-          sep = '\n')
+          sep='\n')
     for location in bacula_tools.CUSTOM_LIST:
-        print('\t',location)
+        print('\t', location)
     exit()
 
-# Next, let's create a bunch of objects modelled after the default installation.
+# Next, let's create a bunch of objects modelled after the default
+# installation.
 
 obj = bacula_tools.Fileset()
 obj.set_name('Full Set')
@@ -173,9 +180,12 @@ obj.set_name('DefaultJob')
 obj[bacula_tools.TYPE] = 'Backup'
 obj[bacula_tools.LEVEL] = 'Full'
 obj[bacula_tools.CLIENT_ID] = cl[bacula_tools.ID]
-obj[bacula_tools.FILESET_ID] = bacula_tools.Fileset().search('Full Set')[bacula_tools.ID]
-obj[bacula_tools.SCHEDULE_ID] = bacula_tools.Schedule().search('WeeklyCycle')[bacula_tools.ID]
-obj[bacula_tools.STORAGE_ID] = bacula_tools.Storage().search('File')[bacula_tools.ID]
+obj[bacula_tools.FILESET_ID] = bacula_tools.Fileset().search(
+    'Full Set')[bacula_tools.ID]
+obj[bacula_tools.SCHEDULE_ID] = bacula_tools.Schedule().search(
+    'WeeklyCycle')[bacula_tools.ID]
+obj[bacula_tools.STORAGE_ID] = bacula_tools.Storage().search(
+    'File')[bacula_tools.ID]
 obj[bacula_tools.MESSAGES_ID] = ms[bacula_tools.ID]
 obj[bacula_tools.POOL_ID] = bacula_tools.Pool().search('File')[bacula_tools.ID]
 obj[bacula_tools.PRIORITY] = 10
@@ -184,15 +194,18 @@ obj._save()
 
 obj = bacula_tools.Job()
 obj.set_name('BackupClient1')
-obj[bacula_tools.JOB_ID] = bacula_tools.Job().search('DefaultJob')[bacula_tools.ID]
+obj[bacula_tools.JOB_ID] = bacula_tools.Job().search(
+    'DefaultJob')[bacula_tools.ID]
 obj._save()
 
 obj = bacula_tools.Job()
 obj.set_name('RestoreFiles')
 obj[bacula_tools.TYPE] = 'Restore'
 obj[bacula_tools.CLIENT_ID] = cl[bacula_tools.ID]
-obj[bacula_tools.FILESET_ID] = bacula_tools.Fileset().search('Full Set')[bacula_tools.ID]
-obj[bacula_tools.STORAGE_ID] = bacula_tools.Storage().search('File')[bacula_tools.ID]
+obj[bacula_tools.FILESET_ID] = bacula_tools.Fileset().search(
+    'Full Set')[bacula_tools.ID]
+obj[bacula_tools.STORAGE_ID] = bacula_tools.Storage().search(
+    'File')[bacula_tools.ID]
 obj[bacula_tools.MESSAGES_ID] = ms[bacula_tools.ID]
 obj[bacula_tools.POOL_ID] = bacula_tools.Pool().search('File')[bacula_tools.ID]
 obj[bacula_tools.WHERE] = '/tmp/bacula-restores'
@@ -215,12 +228,14 @@ ascr._save()
 
 obj = bacula_tools.Job()
 obj.set_name('BackupCatalog')
-obj[bacula_tools.JOB_ID] = bacula_tools.Job().search('DefaultJob')[bacula_tools.ID]
+obj[bacula_tools.JOB_ID] = bacula_tools.Job().search(
+    'DefaultJob')[bacula_tools.ID]
 obj[bacula_tools.LEVEL] = 'Full'
-obj[bacula_tools.FILESET_ID] = bacula_tools.Fileset().search('Catalog')[bacula_tools.ID]
-obj[bacula_tools.SCHEDULE_ID] = bacula_tools.Schedule().search('WeeklyCycleAfterBackup')[bacula_tools.ID]
+obj[bacula_tools.FILESET_ID] = bacula_tools.Fileset().search(
+    'Catalog')[bacula_tools.ID]
+obj[bacula_tools.SCHEDULE_ID] = bacula_tools.Schedule().search(
+    'WeeklyCycleAfterBackup')[bacula_tools.ID]
 obj[bacula_tools.PRIORITY] = 11
 obj._add_script(bscr)
 obj._add_script(ascr)
 obj._save()
-

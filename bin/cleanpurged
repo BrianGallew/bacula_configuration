@@ -15,7 +15,12 @@ change *might* lift that restriction.
 
 '''
 from __future__ import print_function
-import bacula_tools, os, optparse, logging, re, glob
+import bacula_tools
+import os
+import optparse
+import logging
+import re
+import glob
 
 media_query = '''
 SELECT m.VolumeName AS VolumeName
@@ -32,33 +37,42 @@ parser.add_option('-d', '--debug', action='store_true',
                   default=False, help='Enable debugging output')
 (args, given_arg) = parser.parse_args()
 
-try: hostname = given_arg[0]
+try:
+    hostname = given_arg[0]
 except:
     parser.print_help()
     exit(-1)
 
-if args.debug: bacula_tools.set_debug()
-else: logging.basicConfig(level=logging.WARNING)
+if args.debug:
+    bacula_tools.set_debug()
+else:
+    logging.basicConfig(level=logging.WARNING)
 
 # Step 1: identify myself.
 myself = bacula_tools.Storage.Find(name=hostname)[0]
 
 # Step 2: discover my director(s)
-director_list = [bacula_tools.Director().search(x.where_arguments[2]) for x in bacula_tools.PasswordStore.Find(myself) if x.where_arguments[3] == bacula_tools.Director.IDTAG]
+director_list = [bacula_tools.Director().search(x.where_arguments[2]) for x in bacula_tools.PasswordStore.Find(
+    myself) if x.where_arguments[3] == bacula_tools.Director.IDTAG]
 
 # Step 3: Get the catalog (finally!)  At some point in the future we may
 # find it desirable to deduplicate this list, though multiple-catalogs may
 # well be a very rare thing.
-catalog_list = [bacula_tools.Catalog({bacula_tools.DIRECTOR_ID: d[bacula_tools.ID]}).search().connect() for d in director_list]
+catalog_list = [bacula_tools.Catalog(
+    {bacula_tools.DIRECTOR_ID: d[bacula_tools.ID]}).search().connect() for d in director_list]
 
 # Step 4: get all of the archivedirs from the configuration file
-# Good grief this is ugly, but Bacula is just a little too liberal in what it accepts.
-archive_re = re.compile(r'''^\s*a\s*r\s*c\s*h\s*i\s*v\s*e\s*d\s*e\s*v\s*i\s*c\s*e\s*=\s*['"]?(.*?)['"]\s*$''', re.MULTILINE|re.IGNORECASE)
+# Good grief this is ugly, but Bacula is just a little too liberal in what
+# it accepts.
+archive_re = re.compile(
+    r'''^\s*a\s*r\s*c\s*h\s*i\s*v\s*e\s*d\s*e\s*v\s*i\s*c\s*e\s*=\s*['"]?(.*?)['"]\s*$''', re.MULTILINE | re.IGNORECASE)
 
-# Step 5: list all of the files in the archivedirs and compare them to what's in the database
+# Step 5: list all of the files in the archivedirs and compare them to
+# what's in the database
 sql = 'SELECT 1 from Media where VolumeName = %s and VolStatus = "Purged"'
 for directory in archive_re.search(open(args.config_file).read()).groups():
     for filename in glob.glob(os.path.join(directory, '*')):
         shortname = os.path.basename(filename)
         for conn in catalog_list:
-            if conn.do_sql(sql, shortname): open(filename, 'w').close()
+            if conn.do_sql(sql, shortname):
+                open(filename, 'w').close()

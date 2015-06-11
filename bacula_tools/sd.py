@@ -1,22 +1,30 @@
-try: from . import *
-except: from bacula_tools import * #pragma: no cover
+try:
+    from . import *
+except:
+    from bacula_tools import *  # pragma: no cover
+
 
 class SDaemon(BSock):
+
     '''Client for communicating directly with a storage daemon.
     '''
+
     def __init__(self, address, password, myname, port=BACULA_SD_PORT, timeout=5):
         BSock.__init__(self, address, password, 'Director ' + myname,
-                                             port, timeout)
+                       port, timeout)
         return
 
     def version(self):
         '''Query the SD for its version.'''
         for line in self.status().split('\n'):
-            if 'Version' in line: return line
+            if 'Version' in line:
+                return line
         return 'Unable to determine version'
 
     def sd_key(self, jobid=0, job=None, sdid=0, sdtime=0, authorization='dummy'):
         '''You need an SD key before you can actually do anything with an FD/SD'''
-        if not job: job='-Console-.' + self._time()
-        self.send('JobId=%(jobid)d Job=%(job)s SDid=%(sdid)d SDtime=%(sdtime)d Authorization=%(authorization)s' % locals())
+        if not job:
+            job = '-Console-.' + self._time()
+        self.send(
+            'JobId=%(jobid)d Job=%(job)s SDid=%(sdid)d SDtime=%(sdtime)d Authorization=%(authorization)s' % locals())
         return self.recv()

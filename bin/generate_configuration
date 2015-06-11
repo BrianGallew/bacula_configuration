@@ -3,8 +3,11 @@
 
 from __future__ import print_function
 
-import os, optparse, logging
+import os
+import optparse
+import logging
 import bacula_tools
+
 
 def reload_director(target_director):
     '''use bconsole to reload the config'''
@@ -14,6 +17,7 @@ def reload_director(target_director):
     handle.recv_all()
     handle.send('status dir days=')
     handle.recv_all()
+
 
 def reload_storage():
     '''Restart bacula-sd with appropriate precautions.  Relies on at(1).'''
@@ -31,10 +35,13 @@ fi
 service bacula-sd restart
 /bin/rm %(atjob)s
 ''' % locals())
-    if resubmit: os.system("at -f %(atjob)s now + 1 minute" % locals())
+    if resubmit:
+        os.system("at -f %(atjob)s now + 1 minute" % locals())
     return
 
 # pylint: disable=too-many-arguments
+
+
 def query_id_thing(self, sql, obj, output, fun=None, args=(), **kwargs):
     '''Query the database for information to use in constructing various
     objects, returning either the string representation or else the result
@@ -58,6 +65,7 @@ def query_id_thing(self, sql, obj, output, fun=None, args=(), **kwargs):
     return
 # This line is here because I think it'll be more obvious that way.
 bacula_tools.Bacula_Config.query_id_thing = query_id_thing
+
 
 def parse_command_line_arguments():
     '''Parser configuration and sanity checking.'''
@@ -103,9 +111,12 @@ def parse_command_line_arguments():
         parser.print_help()
         exit()
 
-    if args.debug: bacula_tools.set_debug()
-    else: logging.basicConfig(level=logging.WARNING)
+    if args.debug:
+        bacula_tools.set_debug()
+    else:
+        logging.basicConfig(level=logging.WARNING)
     return args, given_arg
+
 
 def director_config(bc_object, myname):
     '''Write the director configuration out to a file.
@@ -154,8 +165,10 @@ def director_config(bc_object, myname):
     # Counters
     bc_object.query_id_thing('SELECT id FROM counters ORDER BY name',
                              bacula_tools.Counter, config_file)
-    if config_file.close(): reload_director(director_object)
+    if config_file.close():
+        reload_director(director_object)
     return
+
 
 def file_daemon_config(bc_object, myname):
     '''Write the file daemon configuration out to the file.
@@ -193,8 +206,10 @@ def file_daemon_config(bc_object, myname):
                              args=(client_object[bacula_tools.ID],
                                    client_object.IDTAG))
 
-    if config_file.close(): pass
+    if config_file.close():
+        pass
     return
+
 
 def storage_daemon_config(bc_object, myname):
     '''Write the file daemon configuration out to the file.
@@ -239,8 +254,10 @@ def storage_daemon_config(bc_object, myname):
                              args=(storage_daemon[bacula_tools.ID],
                                    storage_daemon.IDTAG))
 
-    if configuration_file.close(): pass
+    if configuration_file.close():
+        pass
     return
+
 
 def bconsole_config(name_list):
     '''Write the bconsole configuration out to the file.
@@ -258,7 +275,7 @@ def bconsole_config(name_list):
     configuration_file.close()
     return
 
-bacula = bacula_tools.Bacula_Factory() # Instantiate our DB connection thingy
+bacula = bacula_tools.Bacula_Factory()  # Instantiate our DB connection thingy
 
 arguments, hostname_list = parse_command_line_arguments()
 hostname = hostname_list[0].strip()

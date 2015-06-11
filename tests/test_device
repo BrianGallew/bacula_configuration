@@ -1,11 +1,13 @@
 #! /usr/bin/env python
 
-import os, sys, pprint
+import os
+import sys
+import pprint
 sys.path.insert(0, '..')
 sys.path.insert(0, '.')
 import bacula_tools
 from pyparsing import ParserElement
-#ParserElement.enablePackrat()
+# ParserElement.enablePackrat()
 
 test_cases = ['''  Name = FileStorage
 ''',
@@ -25,8 +27,8 @@ test_cases = ['''  Name = FileStorage
   RemovableMedia = no
 ''',
 
-              
-]
+
+              ]
 for string in test_cases:
     c = bacula_tools.Device()
     c.parse_string(string)

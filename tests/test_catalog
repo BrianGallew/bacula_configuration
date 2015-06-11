@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 
-import os, sys, pprint
+import os
+import sys
+import pprint
 sys.path.insert(0, '..')
 sys.path.insert(0, '.')
 import bacula_tools
@@ -17,7 +19,7 @@ test_cases = [
  dbuser = "bacula"
  dbpassword = ""
 '''
-    ]
+]
 
 # hopefully we have a director already!
 d = bacula_tools.Director().search(id=1)

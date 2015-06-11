@@ -14,9 +14,15 @@ It must be run as a user with sufficent permissions to access bconsole.conf.
 
 '''
 
-import sys, subprocess, logging, optparse, bacula_tools
+import sys
+import subprocess
+import logging
+import optparse
+import bacula_tools
 
 # pylint: disable=unused-argument
+
+
 def lame_progress_spinner(iterable, **kwargs):
     '''Add spinner output to consumption of iterator items.
 
@@ -41,11 +47,14 @@ try:
 except ImportError:
     progress_bar = lame_progress_spinner
 
+
 class BConsole(subprocess.Popen):
+
     '''Wrapper around the bconsole command.  Will some day be refactored to use
     the bacula_tools class.
     '''
     prompt = '@# bconsole prompt\n'
+
     def __init__(self):
         '''Constructor.'''
         subprocess.Popen.__init__(self, 'bconsole', universal_newlines=True,
@@ -58,7 +67,7 @@ class BConsole(subprocess.Popen):
         Poor man's expect.'''
         retval = []
         logging.info('executing cmd: "%s"', cmd)
-        self.stdin.write(cmd+'\n.\n' + self.prompt)
+        self.stdin.write(cmd + '\n.\n' + self.prompt)
         while True:
             line = self.stdout.readline()
             logging.debug('got line: "%s"', line)
@@ -108,6 +117,7 @@ def prune_commands(medialist):
             retval.append('prune volume=%s yes' % volume[2])
     return retval
 
+
 def clean(pool_filter=None):
     '''Iterate through all pools that match the given filter, pruning all the
     media in each one.
@@ -122,7 +132,7 @@ def clean(pool_filter=None):
             # This checks to see if True is returned for any 'x in poolname'
             acceptable = True in [x in poolname for x in pool_filter]
         else:
-            acceptable = True # Not trying to filter at all
+            acceptable = True  # Not trying to filter at all
         if not acceptable:
             continue
         print "searching through %20s" % poolname,
@@ -137,6 +147,7 @@ def clean(pool_filter=None):
                                 label="  cleaning the %s pool " % poolname):
             bconsole.execute(cmd)
     return
+
 
 def main():
     '''Main entry point.'''

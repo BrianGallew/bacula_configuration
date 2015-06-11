@@ -1,9 +1,12 @@
 #! /usr/bin/env python
 
 from __future__ import print_function
-try: from . import *
-except: from bacula_tools import * #pragma: no cover
+try:
+    from . import *
+except:
+    from bacula_tools import *  # pragma: no cover
 import logging
+
 
 class Device(DbDict):
     SETUP_KEYS = [
@@ -13,14 +16,14 @@ class Device(DbDict):
         MINIMUMBLOCKSIZE, MAXIMUMBLOCKSIZE, MAXIMUMVOLUMESIZE, MAXIMUMFILESIZE,
         MAXIMUMNETWORKBUFFERSIZE, MAXIMUMSPOOLSIZE, MAXIMUMJOBSPOOLSIZE, SPOOLDIRECTORY,
         MAXIMUMPARTSIZE, CLIENTCONNECTWAIT,
-        ]
+    ]
     BOOL_KEYS = [
         AUTOSELECT, REMOVABLEMEDIA, BLOCKCHECKSUM, HARDWAREENDOFMEDIUM,
         FASTFORWARDSPACEFILE, USEMTIOCGET, AUTOMATICMOUNT,
         BACKWARDSPACERECORD, BACKWARDSPACEFILE, FORWARDSPACERECORD,
         FORWARDSPACEFILE, BLOCKPOSITIONING, AUTOCHANGER, ALWAYSOPEN, CLOSEONPOLL,
         RANDOMACCESS, BSFATEOM, TWOEOF, OFFLINEONUNMOUNT, LABELMEDIA,
-        ]
+    ]
     table = DEVICE
     _insert = 'INSERT INTO device_link (device_id, storage_id) values (%s, %s)'
     _delete = 'DELETE FROM device_link where device_id = %s and storage_id = %s'
@@ -31,10 +34,12 @@ class Device(DbDict):
         configuration file.
 
         '''
-        self.output = ['Device {\n  Name = "%(name)s"' % self,'}']
-        
-        for key in self.SETUP_KEYS: self._simple_phrase(key)
-        for key in self.BOOL_KEYS: self._yesno_phrase(key)
+        self.output = ['Device {\n  Name = "%(name)s"' % self, '}']
+
+        for key in self.SETUP_KEYS:
+            self._simple_phrase(key)
+        for key in self.BOOL_KEYS:
+            self._yesno_phrase(key)
 
         return '\n'.join(self.output)
 
@@ -47,7 +52,9 @@ class Device(DbDict):
         try:
             self.bc.do_sql(self._insert, (self[ID], obj[ID]))
         except Exception as e:
-            if e.args[0] == 1062: pass # 1062 is what happens when you try to insert a duplicate row
+            if e.args[0] == 1062:
+                # 1062 is what happens when you try to insert a duplicate row
+                pass
             else:
                 print(e)
                 raise
@@ -70,17 +77,21 @@ class Device(DbDict):
         '''Handle any attempts by the CLI to (un)link the Device to/from Storage'''
         if args.add_link:
             s = bacula_tools.Storage().search(args.add_link)
-            if not s[ID]: s.search(args.add_link)
             if not s[ID]:
-                print('\n***WARNING***: Unable to find a Storage Daemon identified by "%s".  Not linked.\n' % args.add_link)
+                s.search(args.add_link)
+            if not s[ID]:
+                print(
+                    '\n***WARNING***: Unable to find a Storage Daemon identified by "%s".  Not linked.\n' % args.add_link)
                 return
             self.link(s)
 
         if args.remove_link:
             s = bacula_tools.Storage().search(args.remove_link)
-            if not s[ID]: s.search(args.remove_link)
             if not s[ID]:
-                print('\n***WARNING***: Unable to find a Storage Daemon identified by "%s".  Not unlinked.\n' % args.remove_link)
+                s.search(args.remove_link)
+            if not s[ID]:
+                print(
+                    '\n***WARNING***: Unable to find a Storage Daemon identified by "%s".  Not unlinked.\n' % args.remove_link)
                 return
             self.unlink(s)
 
@@ -90,18 +101,22 @@ class Device(DbDict):
         '''Print any linked Storage'''
         for row in self.bc.do_sql(self._select, self[ID]):
             s = bacula_tools.Storage().search(row[0])
-            print(('%'+ str(self._maxlen) + 's: %s') % ('Storage Daemon', s[NAME]))
+            print(('%' + str(self._maxlen) + 's: %s') %
+                  ('Storage Daemon', s[NAME]))
         return
 
     def _cli_special_clone(self, oid):
         '''Any clones of this device will be linked to the same Storage.'''
-        for row in self.bc.do_sql(self._select, oid): self.bc.do_sql(self._insert, (self[ID], row[0]))
+        for row in self.bc.do_sql(self._select, oid):
+            self.bc.do_sql(self._insert, (self[ID], row[0]))
         return
 
         # }}}
+
 
 def main():
     s = Device()
     s.cli()
 
-if __name__ == "__main__": main()
+if __name__ == "__main__":
+    main()

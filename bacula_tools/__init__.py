@@ -2,7 +2,10 @@
 Configuration is at the *end* of this file.'''
 
 from __future__ import print_function
-import re, sys, os, logging
+import re
+import sys
+import os
+import logging
 
 logging.basicConfig(level=logging.WARNING)
 
@@ -71,12 +74,13 @@ _INTERNED = [
     'randomaccess', 'blockchecksum', 'hardwareendofmedium', 'fastforwardspacefile', 'usemtiocget',
     'bsfateom', 'twoeof', 'backwardspacerecord', 'backwardspacefile', 'forwardspacerecord',
     'forwardspacefile', 'offlineonunmount', 'blockpositioning', 'labelmedia', 'automaticmount',
-    'clientconnectwait','fd','sd', 'bconsole', 'dirport', 'generate',
+    'clientconnectwait', 'fd', 'sd', 'bconsole', 'dirport', 'generate',
 
     'minimum', 'maximum', 'counter_id', 'counters', 'counter'
-    ]
+]
 
-for w in _INTERNED: locals()[w.upper()] = w
+for w in _INTERNED:
+    locals()[w.upper()] = w
 
 STATUS = [FULL, USED, APPEND, CLEANING, ERROR, PURGED, RECYCLE, AVAILABLE]
 TRUE_VALUES = ['1', 'yes', 'y', 'on', 'true', 't']
@@ -87,8 +91,9 @@ WORKING_DIR = {
     'OSX': "/var/db/bacula",
     'FreeBSD': "/var/db/bacula",
     'Windows': "/bacula/working",
-    }
-    
+}
+
+
 def set_debug():
     logging.root.setLevel(logging.DEBUG)
     logging.debug('debugging enabled')
@@ -107,7 +112,7 @@ guessing_rules = [
     (HOSTNAME, re.compile('.*origin.*'), 'XferLogs', 'FtpHosts'),
     (HOSTNAME, re.compile(r'.*\.ocs\..*'), 'SetOnHostGZIP', 'Weekly'),
     (OS, re.compile(r'Windows'), 'WinFullGZIP', 'Weekly'),
-    ]
+]
 default_rules = [('Daily', 'FullUnixGZIP')]
 
 # Where we keep
@@ -119,11 +124,12 @@ BACULADATADIR = '/data/bacula'
 CUSTOM_LIST = ['/etc/bacula/bacula.conf',
                '/usr/local/etc/bacula/bacula.conf',
                '/usr/local/etc/bacula.conf',
-               os.path.join(os.environ.get('HOME','/'), '.bacula.conf')
+               os.path.join(os.environ.get('HOME', '/'), '.bacula.conf')
                ]
 for filename in CUSTOM_LIST:
-    if not os.access(filename, os.R_OK): continue
-    exec( open(filename).read(), locals(), locals())
+    if not os.access(filename, os.R_OK):
+        continue
+    exec(open(filename).read(), locals(), locals())
 
 from bacula_config import *
 from util import *
@@ -166,4 +172,4 @@ _DISPATCHER = {
     JOBDEFS: JobDef,
     DEVICE: Device,
     COUNTER: Counter,
-    }
+}

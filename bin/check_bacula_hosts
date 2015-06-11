@@ -14,7 +14,8 @@ SELECT obj_id, obj_type, director_id, director_type
   ORDER BY obj_type, director_type
 '''
 for row in bacula_config_object.do_sql(select_query):
-    if prevent_duplicates.has_key((row[0], row[1])): continue
+    if prevent_duplicates.has_key((row[0], row[1])):
+        continue
     prevent_duplicates[(row[0], row[1])] = True
     if row[1] == bacula_tools.Client.IDTAG:
         obj = bacula_tools.Client().search(row[0])
@@ -27,8 +28,10 @@ for row in bacula_config_object.do_sql(select_query):
 
     # Make sure there's a Director already allocated.
     if not dirlist.has_key((row[2], row[3])):
-        if row[3] == bacula_tools.Director.IDTAG: klass = bacula_tools.Director
-        elif row[3] == bacula_tools.Console.IDTAG: klass = bacula_tools.Console
+        if row[3] == bacula_tools.Director.IDTAG:
+            klass = bacula_tools.Director
+        elif row[3] == bacula_tools.Console.IDTAG:
+            klass = bacula_tools.Console
         else:
             print('Unhandled director type:', row[1])
             continue
@@ -37,11 +40,13 @@ for row in bacula_config_object.do_sql(select_query):
     current_director = dirlist[(row[2], row[3])]
     password = bacula_tools.PasswordStore(obj, current_director)
     try:
-        connection = comm(obj[bacula_tools.ADDRESS], password.password, current_director[bacula_tools.NAME])
+        connection = comm(
+            obj[bacula_tools.ADDRESS], password.password, current_director[bacula_tools.NAME])
         connection.auth()
         print(connection.version())
     except:
-        print('%s: connection refused (firewall or dead)' % obj[bacula_tools.NAME])
+        print('%s: connection refused (firewall or dead)' %
+              obj[bacula_tools.NAME])
 
 for row in bacula_config_object.do_sql('SELECT id from %s order by id ASC' % bacula_tools.Director.table):
     obj = bacula_tools.Director().search(row[0])
@@ -50,6 +55,7 @@ for row in bacula_config_object.do_sql('SELECT id from %s order by id ASC' % bac
         connection.auth()
         print(connection.version())
     except:
-        print('%s: connection refused (firewall or dead)' % obj[bacula_tools.NAME])
+        print('%s: connection refused (firewall or dead)' %
+              obj[bacula_tools.NAME])
 
 exit()

@@ -17,7 +17,11 @@ only by your web server user, and ensure that PYTHON_EGG_CACHE points there.
 '''
 from __future__ import print_function
 
-import cgi, socket, os, sys, re
+import cgi
+import socket
+import os
+import sys
+import re
 os.environ.setdefault('PYTHON_EGG_CACHE', '/tmp')
 
 # Only keep these two lines while doing development
@@ -25,6 +29,7 @@ import cgitb
 cgitb.enable(display=2, logdir="/tmp")
 
 import bacula_tools
+
 
 def fix_hostname(hostname):
     '''Check for getting an IP address and, if so, turn it into a hostname'''
@@ -34,12 +39,14 @@ def fix_hostname(hostname):
             hostname = result[0]
     return hostname
 
+
 def do_bconsole_config(bacula_config_object):
     '''Print out the bconsole configuration(s)'''
     for director_name in bacula_config_object.do_sql('SELECT name FROM %s' % bacula_tools.Director.table):
         this_director = bacula_tools.Director().search(director_name)
         print(this_director.bconsole())
     return
+
 
 def main():
     '''Main entry point.'''
@@ -56,8 +63,10 @@ def main():
     if 'bconsole' in os.environ.get('PATH_INFO', ''):
         do_bconsole_config(bacula_config_object)
     else:
-        guest = fix_hostname(query_variables.getvalue('hostname', os.environ.get('REMOTE_HOST', os.environ.get('REMOTE_ADDR', 'localhost.localdomain'))))
-        client = bacula_tools.Client({bacula_tools.NAME: bacula_tools.hostname_mangler(guest)}).search()
+        guest = fix_hostname(query_variables.getvalue('hostname', os.environ.get(
+            'REMOTE_HOST', os.environ.get('REMOTE_ADDR', 'localhost.localdomain'))))
+        client = bacula_tools.Client(
+            {bacula_tools.NAME: bacula_tools.hostname_mangler(guest)}).search()
         if not client[bacula_tools.ID]:
             client.set(bacula_tools.ADDRESS, guest)
             dname = query_variables.getvalue('director', '')
@@ -65,7 +74,8 @@ def main():
             bacula_tools.default_director(client, dname)
         print(client.fd())
         for director_id in bacula_config_object.do_sql('SELECT director_id FROM pwords where obj_id = %s and obj_type = %s ORDER BY director_id', (client[bacula_tools.ID], client.IDTAG)):
-            print(bacula_tools.Director(client_id=client[bacula_tools.ID]).search(director_id).fd())
+            print(bacula_tools.Director(
+                client_id=client[bacula_tools.ID]).search(director_id).fd())
 
         for messages_id in bacula_config_object.do_sql('SELECT messages_id FROM messages_link WHERE ref_id = %s AND link_type = %s', (client[bacula_tools.ID], client.IDTAG)):
             print(bacula_tools.Messages().search(messages_id))

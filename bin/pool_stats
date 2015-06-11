@@ -5,7 +5,9 @@ host with appropriate mysql connectivity.'''
 from __future__ import print_function
 import bacula_tools
 
+
 class FormattedResult(dict):
+
     '''Prints a nicely-formatted collection of statistics for a pool.
     Instantiate once per pool, use the add method for each media volume in
     the pool.
@@ -13,6 +15,7 @@ class FormattedResult(dict):
     '''
     keylist = ['Full', 'Archive', 'Append', 'Recycle', 'Purged', 'Read-Only',
                'Disabled', 'Error', 'Busy', 'Used', 'Cleaning']
+
     def __init__(self, name):
         '''Set up initial values.'''
         dict.__init__(self)
@@ -23,23 +26,29 @@ class FormattedResult(dict):
             self.fmt += '{%s:%s} ' % (key, len(key))
         self.updated = False
         return
+
     def add(self, pair):
         '''Add an item for this pool.  Call this with a (name, value) tuple.'''
         self.updated = True
         self[pair[0]] += pair[1]
+
     def print(self):
         '''Print one row(pool), but only if we have some data.'''
-        if not self.updated: return
+        if not self.updated:
+            return
         return print(self.fmt.format(**self))
+
     @classmethod
     def print_titles(cls):
         '''Prints the keys as a title string '''
-        return print(' '*15, ' '.join(cls.keylist))
+        return print(' ' * 15, ' '.join(cls.keylist))
+
     def __add__(self, other):
         '''Operator to allow (sub)totalling pools.
         '''
         self.updated = True
-        for key in self.keylist: self[key] += other[key]
+        for key in self.keylist:
+            self[key] += other[key]
         return self
 
 pool_sql = 'SELECT PoolId, Name FROM Pool ORDER BY Name'
@@ -48,7 +57,7 @@ media_sql = '''select VolStatus, count(MediaId) from Media
 for catalog in bacula_tools.Catalog().Find():
     conn = catalog.connect()
     print('\n' + catalog[bacula_tools.NAME])
-    totals = FormattedResult('='*15 + '\nTotals         ')
+    totals = FormattedResult('=' * 15 + '\nTotals         ')
     totals.print_titles()
     for pool in conn.do_sql(pool_sql):
         result = FormattedResult(pool[1])

@@ -1,11 +1,14 @@
 #! /usr/bin/env python
 
 from __future__ import print_function
-try: from . import *
-except: from bacula_tools import * #pragma: no cover
+try:
+    from . import *
+except:
+    from bacula_tools import *  # pragma: no cover
+
 
 class Messages(DbDict):
-    SETUP_KEYS = [(DATA, ''),]
+    SETUP_KEYS = [(DATA, ''), ]
     table = MESSAGES
     _select = 'SELECT ref_id, link_type FROM messages_link WHERE messages_id=%s'
     _insert = 'INSERT INTO messages_link (messages_id, ref_id, link_type) VALUES (%s, %s, %s)'
@@ -17,7 +20,9 @@ class Messages(DbDict):
         try:
             self.bc.do_sql(self._insert, (self[ID], obj[ID], obj.IDTAG))
         except Exception as e:
-            if e.args[0] == 1062: pass # 1062 is what happens when you try to insert a duplicate row
+            if e.args[0] == 1062:
+                # 1062 is what happens when you try to insert a duplicate row
+                pass
             else:
                 print(e)
                 raise
@@ -41,7 +46,8 @@ class Messages(DbDict):
                                      "Messages are used by clients, storage daemons, and directors.")
         group.add_option('--add-link', metavar='STORAGE_DAEMON')
         group.add_option('--remove-link', metavar='STORAGE_DAEMON')
-        group.add_option('--object-type', help='Optional device type to disambiguate the desired linkage')
+        group.add_option(
+            '--object-type', help='Optional device type to disambiguate the desired linkage')
         self.parser.add_option_group(group)
         return
 
@@ -49,41 +55,53 @@ class Messages(DbDict):
         '''Handle the CLI switches for linkage.  Use the object type to provide a context
         for name lookup.'''
         obj = None
-        if args.object_type: obj = getattr(bacula_tools, args.object_type.capitalize(), None)
-            
+        if args.object_type:
+            obj = getattr(bacula_tools, args.object_type.capitalize(), None)
+
         if args.add_link:
-            if obj: target = obj().search(args.add_link)
+            if obj:
+                target = obj().search(args.add_link)
             else:
                 for key in [Client, Storage, Director]:
                     target = key().search(args.add_link)
-                    if target[ID]: break
-            if target[ID]: self.link(target)
-            else: print('Unable to find anything named', args.add_link)
+                    if target[ID]:
+                        break
+            if target[ID]:
+                self.link(target)
+            else:
+                print('Unable to find anything named', args.add_link)
 
         if args.remove_link:
-            if obj: target = obj().search(args.remove_link)
+            if obj:
+                target = obj().search(args.remove_link)
             else:
                 for key in [Client, Storage, Director]:
                     target = key().search(args.remove_link)
-                    if target[ID]: break
-            if not target: print('Unable to find anything named', args.remove_link)
-            else: self.unlink(target)
+                    if target[ID]:
+                        break
+            if not target:
+                print('Unable to find anything named', args.remove_link)
+            else:
+                self.unlink(target)
 
         return
 
     def _cli_special_print(self):
         '''Print out the linked objects.'''
         resultset = self.bc.do_sql(self._select, self[ID])
-        if not resultset: return
-        fmt = '%'+ str(self._maxlen) + 's'
+        if not resultset:
+            return
+        fmt = '%' + str(self._maxlen) + 's'
         for row in resultset:
             for key in [Client, Storage, Director]:
-                if key.IDTAG == row[1]: print(fmt % key().search(row[0])[NAME])
+                if key.IDTAG == row[1]:
+                    print(fmt % key().search(row[0])[NAME])
         return
+
 
 def main():
     s = Messages()
     s.cli()
 
-if __name__ == "__main__": main()
-
+if __name__ == "__main__":
+    main()

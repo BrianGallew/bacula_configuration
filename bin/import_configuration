@@ -9,7 +9,9 @@ from __future__ import print_function
 import sys
 # pylint: disable=no-name-in-module
 from bacula_tools import Director, Catalog, ID, DIRECTOR_ID, parser_support
-import curses, curses.wrapper, pprint
+import curses
+import curses.wrapper
+import pprint
 
 
 if len(sys.argv) < 2:
@@ -17,11 +19,15 @@ if len(sys.argv) < 2:
     exit()
 
 # pylint: disable=too-few-public-methods
+
+
 class Writer(object):
+
     '''Convenience class for displaying the results of parsing the
     configuration files.
 
     '''
+
     def __init__(self, screen):
         '''Constructor.  Needs a curses screen object.
         '''
@@ -32,7 +38,7 @@ class Writer(object):
         self.rows['empty'] = []
         curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
         curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
-        self.normal = curses.color_pair(0) # Have to start somewhere!
+        self.normal = curses.color_pair(0)  # Have to start somewhere!
         self.problem = curses.color_pair(1)
         self.good = curses.color_pair(2)
         screen.erase()
@@ -52,7 +58,7 @@ class Writer(object):
         completely random ordering of result.
         '''
         (key, value) = msg.split(': ', 1)
-        row = self.rows.setdefault(key, [len(self.rows)+2, 0, 0, ''])
+        row = self.rows.setdefault(key, [len(self.rows) + 2, 0, 0, ''])
         row[3] = value.replace('\n', ' ')
         if 'Unable to handle' in value:
             row[2] += 1
@@ -60,8 +66,10 @@ class Writer(object):
         else:
             row[1] += 1
         self.screen.addstr(row[0], 3, '%s: %d/' % (key, row[1]), self.normal)
-        if row[2]: self.screen.addstr(str(row[2]), self.problem)
-        else: self.screen.addstr('0', self.normal)
+        if row[2]:
+            self.screen.addstr(str(row[2]), self.problem)
+        else:
+            self.screen.addstr('0', self.normal)
         (_, x) = self.screen.getyx()
         self.screen.addstr('  ' + row[3][:self.restx - x], self.normal)
         (_, x) = self.screen.getyx()
@@ -79,14 +87,18 @@ class Writer(object):
 
 writer = None
 errorlog = []
+
+
 def main(stdscreen):
     '''Main entry poing for the program.
     '''
     global writer
     writer = Writer(stdscreen)
     for argument in sys.argv[1:]:
-        try: stuff = parser_support.parser(open(argument).read(), writer)
-        except: stuff = []
+        try:
+            stuff = parser_support.parser(open(argument).read(), writer)
+        except:
+            stuff = []
     director = None
     for director_object in stuff:
         if type(director_object) == Director:
@@ -106,4 +118,5 @@ except:
 
 if errorlog:
     print("Encountered these errors")
-    for err in errorlog: print(err)
+    for err in errorlog:
+        print(err)

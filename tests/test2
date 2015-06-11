@@ -1,11 +1,13 @@
 #! /usr/bin/env python
 
-import os, sys, pprint
+import os
+import sys
+import pprint
 sys.path.insert(0, '..')
 
 import bacula_tools
 
-bc = bacula_tools.Bacula_Factory() # get a hand for doing SQL
+bc = bacula_tools.Bacula_Factory()  # get a hand for doing SQL
 row = bc.do_sql('select name from clients limit 1')[0]
 print row
 c = bacula_tools.Client()

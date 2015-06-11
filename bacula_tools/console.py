@@ -1,10 +1,13 @@
 #! /usr/bin/env python
 
 from __future__ import print_function
-from bacula_tools import *  #pragma: no cover
-import bacula_tools, logging
+from bacula_tools import *  # pragma: no cover
+import bacula_tools
+import logging
+
 
 class Console(DbDict):
+
     '''This is for configuring bconsole access.  Unfortunately, there's no good
     way to extract this for constructing a bconsole.conf.  You can set up
     conventions that a client hostname should match the name of the Console,
@@ -19,24 +22,27 @@ class Console(DbDict):
                   POOLACL, SCHEDULEACL, STORAGEACL, WHEREACL, DIRPORT, ADDRESS]
     table = CONSOLES
     IDTAG = 4
+
     def __str__(self):
         self.output = ['Console {\n  Name = "%(name)s"' % self, '}']
-        
+
         for key in self.SETUP_KEYS:
-            if key in [DIRPORT, ADDRESS]: continue
+            if key in [DIRPORT, ADDRESS]:
+                continue
             self._simple_phrase(key)
-        if getattr(self,DIRECTOR_ID, None):
+        if getattr(self, DIRECTOR_ID, None):
             c = bacula_tools.Director().search(self.director_id)
             a = PasswordStore(c, self)
-            self.output.insert(-1,'  Password = "%s"' % a.password)
+            self.output.insert(-1, '  Password = "%s"' % a.password)
         return '\n'.join(self.output)
 
     def fd(self):
-        self.output = ['Director {\n  Name = "%(name)s"' % self, '  Monitor = yes','}']
-        if getattr(self,CLIENT_ID, None):
+        self.output = [
+            'Director {\n  Name = "%(name)s"' % self, '  Monitor = yes', '}']
+        if getattr(self, CLIENT_ID, None):
             c = bacula_tools.Client().search(self.client_id)
             a = PasswordStore(c, self)
-            self.output.insert(-1,'  Password = "%s"' % a.password)
+            self.output.insert(-1, '  Password = "%s"' % a.password)
         return '\n'.join(self.output)
 
     def bconsole(self):
@@ -44,16 +50,16 @@ class Console(DbDict):
         self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
         self._simple_phrase(DIRPORT)
         self._simple_phrase(ADDRESS)
-        if getattr(self,DIRECTOR_ID, None):
+        if getattr(self, DIRECTOR_ID, None):
             c = bacula_tools.Director().search(self.director_id)
             a = PasswordStore(c, self)
-            self.output.insert(-1,'  Password = "%s"' % a.password)
+            self.output.insert(-1, '  Password = "%s"' % a.password)
         return '\n'.join(self.output)
 
 
-
-def main(): # Implement the CLI for managing Consoles
+def main():  # Implement the CLI for managing Consoles
     s = Console()
     s.cli()
 
-if __name__ == "__main__": main()
+if __name__ == "__main__":
+    main()

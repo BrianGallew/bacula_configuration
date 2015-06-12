@@ -1,14 +1,24 @@
 #! /usr/bin/python
-# Library to make writing Python tools for Bacula as easy as possible, with lots of code re-use.
+# -*- coding: utf-8 -*-
+
+'''Library to make writing Python tools for Bacula as easy as possible,
+with lots of code re-use.
+
+'''
 
 # You must import both sys and bacula
-import sys, bacula, subprocess
+import sys
+import bacula
+import subprocess
 from random import choice
-numarray = range(0,100)
+numarray = range(0, 100)
 
 # This is the list of Bacula daemon events that you
 #  can receive.
+
+
 class BaculaEvents(object):
+
     def __init__(self):
         '''Called here when a new Bacula Events class is is created. Normally not
          used
@@ -38,11 +48,14 @@ class BaculaEvents(object):
         # Verify or Snap in the name):
         #
         # 1) Run a purge on the Storage associated with this job.
-        # 2) 5% of the time (roughly) start a Verification job against the one that just ran.
-        
+        # 2) 5% of the time (roughly) start a Verification job against the one
+        # that just ran.
+
         # If this is a verify job or snapshot, bail
-        if 'Verify' in job.Job: return
-        if 'Snap' in job.Job: return # cannot verify snapshot backups
+        if 'Verify' in job.Job:
+            return
+        if 'Snap' in job.Job:
+            return  # cannot verify snapshot backups
 
         # Let's truncate any new purged volumes in this pool.
         runcmd = 'purge volume action=Truncate allpools storage=%s\nquit\n' % job.Storage
@@ -58,11 +71,12 @@ class BaculaEvents(object):
             return
         job.JobReport = "ran volume purge command: %s" % so
 
-        # This bit gives us a chance (5%) of running a verify job against this one.
+        # This bit gives us a chance (5%) of running a verify job against this
+        # one.
         if choice(numarray) < 5:          # 5% chance of running a verify
             runcmd = 'run job=%s-Verify jobid=%d yes' % (job.Job, job.JobId)
             newjob = job.run(runcmd)
-            job.JobReport="%s: jobid=%d\n" % (runcmd, newjob)
+            job.JobReport = "%s: jobid=%d\n" % (runcmd, newjob)
         return
 
     def Exit(self, job):
@@ -71,4 +85,4 @@ class BaculaEvents(object):
         return
 
 # This is what makes it actually work
-bacula.set_events(BaculaEvents()) # register daemon events desired
+bacula.set_events(BaculaEvents())  # register daemon events desired

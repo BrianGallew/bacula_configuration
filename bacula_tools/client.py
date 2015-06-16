@@ -1,10 +1,15 @@
 #! /usr/bin/env python
-
-from __future__ import print_function
-try:
-    from . import *
-except:
-    from bacula_tools import *  # pragma: no cover
+# -*- coding: utf-8 -*-
+from __future__ import print_function, absolute_import
+from bacula_tools import (ADDRESS, AUTOPRUNE, CATALOG_ID, CLIENTS,
+                          DIRECTOR, DbDict, FDADDRESS, FDADDRESSES, FDPORT,
+                          FDSOURCEADDRESS, FILERETENTION, HEARTBEATINTERVAL,
+                          JOBRETENTION, MAXIMUMBANDWIDTHPERJOB,
+                          MAXIMUMCONCURRENTJOBS, MAXIMUMNETWORKBUFFERSIZE,
+                          MONITOR, NOTES, PASSWORD, PIDDIRECTORY,
+                          PKIENCRYPTION, PKIKEYPAIR, PKIMASTERKEY,
+                          PKISIGNATURES, PRIORITY, SDCONNECTTIMEOUT,
+                          WORKINGDIRECTORY)
 import logging
 
 

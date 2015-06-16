@@ -1,10 +1,9 @@
 #! /usr/bin/env python
-
-from __future__ import print_function
-try:
-    from . import *
-except:
-    from bacula_tools import *  # pragma: no cover
+# -*- coding: utf-8 -*-
+from __future__ import print_function, absolute_import
+from bacula_tools import (Bacula_Config, DbDict, DBADDRESS, DBNAME, DBPORT,
+                          DBSOCKET, ID, PASSWORD, USER, DIRECTOR_ID,
+                          CATALOGS)
 import logging
 
 

@@ -1,7 +1,11 @@
-from __future__ import print_function
+# -*- coding: utf-8 -*-
+from __future__ import print_function, absolute_import
 import re
 import bacula_tools
 import traceback
+
+# Mostly I try to import specific things, but there's something like 200
+# constants to be imported here.
 from bacula_tools import *
 
 # I know this is poor style, but pyparsing declares a lot of stuff that

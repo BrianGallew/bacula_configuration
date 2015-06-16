@@ -1,11 +1,10 @@
 #! /usr/bin/env python
-
-from __future__ import print_function
-try:
-    from . import *
-except:
-    from bacula_tools import *  # pragma: no cover
+# -*- coding: utf-8 -*-
+from __future__ import print_function, absolute_import
+from bacula_tools import (DbDict, ENABLEVSS, EXCLUDE, FILESETS,
+                          FILESET_FILES, ID, IGNOREFILESETCHANGES)
 from re import compile, MULTILINE, IGNORECASE, DOTALL
+import optparse
 import logging
 
 

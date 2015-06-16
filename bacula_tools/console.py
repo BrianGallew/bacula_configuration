@@ -1,7 +1,10 @@
 #! /usr/bin/env python
-
-from __future__ import print_function
-from bacula_tools import *  # pragma: no cover
+# -*- coding: utf-8 -*-
+from __future__ import print_function, absolute_import
+from bacula_tools import (ADDRESS, CATALOGACL, CLIENTACL, CLIENT_ID,
+                          COMMANDACL, CONSOLES, DIRECTOR_ID, DIRPORT,
+                          DbDict, FILESETACL, JOBACL, POOLACL, SCHEDULEACL,
+                          STORAGEACL, WHEREACL, )
 import bacula_tools
 import logging
 

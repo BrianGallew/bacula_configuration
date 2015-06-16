@@ -1,7 +1,4 @@
-try:
-    from . import *
-except:
-    from bacula_tools import *  # pragma: no cover
+from bacula_tools import (BACULA_SD_PORT, BSock)
 
 
 class SDaemon(BSock):

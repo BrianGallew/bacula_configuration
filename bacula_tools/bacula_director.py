@@ -1,4 +1,6 @@
-from . import *
+# -*- coding: utf-8 -*-
+from __future__ import print_function, absolute_import
+from . import BSock, ADDRESS, PASSWORD, DIRPORT
 
 
 class BDirector(BSock):

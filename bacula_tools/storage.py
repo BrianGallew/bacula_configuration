@@ -1,16 +1,19 @@
 #! /usr/bin/env python
 
-from __future__ import print_function
-try:
-    from . import *
-except:
-    from bacula_tools import *  # pragma: no cover
+from __future__ import print_function, absolute_import
+from bacula_tools import (DbDict, ADDRESS, ALLOWCOMPRESSION, AUTOCHANGER,
+                          CLIENTCONNECTWAIT, DEVICE, DIRECTOR,
+                          HEARTBEATINTERVAL, MAXIMUMCONCURRENTJOBS,
+                          MEDIATYPE, PASSWORD, PIDDIRECTORY, SDADDRESSES,
+                          SDPORT, STORAGE, WORKINGDIRECTORY)
 import logging
 
 
 class Storage(DbDict):
-    SETUP_KEYS = [SDPORT, ADDRESS, DEVICE, MEDIATYPE, MAXIMUMCONCURRENTJOBS, HEARTBEATINTERVAL,
-                  WORKINGDIRECTORY, PIDDIRECTORY, CLIENTCONNECTWAIT, SDADDRESSES]
+    SETUP_KEYS = [SDPORT, ADDRESS, DEVICE, MEDIATYPE,
+                  MAXIMUMCONCURRENTJOBS, HEARTBEATINTERVAL,
+                  WORKINGDIRECTORY, PIDDIRECTORY, CLIENTCONNECTWAIT,
+                  SDADDRESSES]
     BOOL_KEYS = [AUTOCHANGER, ALLOWCOMPRESSION]
     table = STORAGE
     # This is kind of a hack used for associating Messages with different
@@ -18,8 +21,9 @@ class Storage(DbDict):
     IDTAG = 3
     dir_keys = [SDPORT, ADDRESS, DEVICE, MEDIATYPE,
                 MAXIMUMCONCURRENTJOBS, HEARTBEATINTERVAL]
-    sd_keys = [WORKINGDIRECTORY, PIDDIRECTORY, CLIENTCONNECTWAIT, SDADDRESSES,
-               SDPORT, MAXIMUMCONCURRENTJOBS, HEARTBEATINTERVAL]
+    sd_keys = [WORKINGDIRECTORY, PIDDIRECTORY, CLIENTCONNECTWAIT,
+               SDADDRESSES, SDPORT, MAXIMUMCONCURRENTJOBS,
+               HEARTBEATINTERVAL]
 
     def __str__(self):
         '''String representation of a Storage suitable for inclusion in a Director configuration.'''

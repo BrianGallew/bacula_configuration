@@ -1,11 +1,30 @@
 #! /usr/bin/env python
-
-from __future__ import print_function
-try:
-    from . import *
-except:
-    from bacula_tools import *  # pragma: no cover
+# -*- coding: utf-8 -*-
+from __future__ import print_function, absolute_import
+from bacula_tools import (ACCURATE, ADDPREFIX, ADDSUFFIX,
+                          ALLOWDUPLICATEJOBS, ALLOWMIXEDPRIORITY, BASE,
+                          BOOTSTRAP, CANCELLOWERLEVELDUPLICATES,
+                          CANCELQUEUEDDUPLICATES, CANCELRUNNINGDUPLICATES,
+                          CLIENT_ID, DbDict, DIFFERENTIALMAXWAITTIME,
+                          DIFFERENTIALPOOL_ID, FILESET_ID, FULLPOOL_ID,
+                          IDMAXWAITTIME, INCREMENTALMAXRUNTIME,
+                          INCREMENTALPOOL_ID, JOBDEF, JOBS, JOB_ID, LEVEL,
+                          MAXFULLINTERVAL, MAXIMUMBANDWIDTH,
+                          MAXIMUMCONCURRENTJOBS, MAXRUNSCHEDTIME,
+                          MAXRUNTIME, MAXSTARTDELAY, MAXWAITTIME,
+                          MESSAGES_ID, NOTES, POOL_ID,
+                          PREFERMOUNTEDVOLUMES, PREFIXLINKS,
+                          PRIORITY, ENABLED, PRUNEFILES, PRUNEJOBS,
+                          PRUNEVOLUMES, REGEXWHERE, REPLACE,
+                          RERUNFAILEDLEVELS, RESCHEDULEINTERVAL,
+                          RESCHEDULEONERROR, RESCHEDULETIMES, RUN,
+                          SCHEDULE_ID, SPOOLATTRIBUTES, SPOOLDATA,
+                          SPOOLSIZE, STORAGE_ID, STRIPPREFIX, TYPE,
+                          VERIFYJOB, WHERE, WRITEBOOTSTRAP,
+                          WRITEPARTAFTERJOB,
+                          )
 import logging
+import optparse
 
 
 class Job(DbDict):

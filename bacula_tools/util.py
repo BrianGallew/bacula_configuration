@@ -1,8 +1,4 @@
-from __future__ import print_function
-try:
-    from . import *
-except:
-    from bacula_tools import *  # pragma: no cover
+from __future__ import print_function, absolute_import
 import bacula_tools
 import re
 import os
@@ -70,7 +66,7 @@ def die(*msg):
     raise SystemExit(-1)
 
 
-def hostname_mangler(fqdn, target=CLIENT):
+def hostname_mangler(fqdn, target=bacula_tools.CLIENT):
     '''Alters the hostname in the desired manner to return a client, director,
     or storage name.  You will probably want to OVERRIDE THIS to meet the
     needs of your own site.
@@ -213,7 +209,7 @@ class PasswordStore(object):
         '''Store references to the two objects associated with this password'''
         object.__init__(self)
         self.where_arguments = (
-            int(obj1[ID]), obj1.IDTAG, int(obj2[ID]), obj2.IDTAG)
+            int(obj1[bacula_tools.ID]), obj1.IDTAG, int(obj2[bacula_tools.ID]), obj2.IDTAG)
         self.load()
         return
 
@@ -228,9 +224,9 @@ class PasswordStore(object):
 
         class FauxDict(dict):
             IDTAG = 0
-        for row in kls.bc.do_sql(sql % kls.table, (obj[ID], obj.IDTAG)):
+        for row in kls.bc.do_sql(sql % kls.table, (obj[bacula_tools.ID], obj.IDTAG)):
             o = FauxDict()
-            o[ID], o.IDTAG = row
+            o[bacula_tools.ID], o.IDTAG = row
             if director_type:
                 result.append(kls(o, obj))
             else:
@@ -242,7 +238,7 @@ class PasswordStore(object):
         sql = self._select % (self.table, self._where)
         value = self.bc.do_sql(sql, self.where_arguments, asdict=True)
         if len(value) == 1:
-            self.password = value[0][PASSWORD]
+            self.password = value[0][bacula_tools.PASSWORD]
         else:
             self.password = None
         return
@@ -291,8 +287,8 @@ class DbDict(dict):
         dict.__init__(self)
         self.parser = None
         self.special = None
-        self[ID] = None         # Ensure we have an ID
-        self[NAME] = None       # Ensure we have an NAME
+        self[bacula_tools.ID] = None         # Ensure we have an ID
+        self[bacula_tools.NAME] = None       # Ensure we have an NAME
         # This allows flexibility in key setup/declaration, which in turn
         # will allow intelligent groupings to make parse/set/get code
         # somewhat simpler (or at least more clear).
@@ -340,26 +336,28 @@ class DbDict(dict):
 
     def search(self, key=None):
         '''Search for ourself using a number of different methods.  If no key is
-        passed in, try self[NAME] and then self[ID].  Otherwise, try the
-        passed-in key as an ID if it can be converted to an INT, otherwise
-        assume it's a name.  In the event there is no proper row found,
-        return a suggestion as to something better to search for, if
-        possible.'''
+        passed in, try self[bacula_tools.NAME] and then self[bacula_tools.ID].
+        Otherwise, try the passed-in key as an ID if it can be converted to
+        an INT, otherwise assume it's a name.  In the event there is no
+        proper row found, return a suggestion as to something better to
+        search for, if possible.
+
+        '''
         if not key:
             logging.debug(
-                'DbDict.search: no key, checking for NAME and ID: table "%s", name "%s", id "%s"', self.table, self[NAME], self[ID])
-            if self[NAME]:
+                'DbDict.search: no key, checking for NAME and ID: table "%s", name "%s", id "%s"', self.table, self[bacula_tools.NAME], self[bacula_tools.ID])
+            if self[bacula_tools.NAME]:
                 new_me = self.bc.value_check(
-                    self.table, NAME, self[NAME], asdict=True)
-            elif self[ID]:
+                    self.table, bacula_tools.NAME, self[bacula_tools.NAME], asdict=True)
+            elif self[bacula_tools.ID]:
                 new_me = self.bc.value_check(
-                    self.table, ID, self[ID], asdict=True)
+                    self.table, bacula_tools.ID, self[bacula_tools.ID], asdict=True)
         else:
             if type(key) == list or type(key) == tuple:
                 key = key[0]
             try:
                 new_me = self.bc.value_check(
-                    self.table, ID, int(key), asdict=True)
+                    self.table, bacula_tools.ID, int(key), asdict=True)
             except:
                 new_me = self.bc.value_check(
                     self.table, NAME, key, asdict=True)
@@ -367,13 +365,14 @@ class DbDict(dict):
             self.update(new_me[0])
         except Exception as e:
             pass
-        if self[ID]:
+        if self[bacula_tools.ID]:
             [getattr(self, x)() for x in dir(self) if '_load_' in x]
         return self
 
     def delete(self):
         '''Delete itself from the database.'''
-        self.bc.do_sql('DELETE FROM %s WHERE id = %%s' % self.table, self[ID])
+        self.bc.do_sql('DELETE FROM %s WHERE id = %%s' %
+                       self.table, self[bacula_tools.ID])
         return
 
     def set(self, field, value, boolean=False, dereference=False):
@@ -392,21 +391,21 @@ class DbDict(dict):
                       (value, field))
                 return self
         if dereference:
-            value = self._fk_reference(field, value)[ID]
+            value = self._fk_reference(field, value)[bacula_tools.ID]
         self[field] = value
         return self._save()
 
     def _save(self):
         '''Update the database with our data.'''
-        if PASSWORD in self.keys():
-            if self[PASSWORD] == GENERATE:
-                self[PASSWORD] = bacula_tools.generate_password()
-        if self[ID]:
-            keys = [x for x in self.keys() if not x == ID]
+        if bacula_tools.PASSWORD in self.keys():
+            if self[bacula_tools.PASSWORD] == GENERATE:
+                self[bacula_tools.PASSWORD] = bacula_tools.generate_password()
+        if self[bacula_tools.ID]:
+            keys = [x for x in self.keys() if not x == bacula_tools.ID]
             keys.sort()
             sql = 'UPDATE %s SET %s WHERE id = %%s' % (self.table,
                                                        ', '.join(['`%s` = %%s' % x for x in keys]))
-            values = tuple([self[x] for x in keys] + [self[ID], ])
+            values = tuple([self[x] for x in keys] + [self[bacula_tools.ID], ])
             return self.bc.do_sql(sql, values)
         sql = 'INSERT INTO %s (`%s`) VALUES (%s)' % (
             self.table, '`,`'.join(self.keys()), ','.join(['%s' for x in self.keys()]))
@@ -417,7 +416,7 @@ class DbDict(dict):
         except Exception as e:
             if e.args[0] == 1062:
                 die('\t%s "%s" already exists.  You must delete it first.' %
-                    (self.word.capitalize(), self[NAME]))
+                    (self.word.capitalize(), self[bacula_tools.NAME]))
             print(e)  # pragma: no cover
             raise  # pragma: no cover
 
@@ -444,7 +443,7 @@ class DbDict(dict):
         string = self.name_re.sub('', string)
         data = '\n  '.join([x.strip() for x in string.split('\n') if x])
         self.set(DATA, data)
-        return "%s: %s" % (self.table.capitalize(), self[NAME])
+        return "%s: %s" % (self.table.capitalize(), self[bacula_tools.NAME])
 
     def _parse_setter(self, key, c_int=False, dereference=False):
         '''Shortcut called by parser for setting values'''
@@ -501,10 +500,10 @@ class DbDict(dict):
         obj = bacula_tools._DISPATCHER[fk.replace('_id', '')]()
         if string:
             obj.search(string.strip())
-            if not obj[ID]:
+            if not obj[bacula_tools.ID]:
                 obj.set_name(string.strip())
-            if not self[fk] == obj[ID]:
-                self.set(fk, obj[ID])
+            if not self[fk] == obj[bacula_tools.ID]:
+                self.set(fk, obj[bacula_tools.ID])
         else:
             obj.search(self[fk])
         return obj
@@ -579,7 +578,7 @@ class DbDict(dict):
 
         self.search(name_or_num)
 
-        if not self[ID]:
+        if not self[bacula_tools.ID]:
             print('No such %s: %s' % (self.word, name_or_num))
             exit()
 
@@ -592,9 +591,9 @@ class DbDict(dict):
             self.set(NAME, args.rename)
 
         if args.clone:
-            oid = self[ID]
-            self[ID] = None
-            self[NAME] = args.clone
+            oid = self[bacula_tools.ID]
+            self[bacula_tools.ID] = None
+            self[bacula_tools.NAME] = args.clone
             self._save()
             self._cli_special_clone(oid)
 
@@ -621,9 +620,9 @@ class DbDict(dict):
         maxlen += 4
         self._maxlen = maxlen
         fmt = '%' + str(maxlen) + 's: %s'
-        print(fmt % ('ID', str(self[ID])))
+        print(fmt % ('ID', str(self[bacula_tools.ID])))
         try:
-            print(fmt % ('NAME', str(self[NAME])))
+            print(fmt % ('NAME', str(self[bacula_tools.NAME])))
         except:
             pass            # One child class doesn't have a NAME
         for key in keylist:

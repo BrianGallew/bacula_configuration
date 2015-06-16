@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
+
 '''Bacula configuration database stuff: common routines, credentials, etc.
 Configuration is at the *end* of this file.'''
 
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 import re
 import sys
 import os
@@ -28,56 +30,67 @@ MYSQL_HOST = 'OVERRIDE ME'
 MYSQL_USER = 'OVERRIDE ME'
 MYSQL_PASS = 'OVERRIDE ME'
 
-_INTERNED = [
-    'Append', 'Available', 'Catalog', 'Cleaning', 'Error', 'Full', 'Purged', 'Recycle', 'Used',
-    'actiononpurge', 'address', 'autoprune', 'autoprune', 'bacula_enabled', 'begin', 'catalog_id',
-    'catalogacl', 'catalogfiles', 'catalogs', 'cleaningprefix', 'client', 'clientacl', 'clients',
-    'commandacl', 'console', 'consoles', 'data', 'db', 'dbaddress', 'dbname', 'dbpassword',
-    'dbport', 'dbsocket', 'dbuser', 'diraddresses', 'director', 'director_id', 'director_name',
-    'directors', 'dirid', 'enabled', 'end', 'entries', 'exclude', 'excludes', 'failure',
-    'fd_connect_timeout', 'fdaddress', 'fdaddresses', 'fdport', 'fdsourceaddress', 'file_retention',
-    'filedaemon', 'fileretention', 'fileset', 'fileset_files', 'filesetacl', 'filesets',
-    'heartbeatinterval', 'hostid', 'hostname', 'hostnames', 'hosts', 'id',
-    'ignorefilesetchanges', 'includes', 'job_retention', 'jobacl', 'jobretention', 'labelformat',
-    'lastupdated', 'maximumconcurrentjobs', 'maximumbandwidthperjob', 'maximumconcurrentjobs',
-    'maximumconsoleconnections', 'maximumconsoleconnections', 'maximumnetworkbuffersize',
-    'maximumvolumebytes', 'maximumvolumefiles', 'maximumvolumejobs', 'maximumvolumes', 'messages_id',
-    'messages', 'monitor', 'name', 'no', 'notes', 'option', 'options', 'os', 'owners', 'password',
-    'piddirectory', 'pkiencryption', 'pkikeypair', 'pkimasterkey', 'pkisignatures', 'pool',
-    'poolacl', 'pools', 'pooltype', 'port', 'primary_dir', 'priority', 'purgeoldestvolume',
-    'queryfile', 'recycle', 'recyclecurrentvolume', 'recycleoldestvolume', 'recyclepool', 'rows',
-    'run', 'schedule', 'schedule_time', 'scheduleacl', 'schedules', 'scratchpool', 'sdport',
-    'scripts_directory', 'sd_connect_timeout', 'sdconnecttimeout', 'service', 'services',
-    'sourceaddress', 'statistics_retention', 'storage', 'storageacl', 'storagepassword',
-    'storageserver', 'storageserveraddress', 'timespan', 'user', 'usevolumeonce', 'verid',
-    'volumeretention', 'volumeuseduration', 'enablevss', 'whereacl', 'workingdirectory', 'yes',
-    'device', 'mediatype', 'autochanger', 'allowcompression', 'type', 'level', 'differentialpool_id',
-    'fileset_id', 'fullpool_id', 'incrementalpool_id', 'client_id', 'pool_id',
-    'schedule_id', 'job_id', 'rescheduletimes', 'accurate', 'allowduplicatejobs',
-    'allowmixedpriority', 'cancellowerlevelduplicates', 'cancelqueuedduplicates',
-    'cancelrunningduplicates', 'prefermountedvolumes', 'prefixlinks', 'prunefiles', 'prunejobs',
-    'prunevolumes', 'rerunfailedlevels', 'rescheduleonerror', 'spoolattributes', 'spooldata',
-    'writepartafterjob', 'addprefix', 'addsuffix', 'base', 'bootstrap', 'differentialmaxwaittime',
-    'idmaxwaittime', 'incrementalmaxruntime', 'maxfullinterval', 'maximumbandwidth',
-    'maxrunschedtime', 'maxruntime', 'maxstartdelay', 'maxwaittime', 'regexwhere',
-    'rescheduleinterval', 'spoolsize', 'stripprefix', 'verifyjob', 'where', 'writebootstrap',
-    'replace', 'jobdef', 'jobs', 'job', 'storage_id', 'command', 'runsonsuccess', 'runsonfailure',
-    'runsonclient', 'runswhen', 'failjobonerror', 'scripts', 'message', 'script_id', 'jobdefs',
-    'clientconnectwait', 'sdaddresses', 'sdaddress',
-
-    'archivedevice', 'devicetype', 'changerdevice', 'changercommand', 'alertcommand',
-    'driveindex', 'maximumchangerwait', 'maximumrewindwait',
-    'maximumopenwait', 'volumepollinterval', 'mountpoint', 'mountcommand', 'unmountcommand',
-    'minimumblocksize', 'maximumblocksize', 'maximumvolumesize', 'maximumfilesize',
-    'maximumnetworkbuffersize', 'maximumspoolsize', 'maximumjobspoolsize', 'spooldirectory',
-    'maximumpartsize', 'autoselect', 'alwaysopen', 'closeonpoll', 'removablemedia',
-    'randomaccess', 'blockchecksum', 'hardwareendofmedium', 'fastforwardspacefile', 'usemtiocget',
-    'bsfateom', 'twoeof', 'backwardspacerecord', 'backwardspacefile', 'forwardspacerecord',
-    'forwardspacefile', 'offlineonunmount', 'blockpositioning', 'labelmedia', 'automaticmount',
-    'clientconnectwait', 'fd', 'sd', 'bconsole', 'dirport', 'generate',
-
-    'minimum', 'maximum', 'counter_id', 'counters', 'counter'
-]
+_INTERNED = ['Append', 'Available', 'Catalog', 'Cleaning', 'Error',
+             'Full', 'Purged', 'Recycle', 'Used', 'actiononpurge', 'addprefix',
+             'address', 'addsuffix', 'alertcommand', 'allowcompression',
+             'allowmixedpriority', 'alwaysopen', 'archivedevice', 'autochanger',
+             'automaticmount', 'autoprune', 'autoprune', 'autoselect',
+             'backwardspacefile', 'backwardspacerecord', 'bacula_enabled', 'base',
+             'bconsole', 'begin', 'blockchecksum', 'blockpositioning', 'bootstrap',
+             'bsfateom', 'cancellowerlevelduplicates', 'cancelqueuedduplicates',
+             'cancelrunningduplicates', 'catalog_id', 'catalogacl', 'catalogfiles',
+             'catalogs', 'changercommand', 'changerdevice', 'cleaningprefix',
+             'client', 'client_id', 'clientacl', 'clientconnectwait',
+             'clientconnectwait', 'clients', 'closeonpoll', 'command', 'commandacl',
+             'console', 'consoles', 'counter', 'counter_id', 'counters', 'data',
+             'db', 'dbaddress', 'dbname', 'dbpassword', 'dbport', 'dbsocket',
+             'dbuser', 'device', 'devicetype', 'differentialmaxwaittime',
+             'differentialpool_id', 'diraddresses', 'director', 'director_id',
+             'director_name', 'directors', 'dirid', 'dirport', 'driveindex',
+             'enabled', 'enablevss', 'end', 'entries', 'exclude', 'excludes',
+             'failjobonerror', 'failure', 'fastforwardspacefile', 'fd',
+             'fd_connect_timeout', 'fdaddress', 'fdaddresses', 'fdport',
+             'fdsourceaddress', 'file_retention', 'filedaemon', 'fileretention',
+             'fileset', 'fileset_files', 'fileset_id', 'filesetacl', 'filesets',
+             'forwardspacefile', 'forwardspacerecord', 'fullpool_id', 'generate',
+             'hardwareendofmedium', 'heartbeatinterval', 'hostid', 'hostname',
+             'hostnames', 'hosts', 'id', 'idmaxwaittime', 'ignorefilesetchanges',
+             'includes', 'incrementalmaxruntime', 'incrementalpool_id', 'job',
+             'job_id', 'job_retention', 'jobacl', 'jobdef', 'jobdefs',
+             'jobretention', 'jobs', 'labelformat', 'labelmedia', 'lastupdated',
+             'level', 'maxfullinterval', 'maximum', 'maximumbandwidth',
+             'maximumbandwidthperjob', 'maximumblocksize', 'maximumchangerwait',
+             'maximumconcurrentjobs', 'maximumconcurrentjobs',
+             'maximumconsoleconnections', 'maximumconsoleconnections',
+             'maximumfilesize', 'maximumjobspoolsize', 'maximumnetworkbuffersize',
+             'maximumnetworkbuffersize', 'maximumopenwait', 'maximumpartsize',
+             'maximumrewindwait', 'maximumspoolsize', 'maximumvolumebytes',
+             'maximumvolumefiles', 'maximumvolumejobs', 'maximumvolumes',
+             'maximumvolumesize', 'maxrunschedtime', 'maxruntime', 'maxstartdelay',
+             'maxwaittime', 'mediatype', 'message', 'messages', 'messages_id',
+             'minimum', 'minimumblocksize', 'monitor', 'mountcommand', 'mountpoint',
+             'name', 'no', 'notes', 'offlineonunmount', 'option', 'options', 'os',
+             'owners', 'password', 'piddirectory', 'pkiencryption', 'pkikeypair',
+             'pkimasterkey', 'pkisignatures', 'pool', 'pool_id', 'poolacl', 'pools',
+             'pooltype', 'port', 'prefermountedvolumes', 'prefixlinks',
+             'primary_dir', 'priority', 'prunefiles', 'prunejobs', 'prunevolumes',
+             'purgeoldestvolume', 'queryfile', 'randomaccess', 'recycle',
+             'recyclecurrentvolume', 'recycleoldestvolume', 'recyclepool',
+             'regexwhere', 'removablemedia', 'replace', 'rerunfailedlevels',
+             'rescheduleinterval', 'rescheduleonerror', 'rescheduletimes',
+             'accurate', 'allowduplicatejobs', 'rows', 'run', 'runsonclient',
+             'runsonfailure', 'runsonsuccess', 'runswhen', 'schedule',
+             'schedule_id', 'schedule_time', 'scheduleacl', 'schedules',
+             'scratchpool', 'script_id', 'scripts', 'scripts_directory', 'sd',
+             'sd_connect_timeout', 'sdaddress', 'sdaddresses', 'sdconnecttimeout',
+             'sdport', 'service', 'services', 'sourceaddress', 'spoolattributes',
+             'spooldata', 'spooldirectory', 'spoolsize', 'statistics_retention',
+             'storage', 'storage_id', 'storageacl', 'storagepassword',
+             'storageserver', 'storageserveraddress', 'stripprefix', 'timespan',
+             'twoeof', 'type', 'unmountcommand', 'usemtiocget', 'user',
+             'usevolumeonce', 'verid', 'verifyjob', 'volumepollinterval',
+             'volumeretention', 'volumeuseduration', 'where', 'whereacl',
+             'workingdirectory', 'writebootstrap', 'writepartafterjob', 'yes']
 
 for w in _INTERNED:
     locals()[w.upper()] = w
@@ -131,29 +144,27 @@ for filename in CUSTOM_LIST:
         continue
     exec(open(filename).read(), locals(), locals())
 
-from bacula_config import *
-from util import *
-from schedule import Schedule
-from fileset import Fileset
-from messages import Messages
-from director import Director
-from catalog import Catalog
-from console import Console
-from client import Client
-from pool import Pool
-from storage import Storage
-from job import Job, JobDef
-from scripts import Script
-from device import Device
-from counter import Counter
+from .bacula_config import *
+from .util import *
+from .schedule import Schedule
+from .fileset import Fileset
+from .messages import Messages
+from .director import Director
+from .catalog import Catalog
+from .console import Console
+from .client import Client
+from .pool import Pool
+from .storage import Storage
+from .job import Job, JobDef
+from .scripts import Script
+from .device import Device
+from .counter import Counter
 
 # bconsole/daemon bits
-from fd import FDaemon
-from sd import SDaemon
-from bacula_director import BDirector
+from .fd import FDaemon
+from .sd import SDaemon
+from .bacula_director import BDirector
 
-
-import util
 
 _DISPATCHER = {
     FILESET: Fileset,

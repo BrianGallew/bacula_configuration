@@ -1,10 +1,16 @@
 #! /usr/bin/env python
-
-from __future__ import print_function
-try:
-    from . import *
-except:
-    from bacula_tools import *  # pragma: no cover
+# -*- coding: utf-8 -*-
+from __future__ import print_function, absolute_import
+from bacula_tools import (ACTIONONPURGE, AUTOPRUNE, CATALOGFILES,
+                          CLEANINGPREFIX, DbDict, FILERETENTION,
+                          JOBRETENTION, LABELFORMAT, MAXIMUMVOLUMEBYTES,
+                          MAXIMUMVOLUMEFILES, MAXIMUMVOLUMEJOBS,
+                          MAXIMUMVOLUMES, POOLS, POOLTYPE,
+                          PURGEOLDESTVOLUME, RECYCLE,
+                          RECYCLECURRENTVOLUME, RECYCLEOLDESTVOLUME,
+                          RECYCLEPOOL, SCRATCHPOOL, STORAGE_ID,
+                          USEVOLUMEONCE, VOLUMERETENTION,
+                          VOLUMEUSEDURATION, )
 import logging
 
 

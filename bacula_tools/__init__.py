@@ -11,6 +11,9 @@ import logging
 
 logging.basicConfig(level=logging.WARNING)
 
+# This is required because of the way I do interning.
+# pylint: disable=undefined-variable
+
 # Bacula CONFIG DB bits that are less easily interned
 BACULA_DIR_PORT = 9101
 BACULA_FD_PORT = 9102
@@ -108,6 +111,7 @@ WORKING_DIR = {
 
 
 def set_debug():
+    '''Turn on debug logging'''
     logging.root.setLevel(logging.DEBUG)
     logging.debug('debugging enabled')
     return
@@ -137,8 +141,8 @@ BACULADATADIR = '/data/bacula'
 CUSTOM_LIST = ['/etc/bacula/bacula.conf',
                '/usr/local/etc/bacula/bacula.conf',
                '/usr/local/etc/bacula.conf',
-               os.path.join(os.environ.get('HOME', '/'), '.bacula.conf')
-               ]
+               os.path.join(os.environ.get('HOME', '/'), '.bacula.conf')]
+
 for filename in CUSTOM_LIST:
     if not os.access(filename, os.R_OK):
         continue

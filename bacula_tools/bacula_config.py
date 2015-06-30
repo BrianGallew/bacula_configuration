@@ -8,36 +8,22 @@ import MySQLdb as db
 import MySQLdb.cursors
 import os
 import sys
-from bacula_tools import *
-
-_singleton = None
+import bacula_tools
 
 
-def Bacula_Factory():
-    '''Returns a singleton instance of the Bacula_Config class.  This is a
-    simple optimization to reduce the number of database connections used.'''
-    global _singleton
-    if not _singleton:
-        _singleton = Bacula_Config()
-    return _singleton
-
-
-class Bacula_Config:
+class Bacula_Config(object):
 
     '''Class that wraps up lots of dealings with the configuration database.
     You probably should call Bacula_Factory instead of instantiating this
     directly.
 
     '''
-    # {{{ Various class constants
 
     CONNECTIONS = {}            # array of connections to the database
     CURRENT_CONNECTION = None   # The currently in-use connection
 
-    # }}}
-    # {{{ connect(database=MYSQL_DB, user=MYSQL_USER, passwd=MYSQL_PASS, host=MYSQL_HOST):
-
-    def connect(self, database=MYSQL_DB, user=MYSQL_USER, passwd=MYSQL_PASS, host=MYSQL_HOST):
+    def connect(self, database=bacula_tools.MYSQL_DB, user=bacula_tools.MYSQL_USER,
+                passwd=bacula_tools.MYSQL_PASS, host=bacula_tools.MYSQL_HOST):
         '''Connect to the database.  Tries to look up an existing connection to use if possible'''
         key = database + user + passwd + host
         if not self.CONNECTIONS.has_key(key):
@@ -47,17 +33,12 @@ class Bacula_Config:
         self.CURRENT_CONNECTION.autocommit(True)
         return self.CONNECTIONS[key]
 
-    # }}}
-    # {{{ get_cursor():
-
     def get_cursor(self, **kwargs):
-        '''Returns a cursor for querying.  Will automatically connect to the database if necessary.'''
+        '''Returns a cursor for querying.  Will automatically connect to the
+        database if necessary.'''
         if not self.CURRENT_CONNECTION:
             self.connect()  # Assume default connection stuff
         return self.CURRENT_CONNECTION.cursor(**kwargs)
-
-    # }}}
-    # {{{ do_sql(sql, args=None):
 
     def do_sql(self, sql, args=None, asdict=False):
         '''A general-purpose SQL query function.  It handles acquiring a cursor
@@ -73,9 +54,6 @@ class Bacula_Config:
         cursor.execute(sql, args)
         return cursor.fetchall()
 
-    # }}}
-    # {{{ suggest(table, field, value):
-
     def suggest(self, table, field, value):
         '''This is an effort to be helpful in the case where you have an idea on
         the name of a resource, but you aren't really sure of the *precise*
@@ -88,10 +66,7 @@ class Bacula_Config:
         data = self.do_sql(sql, mangled_value)
         if data:                # OK, we got some partial matches
             return "Possible matches for '%s':\n\t" % value + '\n\t'.join([x[0] for x in data if x])
-        return "I was unable to find any close matches to '%(value)s'.  Please try harder.\n" % locals()
-
-    # }}}
-    # {{{ value_check(table, field, value, suggest=False, asdict=False):
+        return "Unable to find any close matches to '%(value)s'.  Please try harder.\n" % locals()
 
     def value_check(self, table, field, value, suggest=False, asdict=False):
         '''Check the existence of a value in a column.  If it exists, return the
@@ -103,12 +78,9 @@ class Bacula_Config:
             return result
         if not suggest:
             return result
-        return die('No such value (%(value)s) in %(table)s' % locals(),
-                   '',
-                   self.suggest(table, field, value))
-
-    # }}}
-    # {{{ value_ensure(table, field, value, asdict=False):
+        return bacula_tools.die('No such value (%(value)s) in %(table)s' % locals(),
+                                '',
+                                self.suggest(table, field, value))
 
     def value_ensure(self, table, field, value, asdict=False):
         '''Ensure the existence of a value in a column.  Use this to find-or-create
@@ -118,4 +90,12 @@ class Bacula_Config:
                 "INSERT INTO %(table)s (%(field)s) VALUES (%%s)" % locals(), value)
         return self.value_check(table, field, value, asdict=asdict)
 
-    # }}}
+
+# order matters: these have to come after the class definition
+_singleton = Bacula_Config()
+
+
+def Bacula_Factory():
+    '''Returns a singleton instance of the Bacula_Config class.  This is a
+    simple optimization to reduce the number of database connections used.'''
+    return _singleton

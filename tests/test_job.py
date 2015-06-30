@@ -11,6 +11,7 @@ sys.path.insert(0, '..')
 sys.path.insert(0, '.')
 import bacula_tools
 import bacula_tools.bacula_config
+import bacula_tools.parser_support
 
 
 @mock.patch('bacula_tools.Job.bc')
@@ -79,6 +80,7 @@ class job_tests(unittest.TestCase):
             'jobs', 'name', 'fred', asdict=True)
 
     def test_parser_more(self, m):
+        logging.root.setLevel(logging.INFO)
         retstrings = ['1', '2', '3']
         m.value_ensure.return_value = [{bacula_tools.NAME: 'fred', bacula_tools.ID: 1},
                                        {bacula_tools.NAME: 'script1',
@@ -118,14 +120,16 @@ class job_tests(unittest.TestCase):
                                      bacula_tools.ID: 4},
                                  ]
 
-        expected_call_list = [mock.call('SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (1, 5L)),
+        expected_call_list = [mock.call('SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (1, 7L)),
                               mock.call(
-                                  'SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (1, 6L)),
+                                  'SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (1, 8L)),
                               mock.call(
-                                  'SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (1, 7L)),
+                                  'SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (1, 9L)),
                               ]
 
         with mock.patch('bacula_tools.Job._load_scripts'), mock.patch('bacula_tools.Job.search'), mock.patch('bacula_tools.Job.set'), mock.patch('bacula_tools.Job._parse_script', new=s):
+            bacula_tools.parser_support.setup_for_parsing()
             j = bacula_tools.Job()
             j.parse_string(self.full_case)
+            print(s.called)
             self.assertEquals(m.do_sql.call_args_list, expected_call_list)

@@ -9,17 +9,18 @@ from bacula_tools import (ALERTCOMMAND, ALWAYSOPEN, ARCHIVEDEVICE,
                           CLIENTCONNECTWAIT, CLOSEONPOLL, DEVICE,
                           DEVICETYPE, DRIVEINDEX, DbDict,
                           FASTFORWARDSPACEFILE, FORWARDSPACEFILE,
-                          FORWARDSPACERECORD, HARDWAREENDOFMEDIUM,
+                          FORWARDSPACERECORD, HARDWAREENDOFMEDIUM, ID,
                           LABELMEDIA, MAXIMUMBLOCKSIZE,
                           MAXIMUMCHANGERWAIT, MAXIMUMCONCURRENTJOBS,
                           MAXIMUMFILESIZE, MAXIMUMJOBSPOOLSIZE,
                           MAXIMUMNETWORKBUFFERSIZE, MAXIMUMOPENWAIT,
                           MAXIMUMPARTSIZE, MAXIMUMREWINDWAIT,
                           MAXIMUMSPOOLSIZE, MAXIMUMVOLUMESIZE, MEDIATYPE,
-                          MINIMUMBLOCKSIZE, MOUNTCOMMAND, MOUNTPOINT,
+                          MINIMUMBLOCKSIZE, MOUNTCOMMAND, MOUNTPOINT, NAME,
                           OFFLINEONUNMOUNT, RANDOMACCESS, REMOVABLEMEDIA,
                           SPOOLDIRECTORY, TWOEOF, UNMOUNTCOMMAND,
                           USEMTIOCGET, VOLUMEPOLLINTERVAL, )
+import bacula_tools
 import logging
 import optparse
 

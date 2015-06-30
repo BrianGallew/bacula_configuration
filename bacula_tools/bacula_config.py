@@ -1,12 +1,13 @@
 '''Bacula configuration database stuff: common routines, etc'''
 # -*- coding: utf-8 -*-
 from __future__ import print_function, absolute_import
+import logging
+logger = logging.getLogger(__name__)
 
 import MySQLdb as db
 import MySQLdb.cursors
 import os
 import sys
-
 from bacula_tools import *
 
 _singleton = None
@@ -68,7 +69,7 @@ class Bacula_Config:
             cursor = self.get_cursor(cursorclass=db.cursors.DictCursor)
         else:
             cursor = self.get_cursor()
-        logging.debug('do_sql: %s:%s', sql, str(args))
+        logger.debug('do_sql: %s:%s', sql, str(args))
         cursor.execute(sql, args)
         return cursor.fetchall()
 

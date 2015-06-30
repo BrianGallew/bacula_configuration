@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import print_function, absolute_import
-from bacula_tools import (ADDRESS, DIRADDRESSES, DIRECTORS, DIRPORT,
-                          DbDict, FD_CONNECT_TIMEOUT, HEARTBEATINTERVAL,
-                          MAXIMUMCONCURRENTJOBS,
-                          MAXIMUMCONSOLECONNECTIONS, MESSAGES_ID,
-                          PASSWORD, PIDDIRECTORY, QUERYFILE,
+from bacula_tools import (ADDRESS, CLIENT_ID, DIRADDRESSES, DIRECTORS,
+                          DIRPORT, DbDict, FD_CONNECT_TIMEOUT,
+                          HEARTBEATINTERVAL, MAXIMUMCONCURRENTJOBS,
+                          MAXIMUMCONSOLECONNECTIONS, MESSAGES, MESSAGES_ID,
+                          NAME, PASSWORD, PIDDIRECTORY, QUERYFILE,
                           SCRIPTS_DIRECTORY, SD_CONNECT_TIMEOUT,
                           SOURCEADDRESS, STATISTICS_RETENTION,
                           WORKINGDIRECTORY, )

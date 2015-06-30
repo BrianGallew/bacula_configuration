@@ -1,12 +1,13 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import print_function, absolute_import
-from bacula_tools import (ADDRESS, AUTOPRUNE, CATALOG_ID, CLIENTS,
-                          DIRECTOR, DbDict, FDADDRESS, FDADDRESSES, FDPORT,
-                          FDSOURCEADDRESS, FILERETENTION, HEARTBEATINTERVAL,
+from bacula_tools import (ADDRESS, AUTOPRUNE, CATALOG, CATALOG_ID, CLIENTS,
+                          DIRECTOR, DIRECTOR_ID, DbDict, FDADDRESS,
+                          FDADDRESSES, FDPORT, FDSOURCEADDRESS,
+                          FILERETENTION, HEARTBEATINTERVAL, ID,
                           JOBRETENTION, MAXIMUMBANDWIDTHPERJOB,
                           MAXIMUMCONCURRENTJOBS, MAXIMUMNETWORKBUFFERSIZE,
-                          MONITOR, NOTES, PASSWORD, PIDDIRECTORY,
+                          MONITOR, NAME, NOTES, PASSWORD, PIDDIRECTORY,
                           PKIENCRYPTION, PKIKEYPAIR, PKIMASTERKEY,
                           PKISIGNATURES, PRIORITY, SDCONNECTTIMEOUT,
                           WORKINGDIRECTORY)

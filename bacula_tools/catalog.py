@@ -1,16 +1,15 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import print_function, absolute_import
-from bacula_tools import (Bacula_Config, DbDict, DBADDRESS, DBNAME, DBPORT,
-                          DBSOCKET, ID, PASSWORD, USER, DIRECTOR_ID,
-                          CATALOGS)
+import bacula_tools
 import logging
 
 
-class Catalog(DbDict):
-    SETUP_KEYS = [DBADDRESS, DBNAME, DBPORT, DBSOCKET, PASSWORD, USER]
-    SPECIAL_KEYS = [DIRECTOR_ID, ]
-    table = CATALOGS
+class Catalog(bacula_tools.DbDict):
+    SETUP_KEYS = [bacula_tools.DBADDRESS, bacula_tools.DBNAME, bacula_tools.DBPORT,
+                  bacula_tools.DBSOCKET, bacula_tools.PASSWORD, bacula_tools.USER]
+    SPECIAL_KEYS = [bacula_tools.DIRECTOR_ID, ]
+    table = bacula_tools.CATALOGS
 
     def __str__(self):
         '''Convert a Catalog into its string representation.  The result can be
@@ -26,13 +25,13 @@ class Catalog(DbDict):
         Director ID.  This is primarily used when generating the
         configuration for a director, as you'll have a Director ID and need
         to look up the associated catalog.'''
-        DbDict.search(self, key)
-        if self[ID]:
+        bacula_tools.DbDict.search(self, key)
+        if self[bacula_tools.ID]:
             return self
-        if not self[DIRECTOR_ID]:
+        if not self[bacula_tools.DIRECTOR_ID]:
             return self  # can't look myself up if I don't have any attributes
         new_me = self.bc.value_check(
-            self.table, DIRECTOR_ID, self[DIRECTOR_ID], asdict=True)
+            self.table, bacula_tools.DIRECTOR_ID, self[bacula_tools.DIRECTOR_ID], asdict=True)
         try:
             self.update(new_me[0])
         except Exception as e:
@@ -52,26 +51,26 @@ class Catalog(DbDict):
             return  # Nothing to do!
         d = bacula_tools.Director()
         d.search(args.director)
-        if not d[ID]:
+        if not d[bacula_tools.ID]:
             d.search(args.director)
-        if not d[ID]:
+        if not d[bacula_tools.ID]:
             print(
                 '\n***WARNING***: Unable to find a director using "%s".  Association not changed\n' % args.director)
             return
-        self.set(DIRECTOR_ID, d[ID])
+        self.set(bacula_tools.DIRECTOR_ID, d[bacula_tools.ID])
         return
 
     def _cli_special_print(self):
         '''De-reference the Director and print its name.'''
-        d = bacula_tools.Director().search(self[DIRECTOR_ID])
+        d = bacula_tools.Director().search(self[bacula_tools.DIRECTOR_ID])
         fmt = '%' + str(self._maxlen) + 's: %s'
-        print(fmt % (DIRECTOR, d[NAME]))
+        print(fmt % (bacula_tools.DIRECTOR, d[bacula_tools.NAME]))
         return
 
     def connect(self):
-        c_conn = Bacula_Config()
+        c_conn = bacula_tools.Bacula_Config()
         args = []
-        for key in [DBNAME, USER, PASSWORD, DBADDRESS]:
+        for key in [bacula_tools.DBNAME, bacula_tools.USER, bacula_tools.PASSWORD, bacula_tools.DBADDRESS]:
             value = self[key]
             if value == None:
                 value = ''

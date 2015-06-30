@@ -1,13 +1,13 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import print_function, absolute_import
-from bacula_tools import (DbDict, DATA, MESSAGES, ID, NAME)
+import bacula_tools
 import optparse
 
 
-class Messages(DbDict):
-    SETUP_KEYS = [(DATA, ''), ]
-    table = MESSAGES
+class Messages(bacula_tools.DbDict):
+    SETUP_KEYS = [(bacula_tools.DATA, ''), ]
+    table = bacula_tools.MESSAGES
     _select = 'SELECT ref_id, link_type FROM messages_link WHERE messages_id=%s'
     _insert = 'INSERT INTO messages_link (messages_id, ref_id, link_type) VALUES (%s, %s, %s)'
     _delete = 'DELETE FROM messages_link WHERE messages_id = %s AND ref_id=%s AND link_type=%s'
@@ -16,7 +16,8 @@ class Messages(DbDict):
         '''If I were willing to really wed this to MySQL, I should switch to REPLACE INTO.
         Since I'm not, we'll just do an insert and check for a duplication error.'''
         try:
-            self.bc.do_sql(self._insert, (self[ID], obj[ID], obj.IDTAG))
+            self.bc.do_sql(
+                self._insert, (self[bacula_tools.ID], obj[bacula_tools.ID], obj.IDTAG))
         except Exception as e:
             if e.args[0] == 1062:
                 # 1062 is what happens when you try to insert a duplicate row
@@ -27,7 +28,8 @@ class Messages(DbDict):
 
     def unlink(self, obj):
         '''Remove the link between this Message and the given object.'''
-        self.bc.do_sql(self._delete, (self[ID], obj[ID], obj.IDTAG))
+        self.bc.do_sql(
+            self._delete, (self[bacula_tools.ID], obj[bacula_tools.ID], obj.IDTAG))
         return
 
     def __str__(self):
@@ -60,11 +62,11 @@ class Messages(DbDict):
             if obj:
                 target = obj().search(args.add_link)
             else:
-                for key in [Client, Storage, Director]:
+                for key in [bacula_tools.Client, bacula_tools.Storage, bacula_tools.Director]:
                     target = key().search(args.add_link)
-                    if target[ID]:
+                    if target[bacula_tools.ID]:
                         break
-            if target[ID]:
+            if target[bacula_tools.ID]:
                 self.link(target)
             else:
                 print('Unable to find anything named', args.add_link)
@@ -73,9 +75,9 @@ class Messages(DbDict):
             if obj:
                 target = obj().search(args.remove_link)
             else:
-                for key in [Client, Storage, Director]:
+                for key in [bacula_tools.Client, bacula_tools.Storage, bacula_tools.Director]:
                     target = key().search(args.remove_link)
-                    if target[ID]:
+                    if target[bacula_tools.ID]:
                         break
             if not target:
                 print('Unable to find anything named', args.remove_link)
@@ -86,14 +88,14 @@ class Messages(DbDict):
 
     def _cli_special_print(self):
         '''Print out the linked objects.'''
-        resultset = self.bc.do_sql(self._select, self[ID])
+        resultset = self.bc.do_sql(self._select, self[bacula_tools.ID])
         if not resultset:
             return
         fmt = '%' + str(self._maxlen) + 's'
         for row in resultset:
-            for key in [Client, Storage, Director]:
+            for key in [bacula_tools.Client, bacula_tools.Storage, bacula_tools.Director]:
                 if key.IDTAG == row[1]:
-                    print(fmt % key().search(row[0])[NAME])
+                    print(fmt % key().search(row[0])[bacula_tools.NAME])
         return
 
 

@@ -3,9 +3,12 @@
 import os
 import sys
 import pprint
+import logging
+# logging.basicConfig(level=logging.DEBUG)
 sys.path.insert(0, '..')
 sys.path.insert(0, '.')
 import bacula_tools
+import bacula_tools.parser_support
 
 test_cases = ['''    Name = File
   Address = 127.0.0.1                
@@ -46,6 +49,7 @@ test_cases = ['''    Name = File
 
 # let's hope there's a director
 for string in test_cases:
+    bacula_tools.parser_support.setup_for_parsing()
     c = bacula_tools.Storage()
     c.parse_string(string)
     # print c

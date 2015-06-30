@@ -1,74 +1,62 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import print_function, absolute_import
-from bacula_tools import (ACCURATE, ADDPREFIX, ADDSUFFIX,
-                          ALLOWDUPLICATEJOBS, ALLOWMIXEDPRIORITY, BASE,
-                          BOOTSTRAP, CANCELLOWERLEVELDUPLICATES,
-                          CANCELQUEUEDDUPLICATES, CANCELRUNNINGDUPLICATES,
-                          CLIENT_ID, DbDict, DIFFERENTIALMAXWAITTIME,
-                          DIFFERENTIALPOOL_ID, FILESET_ID, FULLPOOL_ID,
-                          IDMAXWAITTIME, INCREMENTALMAXRUNTIME,
-                          INCREMENTALPOOL_ID, JOBDEF, JOBS, JOB_ID, LEVEL,
-                          MAXFULLINTERVAL, MAXIMUMBANDWIDTH,
-                          MAXIMUMCONCURRENTJOBS, MAXRUNSCHEDTIME,
-                          MAXRUNTIME, MAXSTARTDELAY, MAXWAITTIME,
-                          MESSAGES_ID, NOTES, POOL_ID,
-                          PREFERMOUNTEDVOLUMES, PREFIXLINKS,
-                          PRIORITY, ENABLED, PRUNEFILES, PRUNEJOBS,
-                          PRUNEVOLUMES, REGEXWHERE, REPLACE,
-                          RERUNFAILEDLEVELS, RESCHEDULEINTERVAL,
-                          RESCHEDULEONERROR, RESCHEDULETIMES, RUN,
-                          SCHEDULE_ID, SPOOLATTRIBUTES, SPOOLDATA,
-                          SPOOLSIZE, STORAGE_ID, STRIPPREFIX, TYPE,
-                          VERIFYJOB, WHERE, WRITEBOOTSTRAP,
-                          WRITEPARTAFTERJOB,
-                          )
+import bacula_tools
 import logging
 import optparse
 
 
-class Job(DbDict):
+class Job(bacula_tools.DbDict):
 
     '''This actually covers both Jobs and JobDefs, EXCEPT during parsing, when
     the JobDef subclass is used because it has different default values.
     '''
-    SETUP_KEYS = [
-        # Enum
-        TYPE, LEVEL,
-        # Strings
-        NOTES, ADDPREFIX, ADDSUFFIX, BASE, BOOTSTRAP, MAXIMUMBANDWIDTH, MAXSTARTDELAY,
-        REGEXWHERE, RUN, SPOOLSIZE, STRIPPREFIX, VERIFYJOB, WHERE, WRITEBOOTSTRAP,
-        # keys with values
-        (REPLACE, 'always'),
-        # Times
-        DIFFERENTIALMAXWAITTIME, IDMAXWAITTIME, INCREMENTALMAXRUNTIME, MAXRUNSCHEDTIME,
-        MAXRUNTIME, MAXWAITTIME, MAXFULLINTERVAL, RESCHEDULEINTERVAL,
-    ]
-    INT_KEYS = [MAXIMUMCONCURRENTJOBS, RESCHEDULETIMES, PRIORITY]
-    BOOL_KEYS = [ENABLED, PREFERMOUNTEDVOLUMES, ACCURATE, ALLOWDUPLICATEJOBS,
-                 ALLOWMIXEDPRIORITY, CANCELLOWERLEVELDUPLICATES,
-                 CANCELQUEUEDDUPLICATES, CANCELRUNNINGDUPLICATES, JOBDEF,
-                 PREFIXLINKS, PRUNEFILES, PRUNEJOBS, PRUNEVOLUMES, RERUNFAILEDLEVELS,
-                 RESCHEDULEONERROR, SPOOLATTRIBUTES, SPOOLDATA, WRITEPARTAFTERJOB
-                 ]
-    REFERENCE_KEYS = [          # foreign keys
-        DIFFERENTIALPOOL_ID, FILESET_ID, FULLPOOL_ID, CLIENT_ID,
-        INCREMENTALPOOL_ID, MESSAGES_ID, POOL_ID, SCHEDULE_ID, STORAGE_ID,
-    ]
-    SPECIAL_KEYS = [JOB_ID, ]    # These won't be handled en- masse
-    table = JOBS
+    SETUP_KEYS = [bacula_tools.TYPE, bacula_tools.LEVEL,
+                  bacula_tools.NOTES, bacula_tools.ADDPREFIX, bacula_tools.ADDSUFFIX,
+                  bacula_tools.BASE, bacula_tools.BOOTSTRAP,
+                  bacula_tools.MAXIMUMBANDWIDTH, bacula_tools.MAXSTARTDELAY,
+                  bacula_tools.REGEXWHERE, bacula_tools.RUN, bacula_tools.SPOOLSIZE,
+                  bacula_tools.STRIPPREFIX, bacula_tools.VERIFYJOB,
+                  bacula_tools.WHERE, bacula_tools.WRITEBOOTSTRAP,
+                  (bacula_tools.REPLACE, 'always'),
+                  bacula_tools.DIFFERENTIALMAXWAITTIME, bacula_tools.IDMAXWAITTIME,
+                  bacula_tools.INCREMENTALMAXRUNTIME, bacula_tools.MAXRUNSCHEDTIME,
+                  bacula_tools.MAXRUNTIME, bacula_tools.MAXWAITTIME,
+                  bacula_tools.MAXFULLINTERVAL, bacula_tools.RESCHEDULEINTERVAL, ]
+    INT_KEYS = [bacula_tools.MAXIMUMCONCURRENTJOBS,
+                bacula_tools.RESCHEDULETIMES, bacula_tools.PRIORITY]
+    BOOL_KEYS = [bacula_tools.ENABLED, bacula_tools.PREFERMOUNTEDVOLUMES,
+                 bacula_tools.ACCURATE, bacula_tools.ALLOWDUPLICATEJOBS,
+                 bacula_tools.ALLOWMIXEDPRIORITY,
+                 bacula_tools.CANCELLOWERLEVELDUPLICATES,
+                 bacula_tools.CANCELQUEUEDDUPLICATES,
+                 bacula_tools.CANCELRUNNINGDUPLICATES, bacula_tools.JOBDEF,
+                 bacula_tools.PREFIXLINKS, bacula_tools.PRUNEFILES,
+                 bacula_tools.PRUNEJOBS, bacula_tools.PRUNEVOLUMES,
+                 bacula_tools.RERUNFAILEDLEVELS,
+                 bacula_tools.RESCHEDULEONERROR,
+                 bacula_tools.SPOOLATTRIBUTES, bacula_tools.SPOOLDATA,
+                 bacula_tools.WRITEPARTAFTERJOB]
+    REFERENCE_KEYS = [bacula_tools.DIFFERENTIALPOOL_ID,
+                      bacula_tools.FILESET_ID, bacula_tools.FULLPOOL_ID,
+                      bacula_tools.CLIENT_ID, bacula_tools.INCREMENTALPOOL_ID,
+                      bacula_tools.MESSAGES_ID, bacula_tools.POOL_ID,
+                      bacula_tools.SCHEDULE_ID, bacula_tools.STORAGE_ID, ]
+    # These won't be handled en- masse
+    SPECIAL_KEYS = [bacula_tools.JOB_ID, ]
+    table = bacula_tools.JOBS
     retlabel = 'Job'
 
     def __init__(self, row={}, string=None):
         '''Need to have a nice, clean scripts member'''
-        DbDict.__init__(self, row, string)
+        bacula_tools.DbDict.__init__(self, row, string)
         self.scripts = []
         return
 
     def __str__(self):
         '''String representation of a Job, suitable for inclusion in a Director config'''
         self.output = ['%s {' % self.retlabel, '}']
-        self._simple_phrase(NAME)
+        self._simple_phrase(bacula_tools.NAME)
         for x in self.SETUP_KEYS:
             self._simple_phrase(x)
         for x in self.INT_KEYS:
@@ -77,13 +65,13 @@ class Job(DbDict):
             if self[x] == None:
                 continue
             self.output.insert(-1, '  %s = "%s"' %
-                               (x.replace('_id', '').capitalize(), self._fk_reference(x)[NAME]))
-        if self[JOB_ID]:
+                               (x.replace('_id', '').capitalize(), self._fk_reference(x)[bacula_tools.NAME]))
+        if self[bacula_tools.JOB_ID]:
             self.output.insert(-1, '  JobDefs = "%s"' %
-                               self._fk_reference(JOB_ID)[NAME])
+                               self._fk_reference(JOB_ID)[bacula_tools.NAME])
 
         for x in self.BOOL_KEYS:
-            if x == JOBDEF:
+            if x == bacula_tools.JOBDEF:
                 continue
             self._yesno_phrase(x)
         for x in self.scripts:
@@ -100,21 +88,23 @@ class Job(DbDict):
         obj = bacula_tools._DISPATCHER[key]()
         if string:
             obj.search(string.strip())
-            if not obj[ID]:
+            if not obj[bacula_tools.ID]:
                 obj.set_name(string.strip())
-            if not self[fk] == obj[ID]:
-                self.set(fk, obj[ID])
+            if not self[fk] == obj[bacula_tools.ID]:
+                self.set(fk, obj[bacula_tools.ID])
         else:
             obj.search(self[fk])
         return obj
 
     def _load_scripts(self):
         '''Job scripts are stored separately as Script objects.  This loads them in. '''
-        if self[ID]:
-            for row in self.bc.do_sql('SELECT * FROM job_scripts WHERE job_id = %s', (self[ID],), asdict=True):
-                s = bacula_tools.Script({ID: row[SCRIPT_ID]})
+        if self[bacula_tools.ID]:
+            for row in self.bc.do_sql('SELECT * FROM job_scripts WHERE job_id = %s', (self[bacula_tools.ID],), asdict=True):
+                s = bacula_tools.Script(
+                    {bacula_tools.ID: row[bacula_tools.SCRIPT_ID]})
                 s.search()
-                self.scripts = [x for x in self.scripts if not x[ID] == s[ID]]
+                self.scripts = [
+                    x for x in self.scripts if not x[bacula_tools.ID] == s[bacula_tools.ID]]
                 self.scripts.append(s)
         return
 
@@ -122,27 +112,30 @@ class Job(DbDict):
         '''Helper function for parsing configuration strings.'''
         def doit(a, b, c):
             s = bacula_tools.Script(kwargs)
-            s[COMMAND] = c[2]
+            s[bacula_tools.COMMAND] = c[2]
             s.search()
             return self._add_script(s)
         return doit
 
     def _add_script(self, s):
         '''Add a script to the Job.'''
-        self.scripts = [x for x in self.scripts if not x[ID] == s[ID]]
+        self.scripts = [x for x in self.scripts if not x[bacula_tools.ID]
+                        == s[bacula_tools.ID]]
         self.scripts.append(s)
         row = self.bc.do_sql(
-            'SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (self[ID], s[ID]))
+            'SELECT * FROM job_scripts WHERE job_id = %s AND script_id = %s', (self[bacula_tools.ID], s[bacula_tools.ID]))
         if not row:
             self.bc.do_sql(
-                'INSERT INTO job_scripts(job_id, script_id) VALUES (%s, %s)', (self[ID], s[ID]))
+                'INSERT INTO job_scripts(job_id, script_id) VALUES (%s, %s)', (self[bacula_tools.ID], s[bacula_tools.ID]))
         return s
 
     def _delete_script(self, s):
         '''Remove a Script from the Job.  This does not actually delete the Script,
         just the linkage to this job.'''
-        self.bc.do_sql('DELETE FROM job_scripts WHERE id = %s', (s[ID]))
-        self.scripts = [x for x in self.scripts if not x[ID] == s[ID]]
+        self.bc.do_sql(
+            'DELETE FROM job_scripts WHERE id = %s', (s[bacula_tools.ID]))
+        self.scripts = [
+            x for x in self.scripts if not x[bacula_tools.ID] == s[bacula_tools.ID]]
         return
 
     def _parse_script_full(self, *tokens):
@@ -182,18 +175,27 @@ class Job(DbDict):
 
     def _cli_special_do_parse(self, args):
         '''CLI Foreign Key reference actions.'''
-        self._cli_deref_helper(POOL_ID, args.pool, Pool)
         self._cli_deref_helper(
-            DIFFERENTIALPOOL_ID, args.differential_pool, Pool)
-        self._cli_deref_helper(FULLPOOL_ID, args.full_pool, Pool)
-        self._cli_deref_helper(INCREMENTALPOOL_ID, args.incremental_pool, Pool)
+            bacula_tools.POOL_ID, args.pool, bacula_tools.Pool)
+        self._cli_deref_helper(
+            bacula_tools.DIFFERENTIALPOOL_ID, args.differential_pool, bacula_tools.Pool)
+        self._cli_deref_helper(
+            bacula_tools.FULLPOOL_ID, args.full_pool, bacula_tools.Pool)
+        self._cli_deref_helper(
+            bacula_tools.INCREMENTALPOOL_ID, args.incremental_pool, bacula_tools.Pool)
 
-        self._cli_deref_helper(FILESET_ID, args.fileset, Fileset)
-        self._cli_deref_helper(CLIENT_ID, args.client, Client)
-        self._cli_deref_helper(MESSAGES_ID, args.message_set, Messages)
-        self._cli_deref_helper(SCHEDULE_ID, args.schedule, Schedule)
-        self._cli_deref_helper(STORAGE_ID, args.storage, Storage)
-        self._cli_deref_helper(JOB_ID, args.default_job, JobDef)
+        self._cli_deref_helper(
+            bacula_tools.FILESET_ID, args.fileset, bacula_tools.Fileset)
+        self._cli_deref_helper(
+            bacula_tools.CLIENT_ID, args.client, bacula_tools.Client)
+        self._cli_deref_helper(
+            bacula_tools.MESSAGES_ID, args.message_set, bacula_tools.Messages)
+        self._cli_deref_helper(
+            bacula_tools.SCHEDULE_ID, args.schedule, bacula_tools.Schedule)
+        self._cli_deref_helper(
+            bacula_tools.STORAGE_ID, args.storage, bacula_tools.Storage)
+        self._cli_deref_helper(
+            bacula_tools.JOB_ID, args.default_job, bacula_tools.JobDef)
         return
 
     def _cli_deref_helper(self, key, value, obj):
@@ -203,8 +205,8 @@ class Job(DbDict):
         if value == '':
             return self.set(key, None)
         target = obj().search(value)
-        if target[ID]:
-            self.set(key, target[ID])
+        if target[bacula_tools.ID]:
+            self.set(key, target[bacula_tools.ID])
         else:
             print('Unable to find a match for %s, continuing' % value)
         pass
@@ -216,7 +218,7 @@ class Job(DbDict):
             if self[x] == None:
                 continue
             print(
-                fmt % (x.replace('_id', '').capitalize(), self._fk_reference(x)[NAME]))
+                fmt % (x.replace('_id', '').capitalize(), self._fk_reference(x)[bacula_tools.NAME]))
         if self.scripts:
             print('\nScripts')
             for x in self.scripts:
@@ -226,7 +228,7 @@ class Job(DbDict):
     def _cli_special_clone(self, oid):
         '''When cloning, add in script links.'''
         select = 'SELECT %s,script_id FROM job_scripts WHERE job_id = %%s' % self[
-            ID]
+            bacula_tools.ID]
         insert = 'INSERT INTO job_scripts (job_id,script_id) VALUES (%s,%s)'
         for row in self.bc.do_sql(select, oid):
             self.bc.do_sql(insert, row)
@@ -241,7 +243,7 @@ class JobDef(Job):
 
     def _save(self):
         '''JobDefs force the JOBDEF key to 1 upon saving.'''
-        self[JOBDEF] = 1
+        self[bacula_tools.JOBDEF] = 1
         return Job._save(self)
 
 

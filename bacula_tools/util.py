@@ -51,10 +51,10 @@ def guess_schedule_and_filesets(hostname, os):
     itself, you may want to have automatic selection of appropriate scheduls
     and filesets.'''
     results = []
-    for (variable, matcher, fileset, schedule) in guessing_rules:
+    for (variable, matcher, fileset, schedule) in bacula_tools.guessing_rules:
         if matcher.match(locals()[variable]):
             results.append((fileset, schedule))
-    return results or default_rules
+    return results or bacula_tools.default_rules
 
 
 def die(*msg):
@@ -245,7 +245,7 @@ class PasswordStore(object):
 
     def store(self):
         '''Write the data out to the database'''
-        if self.password == GENERATE:
+        if self.password == bacula_tools.GENERATE:
             self.password = generate_password()
         if not self.password:
             sql = self._delete % (self.table, self._where)
@@ -360,7 +360,7 @@ class DbDict(dict):
                     self.table, bacula_tools.ID, int(key), asdict=True)
             except:
                 new_me = self.bc.value_check(
-                    self.table, NAME, key, asdict=True)
+                    self.table, bacula_tools.NAME, key, asdict=True)
         try:
             self.update(new_me[0])
         except Exception as e:
@@ -382,9 +382,9 @@ class DbDict(dict):
         logging.debug('setting %s to %s, boolean=%s, dereference=%s',
                       field, value, boolean, dereference)
         if boolean and value != None:
-            if value in TRUE_VALUES:
+            if value in bacula_tools.TRUE_VALUES:
                 value = 1
-            elif value in FALSE_VALUES:
+            elif value in bacula_tools.FALSE_VALUES:
                 value = 0
             else:
                 print('"%s" is not a proper boolean value: %s not changed' %
@@ -398,7 +398,7 @@ class DbDict(dict):
     def _save(self):
         '''Update the database with our data.'''
         if bacula_tools.PASSWORD in self.keys():
-            if self[bacula_tools.PASSWORD] == GENERATE:
+            if self[bacula_tools.PASSWORD] == bacula_tools.GENERATE:
                 self[bacula_tools.PASSWORD] = bacula_tools.generate_password()
         if self[bacula_tools.ID]:
             keys = [x for x in self.keys() if not x == bacula_tools.ID]
@@ -426,7 +426,7 @@ class DbDict(dict):
 
         '''
         row = self.bc.value_ensure(
-            self.table, NAME, name.strip(), asdict=True)[0]
+            self.table, bacula_tools.NAME, name.strip(), asdict=True)[0]
         self.update(row)
         [getattr(self, x)() for x in dir(self) if '_load_' in x]
         return
@@ -442,7 +442,7 @@ class DbDict(dict):
         self.set_name(g[0].strip().replace('"', '').replace("'", ''))
         string = self.name_re.sub('', string)
         data = '\n  '.join([x.strip() for x in string.split('\n') if x])
-        self.set(DATA, data)
+        self.set(bacula_tools.DATA, data)
         return "%s: %s" % (self.table.capitalize(), self[bacula_tools.NAME])
 
     def _parse_setter(self, key, c_int=False, dereference=False):
@@ -483,9 +483,9 @@ class DbDict(dict):
         if value == None:
             return
         if value == '0':
-            value = NO
+            value = bacula_tools.NO
         else:
-            value = YES
+            value = bacula_tools.YES
         self.output.insert(-1, '%s%s = %s' %
                            (self.prefix, key.capitalize(), value))
         return

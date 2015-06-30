@@ -11,3 +11,4 @@ dist
 setuptools-*.egg
 setuptools-*.tar.gz
 .coverage
+.noseids

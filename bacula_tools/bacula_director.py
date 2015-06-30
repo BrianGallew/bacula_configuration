@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+'''Client for communicating directly with a director. '''
 from __future__ import print_function, absolute_import
 from . import BSock, ADDRESS, PASSWORD, DIRPORT
 

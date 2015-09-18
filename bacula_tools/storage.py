@@ -73,7 +73,7 @@ class Storage(bacula_tools.DbDict):
             d.search(args.director)
         except:
             d.search(args.director)
-        if not d[ID]:
+        if not d[bacula_tools.ID]:
             print(
                 '\n***WARNING***: Unable to find a director using "%s".  Password not changed\n' % args.director)
             return

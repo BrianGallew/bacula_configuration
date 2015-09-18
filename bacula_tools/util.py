@@ -468,7 +468,7 @@ class DbDict(dict):
             value = self[key]
         except:
             if quoted:
-                value = '"' + self[key] + '"'
+                value = '"' + self[key].strip() + '"'
             else:
                 value = self[key]
         self.output.insert(-1, '%s%s = %s' %

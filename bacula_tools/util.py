@@ -472,7 +472,7 @@ class DbDict(dict):
             else:
                 value = self[key]
         self.output.insert(-1, '%s%s = %s' %
-                           (self.prefix, key.capitalize(), value))
+                           (self.prefix, key.capitalize().replace('_', ' '), value))
         return
 
     def _yesno_phrase(self, key):
@@ -588,7 +588,7 @@ class DbDict(dict):
             exit()                      # Nothing to print out now
 
         if args.rename:
-            self.set(NAME, args.rename)
+            self.set(bacula_tools.NAME, args.rename)
 
         if args.clone:
             oid = self[bacula_tools.ID]

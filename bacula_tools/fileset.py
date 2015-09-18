@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, absolute_import
 from bacula_tools import (DbDict, ENABLEVSS, EXCLUDE, FILESETS,
-                          FILESET_FILES, ID, IGNOREFILESETCHANGES)
+                          FILESET_FILES, ID, IGNOREFILESETCHANGES, OPTIONS,
+                          NAME)
 from re import compile, MULTILINE, IGNORECASE, DOTALL
 import optparse
 import logging

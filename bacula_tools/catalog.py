@@ -93,6 +93,10 @@ class Catalog(bacula_tools.DbDict):
         return c_conn
 
 # Implement the CLI for managing Catalogs
+def main():
+    s = Catalog()
+    s.cli()
+
 
 if __name__ == "__main__":
-    Catalog().cli()
+    main()

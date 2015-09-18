@@ -90,7 +90,7 @@ configuration.'''
             "Password set/change",
             "Passwords are associated with Directors, so changing a password requires "
             "that you specify the Director to which that password applies.  Also, Directors may be "
-            "restricted to a monitoring role.  Specify a value of 'generate' for an",
+            "restricted to a monitoring role.  Specify a value of 'generate' for an"
             "auto-generated password."
         )
         return
@@ -144,5 +144,9 @@ configuration.'''
         return
 
 # Implement the CLI for managing Clients
+def main():
+    s = Client()
+    s.cli()
+
 if __name__ == "__main__":
-    Client().cli()
+    main()

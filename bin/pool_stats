@@ -1,4 +1,4 @@
-#! /usr/local/bin/python
+#! /usr/bin/env python
 '''Dump statistics for all storage pools in all Catalogs.  Run it from a
 host with appropriate mysql connectivity.'''
 

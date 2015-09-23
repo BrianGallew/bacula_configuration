@@ -1,4 +1,4 @@
-#! /usr/local/bin/python
+#! /usr/bin/env python
 '''Look through the local on-disk files, determine which of them, if any,
 have been marked Purged in the catalog, and truncate them.
 

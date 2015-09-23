@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python
 '''Report on the status of all of the clients. '''
 from __future__ import print_function
 import bacula_tools

@@ -1,4 +1,4 @@
-#! /usr/local/bin/python
+#! /usr/bin/env python
 
 '''Cleanup after jobs/clients that have vanished without pruning.
 

@@ -218,35 +218,39 @@ def storage_daemon_config(bc_object, myname):
     storage_daemon = bacula_tools.Storage().search(myname)
     configuration_file.write(storage_daemon.sd(), '\n')
 
+    logging.debug('Getting Director credentials')
     bc_object.query_id_thing('SELECT director_id'
                              '  FROM pwords'
                              '  WHERE obj_id = %s AND obj_type = %s'
                              '                    AND director_type = %s'
                              '  ORDER BY director_id',
                              bacula_tools.Director, configuration_file,
-                             fun='fd',
+                             fun='sd',
                              args=(storage_daemon[bacula_tools.ID],
                                    storage_daemon.IDTAG,
                                    bacula_tools.Director.IDTAG),
-                             client_id=storage_daemon[bacula_tools.ID])
+                             storage_id=storage_daemon[bacula_tools.ID])
 
+    logging.debug('Getting Console credentials')
     bc_object.query_id_thing('SELECT director_id'
                              '  FROM pwords'
                              '  WHERE obj_id = %s AND obj_type = %s'
                              '                    AND director_type = %s'
                              '  ORDER BY director_id',
                              bacula_tools.Console, configuration_file,
-                             fun='fd',
+                             fun='sd',
                              args=(storage_daemon[bacula_tools.ID],
                                    storage_daemon.IDTAG,
                                    bacula_tools.Console.IDTAG),
-                             client_id=storage_daemon[bacula_tools.ID])
+                             storage_id=storage_daemon[bacula_tools.ID])
 
+    logging.debug('Getting devices')
     bc_object.query_id_thing('SELECT device_id FROM device_link'
                              '  WHERE storage_id = %s',
                              bacula_tools.Device, configuration_file,
                              args=(storage_daemon[bacula_tools.ID],))
 
+    logging.debug('Getting messages')
     bc_object.query_id_thing('SELECT messages_id'
                              '  FROM messages_link'
                              '  WHERE ref_id = %s AND link_type = %s',

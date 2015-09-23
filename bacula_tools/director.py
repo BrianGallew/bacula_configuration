@@ -49,7 +49,7 @@ class Director(DbDict):
         '''This is what we'll call to dump out the config for the file daemon'''
         self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
         if getattr(self, CLIENT_ID, None):
-            a = PasswordStore(
+            a = bacula_tools.PasswordStore(
                 bacula_tools.Client().search(self.client_id), self)
             if getattr(a, PASSWORD, None):
                 self.output.insert(-1, '  Password = "%s"' % a.password)
@@ -59,7 +59,7 @@ class Director(DbDict):
         '''This is what we'll call to dump out the config for the storage daemon'''
         self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
         if getattr(self, STORAGE_ID, None):
-            a = PasswordStore(
+            a = bacula_tools.PasswordStore(
                 bacula_tools.Storage().search(self.storage_id), self)
             if getattr(a, PASSWORD, None):
                 self.output.insert(-1, '  Password = "%s"' % a.password)

@@ -32,14 +32,15 @@ class Director(DbDict):
         self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
         for key in self.SETUP_KEYS + self.INT_KEYS:
             if key == ADDRESS:
-                continue
-            self._simple_phrase(key)
+                self.output.insert(-1, '  DirAddress = %s' % self[key])
+            else:
+                self._simple_phrase(key)
         # set the messages
         m = self._fk_reference(MESSAGES_ID)
         self.output.insert(-1, '  %s = "%s"' %
                            (MESSAGES.capitalize(), m[NAME]))
         if self[DIRADDRESSES]:
-            self.output.insert(-1, '  %s {' % DIRADDRESSES.capitalize())
+            self.output.insert(-1, '  %s = {' % DIRADDRESSES.capitalize())
             self.output.insert(-1,  self[DIRADDRESSES])
             self.output.insert(-1, '  }')
         return '\n'.join(self.output)
@@ -67,8 +68,13 @@ class Director(DbDict):
     def bconsole(self):
         '''This is what we'll call to dump out the config for the bconsole'''
         self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
-        self._simple_phrase(DIRPORT)
-        self._simple_phrase(ADDRESS)
+        if self[DIRPORT]:
+            self._simple_phrase(DIRPORT)
+            self._simple_phrase(ADDRESS)
+        else:
+            # This has the more silly way of doing stuff.  bleah.
+            self.output.insert(-1,
+                               '  Dir Addresses = {\n  %s  \n  }\n' % self[DIRADDRESSES])
         self._simple_phrase(PASSWORD)
         return '\n'.join(self.output)
 

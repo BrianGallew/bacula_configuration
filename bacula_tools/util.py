@@ -729,7 +729,7 @@ class BSock:
         # Don't take forever trying to do stuff
         self.connection.settimeout(timeout)
         logging.debug(
-            'connecting to: %s:%s with password "%s"', address, port, self.password)
+            'connecting to: %s(%s):%s with password "%s"', myname, address, port, self.password)
         self.connection.connect((address, port))
         return
 

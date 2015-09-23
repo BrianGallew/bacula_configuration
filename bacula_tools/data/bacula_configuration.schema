@@ -3,29 +3,27 @@
 -- Order matters!
 DROP TABLE IF EXISTS `counters` ;
 DROP TABLE IF EXISTS `device_link` ;
-DROP TABLE IF EXISTS `messages_link` ;
-DROP TABLE IF EXISTS `device` ;
-DROP TABLE IF EXISTS `job_scripts` ;
-DROP TABLE IF EXISTS `service_link` ;
-DROP TABLE IF EXISTS `schedule_link` ;
-DROP TABLE IF EXISTS `jobs` ;
-DROP TABLE IF EXISTS `scripts` ;
-DROP TABLE IF EXISTS `client_pwords` ;
-DROP TABLE IF EXISTS `storage_pwords` ;
-DROP TABLE IF EXISTS `pwords` ;
-DROP TABLE IF EXISTS `clients` ;
-DROP TABLE IF EXISTS `catalogs`;
-DROP TABLE IF EXISTS `directors` ;
-DROP TABLE IF EXISTS `messages`;
-DROP TABLE IF EXISTS `schedule_time` ;
-DROP TABLE IF EXISTS `schedules` ;
-DROP TABLE IF EXISTS `services` ;
 DROP TABLE IF EXISTS `fileset_link` ;
-DROP TABLE IF EXISTS `fileset_files` ;
-DROP TABLE IF EXISTS `filesets` ;
-DROP TABLE IF EXISTS `consoles`;
+DROP TABLE IF EXISTS `schedule_link` ;
+DROP TABLE IF EXISTS `service_link` ;
+DROP TABLE IF EXISTS `job_scripts` ;
+DROP TABLE IF EXISTS `jobs` ;
+DROP TABLE IF EXISTS `clients` ;
 DROP TABLE IF EXISTS `pools`;
+DROP TABLE IF EXISTS `catalogs`;
+DROP TABLE IF EXISTS `consoles`;
+DROP TABLE IF EXISTS `directors` ;
+DROP TABLE IF EXISTS `messages_link` ;
+DROP TABLE IF EXISTS `filesets` ;
+DROP TABLE IF EXISTS `fileset_files` ;
+DROP TABLE IF EXISTS `services` ;
+DROP TABLE IF EXISTS `schedules` ;
+DROP TABLE IF EXISTS `schedule_time` ;
 DROP TABLE IF EXISTS `storage` ;
+DROP TABLE IF EXISTS `scripts` ;
+DROP TABLE IF EXISTS `pwords` ;
+DROP TABLE IF EXISTS `messages`;
+DROP TABLE IF EXISTS `device` ;
 
 -- select 'Creating table device';
 CREATE TABLE `device` 
@@ -81,26 +79,6 @@ CREATE TABLE `device`
   UNIQUE KEY `name` (`name`)
 ) DEFAULT CHARSET=latin1;
 
--- select 'Creating table consoles';
-CREATE TABLE `consoles` 
- (
-  `id` int(11) NOT NULL auto_increment,
-  `name` varchar(255) NOT NULL,
-  `catalogacl` varchar(4096),	
-  `clientacl` varchar(4096),
-  `commandacl` varchar(4096),
-  `filesetacl` varchar(4096),
-  `jobacl` varchar(4096),
-  `poolacl` varchar(4096),
-  `scheduleacl` varchar(4096),
-  `storageacl` varchar(4096),
-  `whereacl` varchar(4096),
-  `address` varchar(255),
-  `dirport` int(11) NOT NULL DEFAULT 9101,
-  PRIMARY KEY `PRIMARY` (`id`),
-  UNIQUE KEY `name` (`name`)
-) DEFAULT CHARSET=latin1;
-
 -- select 'Creating table messages';
 CREATE TABLE `messages` 
  (
@@ -111,46 +89,30 @@ CREATE TABLE `messages`
   UNIQUE KEY `name` (`name`)
 ) DEFAULT CHARSET=latin1;
 
--- select 'Creating table directors';
-CREATE TABLE `directors` (
+-- select 'Creating table pwords';
+CREATE TABLE `pwords` (
   `id` int(11) NOT NULL auto_increment,
-  `name` varchar(255) NOT NULL,
+  `obj_id` int(11) NOT NULL,
+  `obj_type` int(11) NOT NULL,
+  `director_id` int(11) NOT NULL,
+  `director_type` int(11) NOT NULL,
   `password` varchar(255),
-  `messages_id` int(11),
-  `workingdirectory` varchar(255),
-  `piddirectory` varchar(255),
-  `scripts_directory` varchar(255),
-  `queryfile` varchar(255),
-  `heartbeatinterval` int(11),
-  `maximumconcurrentjobs` int(11),
-  `fd_connect_timeout` int(11),
-  `sd_connect_timeout` int(11),
-  `diraddresses` varchar(512),
-  `statistics_retention` varchar(255),
-  `maximumconsoleconnections` int(11),
-  `address` varchar(255),
-  `sourceaddress` varchar(255),
-  `dirport` int(11) NOT NULL DEFAULT 9101,
   PRIMARY KEY `PRIMARY` (`id`),
-  UNIQUE KEY `name` (`name`),
-  CONSTRAINT `directors_fk_messages_id` FOREIGN KEY (`messages_id`) REFERENCES `messages` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+  UNIQUE KEY `pwords_cid_did` (`obj_id`, `obj_type`, `director_id`, `director_type`)
 ) DEFAULT CHARSET=latin1;
 
--- select 'Creating table catalogs';
-CREATE TABLE `catalogs` 
- (
+-- select 'Creating table scripts';
+CREATE TABLE `scripts` (
   `id` int(11) NOT NULL auto_increment,
-  `name` varchar(255) NOT NULL,
-  `user` varchar(255),
-  `password` varchar(255),
-  `dbname` varchar(255),
-  `dbaddress` varchar(255),
-  `dbsocket` varchar(255),
-  `dbport` varchar(255),
-  `director_id` int(11),
-  PRIMARY KEY `PRIMARY` (`id`),
-  UNIQUE KEY `name` (`name`),
-  CONSTRAINT `catalogs_fk_director_id` FOREIGN KEY (`director_id`) REFERENCES `directors` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+  `name` varchar(255),
+  `runsonsuccess` tinyint(1),
+  `runsonfailure` tinyint(1),
+  `runsonclient` tinyint(1),
+  `runswhen` varchar(15) NOT NULL DEFAULT 'Never',
+  `failjobonerror` tinyint(1),
+  `command` varchar(255),
+  `console` varchar(255),
+  PRIMARY KEY `PRIMARY` (`id`)
 ) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table storage';
@@ -172,38 +134,6 @@ CREATE TABLE `storage` (
   `sdaddresses` varchar(255),
   PRIMARY KEY `id` (`id`),
   UNIQUE KEY `name` (`name`)
-) DEFAULT CHARSET=latin1;
-
--- select 'Creating table pools';
-CREATE TABLE `pools` 
- (
-  `id` int(11) NOT NULL auto_increment,
-  `name` varchar(255) NOT NULL,
-  `maximumvolumes` int(11),
-  `pooltype` varchar(15) NOT NULL DEFAULT 'Backup',
-  `storage_id` int(11),
-  `usevolumeonce` tinyint(1),
-  `maximumvolumejobs` int(11),
-  `maximumvolumefiles` int(11),
-  `maximumvolumebytes` varchar(255),
-  `volumeuseduration` varchar(255),
-  `catalogfiles` tinyint(1),
-  `autoprune` tinyint(1),
-  `volumeretention` varchar(255),
-  `actiononpurge` varchar(255),
-  `scratchpool` varchar(255),
-  `recyclepool` varchar(255),
-  `recycle` tinyint(1),
-  `recycleoldestvolume` tinyint(1),
-  `recyclecurrentvolume` tinyint(1),
-  `purgeoldestvolume` tinyint(1),
-  `fileretention` varchar(255),
-  `jobretention` varchar(255),
-  `cleaningprefix` varchar(255),
-  `labelformat` varchar(255),
-  PRIMARY KEY `PRIMARY` (`id`),
-  UNIQUE KEY `name` (`name`),
-  CONSTRAINT `pools_fk_storage_id` FOREIGN KEY (`storage_id`) REFERENCES `storage` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table schedule_time';
@@ -249,6 +179,110 @@ CREATE TABLE `filesets` (
   UNIQUE KEY `name_UNIQUE` (`name`)
 ) DEFAULT CHARSET=latin1;
 
+-- select 'Creating table messages_link';
+CREATE TABLE `messages_link` (
+  `id` int(11) NOT NULL auto_increment,
+  `messages_id` int(11) NOT NULL,
+  `ref_id` int(11) NOT NULL,
+  `link_type` int(11) NOT NULL,
+  PRIMARY KEY `PRIMARY` (`id`),
+  UNIQUE KEY (`messages_id`, `ref_id`, `link_type`)
+) DEFAULT CHARSET=latin1;
+
+-- select 'Creating table directors';
+CREATE TABLE `directors` (
+  `id` int(11) NOT NULL auto_increment,
+  `name` varchar(255) NOT NULL,
+  `password` varchar(255),
+  `messages_id` int(11),
+  `workingdirectory` varchar(255),
+  `piddirectory` varchar(255),
+  `scripts_directory` varchar(255),
+  `queryfile` varchar(255),
+  `heartbeatinterval` int(11),
+  `maximumconcurrentjobs` int(11),
+  `fd_connect_timeout` int(11),
+  `sd_connect_timeout` int(11),
+  `diraddresses` varchar(512),
+  `statistics_retention` varchar(255),
+  `maximumconsoleconnections` int(11),
+  `address` varchar(255),
+  `sourceaddress` varchar(255),
+  `dirport` int(11) DEFAULT 9101,
+  PRIMARY KEY `PRIMARY` (`id`),
+  UNIQUE KEY `name` (`name`),
+  CONSTRAINT `directors_fk_messages_id` FOREIGN KEY (`messages_id`) REFERENCES `messages` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) DEFAULT CHARSET=latin1;
+
+-- select 'Creating table consoles';
+CREATE TABLE `consoles` 
+ (
+  `id` int(11) NOT NULL auto_increment,
+  `name` varchar(255) NOT NULL,
+  `catalogacl` varchar(4096),	
+  `clientacl` varchar(4096),
+  `commandacl` varchar(4096),
+  `filesetacl` varchar(4096),
+  `jobacl` varchar(4096),
+  `poolacl` varchar(4096),
+  `scheduleacl` varchar(4096),
+  `storageacl` varchar(4096),
+  `whereacl` varchar(4096),
+  `director_id` int(11),
+  PRIMARY KEY `PRIMARY` (`id`),
+  UNIQUE KEY `name` (`name`),
+  CONSTRAINT `consoles_fk_director_id` FOREIGN KEY (`director_id`) REFERENCES `directors` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) DEFAULT CHARSET=latin1;
+
+-- select 'Creating table catalogs';
+CREATE TABLE `catalogs` 
+ (
+  `id` int(11) NOT NULL auto_increment,
+  `name` varchar(255) NOT NULL,
+  `user` varchar(255),
+  `password` varchar(255),
+  `dbname` varchar(255),
+  `dbaddress` varchar(255),
+  `dbsocket` varchar(255),
+  `dbport` varchar(255),
+  `director_id` int(11),
+  PRIMARY KEY `PRIMARY` (`id`),
+  UNIQUE KEY `name` (`name`),
+  CONSTRAINT `catalogs_fk_director_id` FOREIGN KEY (`director_id`) REFERENCES `directors` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) DEFAULT CHARSET=latin1;
+
+-- select 'Creating table pools';
+CREATE TABLE `pools` 
+ (
+  `id` int(11) NOT NULL auto_increment,
+  `name` varchar(255) NOT NULL,
+  `maximumvolumes` int(11),
+  `pooltype` varchar(15) NOT NULL DEFAULT 'Backup',
+  `storage_id` int(11),
+  `usevolumeonce` tinyint(1),
+  `maximumvolumejobs` int(11),
+  `maximumvolumefiles` int(11),
+  `maximumvolumebytes` varchar(255),
+  `volumeuseduration` varchar(255),
+  `catalogfiles` tinyint(1),
+  `autoprune` tinyint(1),
+  `volumeretention` varchar(255),
+  `actiononpurge` varchar(255),
+  `scratchpool` varchar(255),
+  `recyclepool` varchar(255),
+  `recycle` tinyint(1),
+  `recycleoldestvolume` tinyint(1),
+  `recyclecurrentvolume` tinyint(1),
+  `purgeoldestvolume` tinyint(1),
+  `fileretention` varchar(255),
+  `jobretention` varchar(255),
+  `cleaningprefix` varchar(255),
+  `labelformat` varchar(255),
+  PRIMARY KEY `PRIMARY` (`id`),
+  UNIQUE KEY `name` (`name`),
+  CONSTRAINT `pools_fk_storage_id` FOREIGN KEY (`storage_id`) REFERENCES `storage` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+) DEFAULT CHARSET=latin1;
+
 -- select 'Creating table clients';
 CREATE TABLE `clients` (
   `id` int(11) NOT NULL auto_increment,
@@ -285,32 +319,6 @@ CREATE TABLE `clients` (
   PRIMARY KEY `PRIMARY` (`id`),
   UNIQUE KEY `hostname` (`name`),
   CONSTRAINT `clients_fk_catalog_id` FOREIGN KEY (`catalog_id`) REFERENCES `catalogs` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
-) DEFAULT CHARSET=latin1;
-
--- select 'Creating table pwords';
-CREATE TABLE `pwords` (
-  `id` int(11) NOT NULL auto_increment,
-  `obj_id` int(11) NOT NULL,
-  `obj_type` int(11) NOT NULL,
-  `director_id` int(11) NOT NULL,
-  `director_type` int(11) NOT NULL,
-  `password` varchar(255),
-  PRIMARY KEY `PRIMARY` (`id`),
-  UNIQUE KEY `pwords_cid_did` (`obj_id`, `obj_type`, `director_id`, `director_type`)
-) DEFAULT CHARSET=latin1;
-
--- select 'Creating table scripts';
-CREATE TABLE `scripts` (
-  `id` int(11) NOT NULL auto_increment,
-  `name` varchar(255),
-  `runsonsuccess` tinyint(1),
-  `runsonfailure` tinyint(1),
-  `runsonclient` tinyint(1),
-  `runswhen` varchar(15) NOT NULL DEFAULT 'Never',
-  `failjobonerror` tinyint(1),
-  `command` varchar(255),
-  `console` varchar(255),
-  PRIMARY KEY `PRIMARY` (`id`)
 ) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table jobs';
@@ -432,16 +440,6 @@ CREATE TABLE `fileset_link` (
   UNIQUE KEY  (`fileset_id`,`file_id`),
   CONSTRAINT `fileset_link_fk_fileset_id` FOREIGN KEY (`fileset_id`) REFERENCES `filesets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fileset_link_fk_files_id` FOREIGN KEY (`file_id`) REFERENCES `fileset_files` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) DEFAULT CHARSET=latin1;
-
--- select 'Creating table messages_link';
-CREATE TABLE `messages_link` (
-  `id` int(11) NOT NULL auto_increment,
-  `messages_id` int(11) NOT NULL,
-  `ref_id` int(11) NOT NULL,
-  `link_type` int(11) NOT NULL,
-  PRIMARY KEY `PRIMARY` (`id`),
-  UNIQUE KEY (`messages_id`, `ref_id`, `link_type`)
 ) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table device_link';

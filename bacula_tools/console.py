@@ -4,9 +4,10 @@ from __future__ import print_function, absolute_import
 from bacula_tools import (ADDRESS, CATALOGACL, CLIENTACL, CLIENT_ID,
                           COMMANDACL, CONSOLES, DIRECTOR_ID, DIRPORT,
                           DbDict, FILESETACL, JOBACL, POOLACL, SCHEDULEACL,
-                          STORAGEACL, WHEREACL, )
+                          STORAGEACL, WHEREACL, PASSWORD)
 import bacula_tools
 import logging
+logger = logging.getLogger(__name__)
 
 
 class Console(DbDict):
@@ -22,7 +23,8 @@ class Console(DbDict):
 
     '''
     SETUP_KEYS = [CATALOGACL, CLIENTACL, COMMANDACL, FILESETACL, JOBACL,
-                  POOLACL, SCHEDULEACL, STORAGEACL, WHEREACL, DIRPORT, ADDRESS]
+                  POOLACL, SCHEDULEACL, STORAGEACL, WHEREACL]
+    NULL_KEYS = [DIRECTOR_ID, ]
     table = CONSOLES
     IDTAG = 4
 
@@ -30,13 +32,9 @@ class Console(DbDict):
         self.output = ['Console {\n  Name = "%(name)s"' % self, '}']
 
         for key in self.SETUP_KEYS:
-            if key in [DIRPORT, ADDRESS]:
-                continue
             self._simple_phrase(key)
-        if getattr(self, DIRECTOR_ID, None):
-            c = bacula_tools.Director().search(self.director_id)
-            a = PasswordStore(c, self)
-            self.output.insert(-1, '  Password = "%s"' % a.password)
+        c = bacula_tools.Director().search(self[DIRECTOR_ID])
+        self.output.insert(-1, '  Password = "%s"' % c[PASSWORD])
         return '\n'.join(self.output)
 
     def fd(self):
@@ -44,19 +42,21 @@ class Console(DbDict):
             'Director {\n  Name = "%(name)s"' % self, '  Monitor = yes', '}']
         if getattr(self, CLIENT_ID, None):
             c = bacula_tools.Client().search(self.client_id)
-            a = PasswordStore(c, self)
+            a = bacula_tools.PasswordStore(c, self)
             self.output.insert(-1, '  Password = "%s"' % a.password)
         return '\n'.join(self.output)
 
     def bconsole(self):
         '''This is what we'll call to dump out the config for the bconsole'''
         self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
-        self._simple_phrase(DIRPORT)
-        self._simple_phrase(ADDRESS)
-        if getattr(self, DIRECTOR_ID, None):
-            c = bacula_tools.Director().search(self.director_id)
-            a = PasswordStore(c, self)
-            self.output.insert(-1, '  Password = "%s"' % a.password)
+        c = bacula_tools.Director().search(self[DIRECTOR_ID])
+        self.output.insert(-1, '  Password = "%s"' % c[PASSWORD])
+        if ADDRESS in c:
+            self.output.insert(-1,
+                               '  DirPort = %(dirport)s\n  Address = %(address)s' % c)
+        else:
+            self.output.insert(-1,
+                               '  Dir Addresses = {\n  %s  \n  }\n' % c[DIRADDRESSES])
         return '\n'.join(self.output)
 
 

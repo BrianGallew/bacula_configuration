@@ -8,7 +8,7 @@ from bacula_tools import (ADDRESS, CLIENT_ID, DIRADDRESSES, DIRECTORS,
                           NAME, PASSWORD, PIDDIRECTORY, QUERYFILE,
                           SCRIPTS_DIRECTORY, SD_CONNECT_TIMEOUT,
                           SOURCEADDRESS, STATISTICS_RETENTION,
-                          WORKINGDIRECTORY, )
+                          WORKINGDIRECTORY, STORAGE_ID)
 import bacula_tools
 import logging
 import optparse

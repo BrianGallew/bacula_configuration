@@ -68,7 +68,7 @@ class Job(bacula_tools.DbDict):
                                (x.replace('_id', '').capitalize(), self._fk_reference(x)[bacula_tools.NAME]))
         if self[bacula_tools.JOB_ID]:
             self.output.insert(-1, '  JobDefs = "%s"' %
-                               self._fk_reference(JOB_ID)[bacula_tools.NAME])
+                               self._fk_reference(bacula_tools.JOB_ID)[bacula_tools.NAME])
 
         for x in self.BOOL_KEYS:
             if x == bacula_tools.JOBDEF:

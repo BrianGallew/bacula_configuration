@@ -2,29 +2,78 @@
 '''Change or list the hosts using a given storage server.'''
 
 from __future__ import print_function
+import logging
+logging.basicConfig(level=logging.DEBUG)
 import sys
 import bacula_tools
+# Requires Python 2.7 or better
+import argparse
 
 
-def usage():
-    '''Usage: %s storageserver [client [client...]]
-    Given just a storageserver, list all of the clients using this storageserver.
+def setup_logging(option_group):
+    """Sets up logging in a syslog format by log level
+    :param option_group: options as returned by the OptionParser
+    """
+    stderr_log_format = "%(levelname) -8s %(asctime)s %(funcName)s line:%(lineno)d: %(message)s"
+    file_log_format = "%(asctime)s - %(levelname)s - %(message)s"
+    logger = logging.getLogger()
+    if option_group.debug:
+        logger.setLevel(level=logging.DEBUG)
+    elif option_group.verbose:
+        logger.setLevel(level=logging.INFO)
+    else:
+        logger.setLevel(level=logging.WARNING)
 
-    If given one or more clients, switch them to this storageserver.'''
-    print(usage.__doc__ % sys.argv[0])
-    exit()
+    handlers = []
+    if option_group.syslog:
+        handlers.append(logging.SyslogHandler(facility=option_group.syslog))
+        # Use standard format here because timestamp and level will be added by
+        # syslogd.
+    if option_group.logfile:
+        handlers.append(logging.FileHandler(option_group.logfile))
+        handlers[0].setFormatter(logging.Formatter(file_log_format))
+    if not handlers:
+        handlers.append(logging.StreamHandler())
+        handlers[0].setFormatter(logging.Formatter(stderr_log_format))
+    for handler in handlers:
+        logger.addHandler(handler)
+    return
 
-# Actual program is here.
 
-if len(sys.argv) < 2 or '-h' in sys.argv or '--help' in sys.argv:
-    usage()
-storage = sys.argv[1]
-clients = sys.argv[2:]
+def main():
+    """Primary entry point."""
+    logging.debug('main')
+    parser = argparse.ArgumentParser(description='''Given just a storageserver, list all of the clients using this storageserver.
+    If given one or more clients, switch them to this storageserver.''')
+    # Standard logging options.
+    parser.add_argument("-v", "--verbose", dest="verbose", action='store_true',
+                        default=False, help="Verbose output")
+    parser.add_argument("-d", "--debug", dest="debug", action='store_true',
+                        default=False, help="Debugging output")
+    parser.add_argument("--syslog", dest="syslog", metavar="FACILITY",
+                        help="Send log messages to the syslog")
+    parser.add_argument("--logfile", dest="logfile", metavar="FILENAME",
+                        help="Send log messages to a file")
+    # script-specific options here
+    parser.add_argument(dest="storage", metavar="STORAGESERVER",
+                        help="Short name for a storage server")
+    parser.add_argument(dest="clients", nargs='*', metavar="CLIENTS",
+                        help="Clients to attach to this storage server")
 
-storage_unit = bacula_tools.Storage().search(storage)
+    options = parser.parse_args()
+    setup_logging(options)
 
-if clients:
-    for host in clients:
-        storage_unit.move(host)
-else:
-    storage_unit.list_clients()
+    # Your code here.
+    storage_unit = bacula_tools.Storage().search(options.storage)
+
+    if options.clients:
+        for host in options.clients:
+            storage_unit.move(host)
+    else:
+        storage_unit.list_clients()
+
+    return
+
+
+if __name__ == '__main__':
+    main()

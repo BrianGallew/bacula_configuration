@@ -31,8 +31,10 @@ class Director(DbDict):
         '''String representation of a Director, suitable for inclusion in director.conf'''
         self.output = ['Director {\n  Name = "%(name)s"' % self, '}']
         for key in self.SETUP_KEYS + self.INT_KEYS:
-            if key == ADDRESS:
+            if key == ADDRESS and self[ADDRESS]:
                 self.output.insert(-1, '  DirAddress = %s' % self[key])
+            elif key == SOURCEADDRESS and self[SOURCEADDRESS]:
+                self.output.insert(-1, '  DirSourceAddress = %s' % self[key])
             else:
                 self._simple_phrase(key)
         # set the messages

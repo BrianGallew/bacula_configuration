@@ -80,6 +80,13 @@ class Device(DbDict):
         self.bc.do_sql(self._delete, (self[ID], obj[ID]))
         return
 
+    def find_linked(self):
+        '''Find all the linked Storage servers'''
+        result = []
+        for row in self.bc.do_sql(self._select, self[ID]):
+            result.append(bacula_tools.Storage().search(row[0]))
+        return result
+
     def _cli_special_setup(self):
         '''Enable the CLI to (un)link devices to/from Sotrage Daemons.'''
         group = optparse.OptionGroup(self.parser, "Storage daemon links",
@@ -115,8 +122,7 @@ class Device(DbDict):
 
     def _cli_special_print(self):
         '''Print any linked Storage'''
-        for row in self.bc.do_sql(self._select, self[ID]):
-            s = bacula_tools.Storage().search(row[0])
+        for s in self.find_linked():
             print(('%' + str(self._maxlen) + 's: %s') %
                   ('Storage Daemon', s[NAME]))
         return

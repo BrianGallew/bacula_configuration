@@ -111,26 +111,36 @@ class Storage(bacula_tools.DbDict):
 
     def list_clients(self):
         '''List the clients with jobs that use this storage.'''
-        sql = 'SELECT DISTINCT c.name FROM clients c, jobs j WHERE j.storage_id = %s and j.client_id = c.id'
+        sql = '''SELECT DISTINCT c.name FROM clients c, jobs j
+        WHERE j.client_id = c.id AND j.storage_id IN
+        (SELECT s.id FROM storage s, storage t
+        WHERE s.address = t.address AND t.id=%s AND NOT s.id = t.id);'''
         for host in self.bc.do_sql(sql, self[bacula_tools.ID]):
             print(host[0])
         return
 
     def move(self, target_host):
         '''Change all jobs for target_host to use this Storage.'''
-        client = Client().search(target_host)
-        if not client[bacula_tools.ID]:
-            print('No such client:', target_host)
-            return
-        old_dests = [x[0] for x in self.bc.do_sql(
-            'SELECT DISTINCT s.name FROM storage s, jobs j where j.client_id = %s and j.storage_id = s.id', client[bacula_tools.ID])]
-        if not old_dests:
-            print('No jobs configured for client:', target_host)
-            return
-        retval = self.bc.do_sql(
-            'UPDATE jobs SET storage_id = %s WHERE client_id = %s', (self[bacula_tools.ID], client[bacula_tools.ID]))
-        print('Moved %s from %s to %s' %
-              (target_host, ', '.join(old_dests), self[bacula_tools.NAME]))
+        c = bacula_tools.Client().search(target_host)
+        for job in bacula_tools.Job.Find(client_id=c[bacula_tools.ID]):
+            pool_name = '%s-%s' % (self[bacula_tools.NAME],
+                                   c[bacula_tools.FILERETENTION].replace(
+                ' ', '_'))
+            new_pool = bacula_tools.Pool().search(pool_name)
+            job.set(bacula_tools.POOL_ID, new_pool[bacula_tools.ID])
+            job_storage = bacula_tools.Storage().search(
+                job[bacula_tools.STORAGE_ID])
+            job_storage.set(
+                bacula_tools.ADDRESS, self[bacula_tools.ADDRESS])
+            job_device = bacula_tools.Device().search(
+                job_storage[bacula_tools.NAME])
+            old_storage = job_device.find_linked()
+            if old_storage:
+                for o_s in old_storage:
+                    job_device.unlink(o_s)
+                print('Moved %s from %s to %s' %
+                      (target_host, o_s[bacula_tools.NAME], self[bacula_tools.NAME]))
+            job_device.link(self)
         pass
 
 

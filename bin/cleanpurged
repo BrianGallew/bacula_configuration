@@ -49,7 +49,7 @@ else:
     logging.basicConfig(level=logging.WARNING)
 
 # Step 1: identify myself.
-myself = bacula_tools.Storage.Find(name=hostname)[0]
+myself = bacula_tools.Storage().search(hostname)
 
 # Step 2: discover my director(s)
 director_list = [bacula_tools.Director().search(x.where_arguments[2]) for x in bacula_tools.PasswordStore.Find(

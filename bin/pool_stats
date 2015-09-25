@@ -15,15 +15,16 @@ class FormattedResult(dict):
     '''
     keylist = ['Full', 'Archive', 'Append', 'Recycle', 'Purged', 'Read-Only',
                'Disabled', 'Error', 'Busy', 'Used', 'Cleaning']
+    name_width = 20
 
     def __init__(self, name):
         '''Set up initial values.'''
         dict.__init__(self)
         self['NAME'] = name
-        self.fmt = "{NAME:15} "
+        self.fmt = "{NAME:%d} " % self.name_width
         for key in self.keylist:
             self[key] = 0
-            self.fmt += '{%s:%s} ' % (key, len(key))
+            self.fmt += '{%s:>%d} ' % (key, max(len(key), 6))
         self.updated = False
         return
 
@@ -38,10 +39,11 @@ class FormattedResult(dict):
             return
         return print(self.fmt.format(**self))
 
-    @classmethod
-    def print_titles(cls):
+    def print_titles(self):
         '''Prints the keys as a title string '''
-        return print(' ' * 15, ' '.join(cls.keylist))
+        titles = dict(zip(self.keylist, self.keylist))
+        titles['NAME'] = ''
+        print(self.fmt.format(**titles))
 
     def __add__(self, other):
         '''Operator to allow (sub)totalling pools.
@@ -56,8 +58,10 @@ media_sql = '''select VolStatus, count(MediaId) from Media
                       where PoolId=%s group by VolStatus'''
 for catalog in bacula_tools.Catalog().Find():
     conn = catalog.connect()
-    print('\n' + catalog[bacula_tools.NAME])
-    totals = FormattedResult('=' * 15 + '\nTotals         ')
+    print('\nCatalog: ' + catalog[bacula_tools.NAME])
+    width = FormattedResult.name_width
+    title = "{0}\n{1:%d}" % width
+    totals = FormattedResult(title.format('=' * width, 'Totals'))
     totals.print_titles()
     for pool in conn.do_sql(pool_sql):
         result = FormattedResult(pool[1])
@@ -66,3 +70,4 @@ for catalog in bacula_tools.Catalog().Find():
         result.print()
         totals += result
     totals.print()
+    print()

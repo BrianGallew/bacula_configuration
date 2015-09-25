@@ -137,11 +137,15 @@ BACULADATADIR = '/data/bacula'
 
 
 # Now that we've set all of the default initial values, we'll load and
-# parse config files, updating the environment from them.
+# parse config files, updating the environment from them.  NB: every one of
+# these files, if they exist, will be parsed, in this order.  That means
+# later files will override earlier ones.
 CUSTOM_LIST = ['/etc/bacula/bacula.conf',
                '/usr/local/etc/bacula/bacula.conf',
                '/usr/local/etc/bacula.conf',
-               os.path.join(os.environ.get('HOME', '/'), '.bacula.conf')]
+               os.path.join(os.environ.get('HOME', '/'), '.bacula.conf'),
+               os.environ.get('BACULA_CONF', '/dev/null')
+               ]
 
 for filename in CUSTOM_LIST:
     if not os.access(filename, os.R_OK):

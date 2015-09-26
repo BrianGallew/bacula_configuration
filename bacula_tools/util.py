@@ -313,7 +313,7 @@ class DbDict(dict):
         return
 
     @classmethod
-    def Find(kls, **kwargs):
+    def Find(kls, order_by=None, explicit_where=None, **kwargs):
         '''This factory function should be available in all sub-classes as a
         relatively easy way to get a list of all instances which meet a simple
         criteria.'''
@@ -329,6 +329,13 @@ class DbDict(dict):
                     where.append('`%s` like %%s' % key)
                     args.append(value)
             sql += ' WHERE ' + ' AND '.join(where)
+        if explicit_where:
+            if 'WHERE' in sql:
+                sql += ' ' + explicit_where
+            else:
+                sql += ' WHERE ' + explicit_where
+        if order_by:
+            sql += ' ORDER BY %s' % order_by
         result = []
         for row in kls.bc.do_sql(sql, tuple(args)):
             result.append(kls().search(row[0]))
@@ -791,6 +798,11 @@ class BSock:
         r = ""
         s = self.recv()
         while s:
+            # This is stupid.  For Linux clients, if you don't have this
+            # microsleep here, even though it reads everything Python will
+            # tell you the connection timed out.  FreeBSD doesn't have this
+            # problem.
+            time.sleep(0.01)
             r += s
             s = self.recv()
         return r
@@ -798,7 +810,7 @@ class BSock:
     def version(self):
         '''Request the version string from the connected services.'''
         self.send('version')
-        return self.recv()
+        return self.recv_all()
 
     def status(self, args=''):
         '''Ask the connected service for its status.'''

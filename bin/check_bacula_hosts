@@ -2,60 +2,114 @@
 '''Report on the status of all of the clients. '''
 from __future__ import print_function
 import bacula_tools
+import logging
+# Requires Python 2.7 or better
+import argparse
+import sys
 
-bacula_config_object = bacula_tools.Bacula_Factory()
 
-# This loop will iterate through the pword table
-dirlist = {}
-prevent_duplicates = {}
-select_query = '''
-SELECT obj_id, obj_type, director_id, director_type
-  FROM pwords
-  ORDER BY obj_type, director_type
-'''
-for row in bacula_config_object.do_sql(select_query):
-    if prevent_duplicates.has_key((row[0], row[1])):
-        continue
-    prevent_duplicates[(row[0], row[1])] = True
-    if row[1] == bacula_tools.Client.IDTAG:
-        obj = bacula_tools.Client().search(row[0])
-        comm = bacula_tools.FDaemon
-    elif row[1] == bacula_tools.Storage.IDTAG:
-        obj = bacula_tools.Storage().search(row[0])
-        comm = bacula_tools.SDaemon
-    else:
-        print('Unhandled object type:', row[1])
-
-    # Make sure there's a Director already allocated.
-    if not dirlist.has_key((row[2], row[3])):
-        if row[3] == bacula_tools.Director.IDTAG:
-            klass = bacula_tools.Director
-        elif row[3] == bacula_tools.Console.IDTAG:
-            klass = bacula_tools.Console
+def connect(comm, thing, password, dir_name):
+    '''Wrap up the version check in sufficient error checking to continue in the face of terrible odds.'''
+    logger = logging.getLogger('connect')
+    try:
+        if thing.IDTAG == bacula_tools.Director.IDTAG:
+            connection = comm(thing)
         else:
-            print('Unhandled director type:', row[1])
-            continue
-        dirlist[(row[2], row[3])] = klass().search(row[2])
-
-    current_director = dirlist[(row[2], row[3])]
-    password = bacula_tools.PasswordStore(obj, current_director)
-    try:
-        connection = comm(
-            obj[bacula_tools.ADDRESS], password.password, current_director[bacula_tools.NAME])
+            connection = comm(
+                thing[bacula_tools.ADDRESS], password, dir_name, timeout=3)
+        logger.info('connected')
         connection.auth()
+        logger.info('authenticated')
         print(connection.version())
-    except:
-        print('%s: connection refused (firewall or dead)' %
-              obj[bacula_tools.NAME])
+        logger.info('versioned')
+        sys.stdout.flush()
+    except Exception as the_exception:
+        print('%s: connection refused (%s)' %
+              (thing[bacula_tools.NAME], the_exception))
 
-for row in bacula_config_object.do_sql('SELECT id from %s order by id ASC' % bacula_tools.Director.table):
-    obj = bacula_tools.Director().search(row[0])
-    try:
-        connection = bacula_tools.BDirector(obj)
-        connection.auth()
-        print(connection.version())
-    except:
-        print('%s: connection refused (firewall or dead)' %
-              obj[bacula_tools.NAME])
 
-exit()
+def do_things(object_list, comm, is_director=False):
+    '''Look up the password for each object, the connect to it'''
+    directors = {}
+    for client in object_list:
+        pw = bacula_tools.PasswordStore.Find(client, is_director)
+        if pw:
+            dir_id = pw[0].where_arguments[2]
+            if not dir_id in directors:
+                directors[dir_id] = bacula_tools.Director().search(
+                    dir_id)[bacula_tools.NAME]
+            connect(comm, client, pw[0].password, directors[dir_id])
+    return all
+
+
+def contact_hosts():
+    '''Iterate through all of the bacula devices.'''
+
+    print("Clients - ")
+    do_things(bacula_tools.Client.Find(order_by=bacula_tools.NAME),
+              bacula_tools.FDaemon)
+    print("SDs - ")
+    storage_servers = bacula_tools.Storage.Find(
+        order_by='name',
+        explicit_where='name in (select c.name from clients c, storage s where c.name = s.name)')
+    do_things(storage_servers, bacula_tools.SDaemon)
+    print("Directors - ")
+    do_things(bacula_tools.Director.Find(order_by=bacula_tools.NAME),
+              bacula_tools.BDirector, True)
+    exit()
+
+
+def setup_logging(option_group):
+    """Sets up logging in a syslog format by log level
+    :param option_group: options as returned by the OptionParser
+    """
+    stderr_log_format = "%(levelname) -8s %(asctime)s %(funcName)s line:%(lineno)d: %(message)s"
+    file_log_format = "%(asctime)s - %(levelname)s - %(message)s"
+    logger = logging.getLogger()
+    if option_group.debug:
+        logger.setLevel(level=logging.DEBUG)
+    elif option_group.verbose:
+        logger.setLevel(level=logging.INFO)
+    else:
+        logger.setLevel(level=logging.WARNING)
+
+    handlers = []
+    if option_group.syslog:
+        handlers.append(logging.SyslogHandler(facility=option_group.syslog))
+        # Use standard format here because timestamp and level will be added by
+        # syslogd.
+    if option_group.logfile:
+        handlers.append(logging.FileHandler(option_group.logfile))
+        handlers[0].setFormatter(logging.Formatter(file_log_format))
+    if not handlers:
+        handlers.append(logging.StreamHandler())
+        handlers[0].setFormatter(logging.Formatter(stderr_log_format))
+    for handler in handlers:
+        logger.addHandler(handler)
+    return
+
+
+def main():
+    """Primary entry point."""
+    parser = argparse.ArgumentParser()
+    # Standard logging options.
+    parser.add_argument("-v", "--verbose", dest="verbose", action='store_true',
+                        default=False, help="Verbose output")
+    parser.add_argument("-d", "--debug", dest="debug", action='store_true',
+                        default=False, help="Debugging output")
+    parser.add_argument("--syslog", dest="syslog", metavar="FACILITY",
+                        help="Send log messages to the syslog")
+    parser.add_argument("--logfile", dest="logfile", metavar="FILENAME",
+                        help="Send log messages to a file")
+    # script-specific options here
+
+    options = parser.parse_args()
+    setup_logging(options)
+
+    exit(contact_hosts())
+
+    return
+
+
+if __name__ == '__main__':
+    main()

@@ -7,7 +7,7 @@ class SDaemon(BSock):
     '''
 
     def __init__(self, address, password, myname, port=BACULA_SD_PORT, timeout=5):
-        BSock.__init__(self, address, password, 'Director ' + myname,
+        BSock.__init__(self, address, password, 'SD: Bacula Director ' + myname,
                        port, timeout)
         return
 

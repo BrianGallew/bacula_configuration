@@ -235,6 +235,13 @@ class Job(bacula_tools.DbDict):
         self._load_scripts()
         pass
 
+    def delete(self):
+        '''Job-specific deletion bits'''
+        bacula_tools.DbDict.delete(self)
+        # Now we need to cleanup an newly orphaned devices/storage, but NOT
+        # top-level storage!
+        # TODO
+
 
 class JobDef(Job):
 

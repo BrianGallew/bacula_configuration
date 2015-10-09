@@ -33,7 +33,7 @@ MYSQL_HOST = 'OVERRIDE ME'
 MYSQL_USER = 'OVERRIDE ME'
 MYSQL_PASS = 'OVERRIDE ME'
 
-_INTERNED = ['Append', 'Available', 'Catalog', 'Cleaning', 'Error',
+_INTERNED = ['Append', 'Available', 'Catalog', 'comment', 'Cleaning', 'Error',
              'Full', 'Purged', 'Recycle', 'Used', 'actiononpurge', 'addprefix',
              'address', 'addsuffix', 'alertcommand', 'allowcompression',
              'allowmixedpriority', 'alwaysopen', 'archivedevice', 'autochanger',
@@ -167,6 +167,14 @@ from .job import Job, JobDef
 from .scripts import Script
 from .device import Device
 from .counter import Counter
+
+# Load the code a second time so imported functions/variables can be
+# overridden.
+
+for filename in CUSTOM_LIST:
+    if not os.access(filename, os.R_OK):
+        continue
+    exec(open(filename).read(), locals(), locals())
 
 # bconsole/daemon bits
 from .fd import FDaemon

@@ -6,7 +6,7 @@ import optparse
 
 
 class Messages(bacula_tools.DbDict):
-    SETUP_KEYS = [(bacula_tools.DATA, ''), ]
+    SETUP_KEYS = [(bacula_tools.DATA, ''), bacula_tools.COMMENT]
     table = bacula_tools.MESSAGES
     _select = 'SELECT ref_id, link_type FROM messages_link WHERE messages_id=%s'
     _insert = 'INSERT INTO messages_link (messages_id, ref_id, link_type) VALUES (%s, %s, %s)'
@@ -33,7 +33,7 @@ class Messages(bacula_tools.DbDict):
         return
 
     def __str__(self):
-        '''String representation suitable for inclustion in any config file.'''
+        '''String representation suitable for inclusion in any config file.'''
         output = 'Messages {\n  Name = "%(name)s"\n  %(data)s\n}' % self
         return output
 

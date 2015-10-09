@@ -95,9 +95,9 @@ class Director(DbDict):
             return
         if args.message_set == '':
             return self.set(MESSAGES_ID, None)
-        target = Messages().search(args.message_set)
-        if target[ID]:
-            self.set(MESSAGES_ID, target[ID])
+        target = bacula_tools.Messages().search(args.message_set)
+        if target[bacula_tools.ID]:
+            self.set(MESSAGES_ID, target[bacula_tools.ID])
         else:
             print('Unable to find a match for %s, continuing' %
                   args.message_set)

@@ -378,6 +378,11 @@ class DbDict(dict):
 
     def delete(self):
         '''Delete itself from the database.'''
+        # first clean up passwords!
+        for pw in bacula_tools.PasswordStore.Find(self, self.IDTAG == bacula_tools.Director.IDTAG):
+            pw.password = None
+            pw.store()
+        # Now delete myself!
         self.bc.do_sql('DELETE FROM %s WHERE id = %%s' %
                        self.table, self[bacula_tools.ID])
         return
@@ -467,7 +472,7 @@ class DbDict(dict):
             key = key[0]
         if self[key] == None:
             return
-        for unquoted in ['retention', 'size', 'bytes', 'address']:
+        for unquoted in ['retention', 'size', 'bytes', 'address',  bacula_tools.COMMENT]:
             if unquoted in key.lower():
                 quoted = False
         try:
@@ -478,6 +483,8 @@ class DbDict(dict):
                 value = '"' + self[key].strip() + '"'
             else:
                 value = self[key]
+        if key.lower() == bacula_tools.COMMENT:
+            value = '# %s' % value
         self.output.insert(-1, '%s%s = %s' %
                            (self.prefix, key.capitalize().replace('_', ' '), value))
         return
@@ -570,8 +577,11 @@ class DbDict(dict):
                 "You didn't think this one out very well, did you?.")
 
         if args.list:
-            for row in self.bc.do_sql('select name from %s order by name' % self.table):
-                print(row[0])
+            for row in self.Find(order_by='name'):
+                if bacula_tools.COMMENT in row and row[bacula_tools.COMMENT]:
+                    print("%(id)d: %(name)s #%(comment)s" % row)
+                else:
+                    print("%(id)d: %(name)s" % row)
             if not client_arg:
                 exit()
 

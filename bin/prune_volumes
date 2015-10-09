@@ -114,7 +114,7 @@ def prune_commands(medialist):
     retval = []
     if medialist:
         for volume in medialist:
-            if volume[3] in ('Purged', 'Archive', 'Recycle',
+            if volume[3] in ('Purged', 'Error', 'Archive', 'Recycle',
                              'Disabled', 'Busy', 'Cleaning'):
                 continue
             retval.append('prune volume=%s yes' % volume[2])

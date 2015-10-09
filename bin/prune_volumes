@@ -43,7 +43,7 @@ def lame_progress_spinner(iterable, **kwargs):
 
 try:
     # pylint: disable=import-error
-    from clint.textui.progress import progress_bar
+    from clint.textui.progress import bar as progress_bar
 except ImportError:
     progress_bar = lame_progress_spinner
 

@@ -30,7 +30,7 @@ os.environ.setdefault('PYTHON_EGG_CACHE', '/tmp')
 
 # Only keep these two lines while doing development
 import cgitb
-cgitb.enable(display=2, logdir="/tmp")
+cgitb.enable(display=0, logdir="/tmp")
 
 import bacula_tools
 

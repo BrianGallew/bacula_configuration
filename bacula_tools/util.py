@@ -142,6 +142,20 @@ def default_director(client, dname=''):
     password.store()
 
 
+def find_client(bacula_config_object, guest, director='', **kwargs):
+    '''Will create the client if it wasn't found.  You almost certainly need to
+    OVERRIDE THIS to meet your local requirements.'''
+    client = bacula_tools.Client(
+        {bacula_tools.NAME: bacula_tools.hostname_mangler(guest)}).search()
+    if not client[bacula_tools.ID]:
+        # Didn't find the client, so create a new one!
+        client.set(bacula_tools.ADDRESS, guest)
+        bacula_tools.default_jobs(client)
+        bacula_tools.default_director(client, director)
+
+    return client
+
+
 class ConfigFile(object):
 
     '''Easy config file management wrapper.

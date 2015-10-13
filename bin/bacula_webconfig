@@ -54,19 +54,6 @@ def do_bconsole_config(bacula_config_object):
     return '\n'.join(result)
 
 
-def find_client(bacula_config_object, guest, director):
-    '''Will create the client if it wasn't found'''
-    client = bacula_tools.Client(
-        {bacula_tools.NAME: bacula_tools.hostname_mangler(guest)}).search()
-    if not client[bacula_tools.ID]:
-        # Didn't find the client, so create a new one!
-        client.set(bacula_tools.ADDRESS, guest)
-        bacula_tools.default_jobs(client)
-        bacula_tools.default_director(client, director)
-
-    return client
-
-
 def main():
     '''Main entry point.'''
     # Ensure a valid HTTP response
@@ -90,8 +77,12 @@ def main():
                                             os.environ.get('REMOTE_HOST',
                                                            os.environ.get('REMOTE_ADDR', 'localhost.localdomain')))
         guest = fix_hostname(hostname)
-        client = find_client(bacula_config_object, guest,
-                             query_variables.getvalue('director', ''))
+        client = bacula_tools.find_client(bacula_config_object, guest,
+                                          query_variables.getvalue(
+                                              'director', ''),
+                                          os=query_variables.getvalue(
+                                              'os', bacula_tools.guess_os)
+                                          )
         result.append(client.fd())
         for director_id in bacula_config_object.do_sql('SELECT director_id FROM pwords where obj_id = %s and obj_type = %s ORDER BY director_id', (client[bacula_tools.ID], client.IDTAG)):
             result.append(bacula_tools.Director(

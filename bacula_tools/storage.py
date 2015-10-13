@@ -105,7 +105,6 @@ class Storage(bacula_tools.DbDict):
         insert = '''INSERT INTO pwords (obj_id, obj_type, director_id, director_type, password)
                    SELECT %s, obj_type, director_id, director_type, password FROM pwords
                    WHERE obj_id=%s AND obj_type=%s;'''
-        print(insert % (self[bacula_tools.ID], old_id, self.IDTAG))
         self.bc.do_sql(insert, (self[bacula_tools.ID], old_id, self.IDTAG))
         return
 

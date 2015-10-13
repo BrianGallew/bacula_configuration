@@ -42,7 +42,6 @@ def setup_logging(option_group):
 
 def main():
     """Primary entry point."""
-    logging.debug('main')
     parser = argparse.ArgumentParser(description='''Given just a storageserver, list all of the clients using this storageserver.
     If given one or more clients, switch them to this storageserver.''')
     # Standard logging options.

@@ -125,9 +125,8 @@ def director_config(bc_object, myname):
     config_file = bacula_tools.ConfigFile(bacula_tools.BACULA_DIR_CONF)
     director_object = bacula_tools.Director().search(myname)
     config_file.write(director_object, '\n')
-    catalog_object = bacula_tools.Catalog(
-        {bacula_tools.DIRECTOR_ID: director_object[bacula_tools.ID]}).search()
-    config_file.write(catalog_object, '\n')
+    for catalog_object in bacula_tools.Catalog.Find(director_id=director_object[bacula_tools.ID]):
+        config_file.write(catalog_object, '\n')
     bc_object.query_id_thing('SELECT messages_id'
                              '  FROM messages_link'
                              '  WHERE ref_id = %s AND link_type = %s',

@@ -123,8 +123,7 @@ class Storage(bacula_tools.DbDict):
         c = bacula_tools.Client().search(target_host)
         for job in bacula_tools.Job.Find(client_id=c[bacula_tools.ID]):
             pool_name = '%s-%s' % (self[bacula_tools.NAME],
-                                   c[bacula_tools.FILERETENTION].replace(
-                ' ', '_'))
+                                   c.get(bacula_tools.FILERETENTION, '').replace(' ', '_'))
             new_pool = bacula_tools.Pool().search(pool_name)
             job.set(bacula_tools.POOL_ID, new_pool[bacula_tools.ID])
             job_storage = bacula_tools.Storage().search(
@@ -133,6 +132,11 @@ class Storage(bacula_tools.DbDict):
                 bacula_tools.ADDRESS, self[bacula_tools.ADDRESS])
             job_device = bacula_tools.Device().search(
                 job_storage[bacula_tools.NAME])
+
+            old_password = bacula_tools.PasswordStore.Find(job_storage)[0]
+            new_password = bacula_tools.PasswordStore.Find(self)[0]
+            old_password.password = new_password.password
+            old_password.store()
             old_storage = job_device.find_linked()
             if old_storage:
                 for o_s in old_storage:

@@ -143,7 +143,15 @@ configuration.'''
         self.bc.do_sql(insert, (self[bacula_tools.ID], old_id, self.IDTAG))
         return
 
+    def delete(self):
+        '''If left to itself, the job will be deleted, but not any related storage/devices.'''
+        for job in bacula_tools.Job().Find(client_id=self[bacula_tools.ID]):
+            job.delete()
+        bacula_tools.DbDict.delete(self)
+
 # Implement the CLI for managing Clients
+
+
 def main():
     s = Client()
     s.cli()

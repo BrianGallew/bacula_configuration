@@ -237,10 +237,21 @@ class Job(bacula_tools.DbDict):
 
     def delete(self):
         '''Job-specific deletion bits'''
+        storage_things = []
+        for storage in bacula_tools.Storage().Find(id=self[bacula_tools.STORAGE_ID]):
+            storage_things.append(storage)
         bacula_tools.DbDict.delete(self)
-        # Now we need to cleanup an newly orphaned devices/storage, but NOT
-        # top-level storage!
-        # TODO
+        for storage in storage_things:
+            # Have to be careful, it may be that multiple jobs reference the
+            # same storage
+            if len(bacula_tools.Job().Find(storage_id=self[bacula_tools.STORAGE_ID])) > 1:
+                continue
+            device_name = storage[bacula_tools.DEVICE]
+            storage.delete()
+            if len(bacula_tools.Storage().Find(device=device_name)):
+                continue
+            for device in bacula_tools.Device().Find(name=device_name):
+                device.delete()
 
 
 class JobDef(Job):

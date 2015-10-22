@@ -131,12 +131,11 @@ def default_director(client, dname=''):
     undoubtedly want to OVERRIDE THIS to meet the needs of your own
     site.  The default in this case is the first one returned by a select
     against the director table with no where clause.'''
-    if not dname:
-        bc = bacula_tools.Bacula_Factory()
-        dname = bc.do_sql('SELECT name FROM %s LIMIT 1' %
-                          bacula_tools.Director.table)[0]
+    if dname:
+        d = bacula_tools.Director().search(dname)
+    else:
+        d = bacula_tools.Director().Find(order_by=bacula_tools.ID)[0]
 
-    d = bacula_tools.Director().search(dname)
     password = bacula_tools.PasswordStore(client, d)
     password.password = bacula_tools.GENERATE
     password.store()

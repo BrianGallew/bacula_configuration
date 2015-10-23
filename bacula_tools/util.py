@@ -509,7 +509,7 @@ class DbDict(dict):
         value = self[key]
         if value == None:
             return
-        if value == '0':
+        if value == 0:
             value = bacula_tools.NO
         else:
             value = bacula_tools.YES

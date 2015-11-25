@@ -170,6 +170,10 @@ class Job(bacula_tools.DbDict):
         group.add_option('--storage')
         group.add_option(
             '--default-job', help='The job which will supply default values for those otherwise unset on this one')
+        group.add_option(
+            '--add-script', help='Script name or ID to be added')
+        group.add_option(
+            '--remove-script', help='Script name or ID to be removed')
         self.parser.add_option_group(group)
         return
 
@@ -196,6 +200,10 @@ class Job(bacula_tools.DbDict):
             bacula_tools.STORAGE_ID, args.storage, bacula_tools.Storage)
         self._cli_deref_helper(
             bacula_tools.JOB_ID, args.default_job, bacula_tools.JobDef)
+        if args.add_script:
+            self._cli_script_helper(args.add_script)
+        if args.remove_script:
+            self._cli_script_helper(args.remove_script, True)
         return
 
     def _cli_deref_helper(self, key, value, obj):
@@ -210,6 +218,19 @@ class Job(bacula_tools.DbDict):
         else:
             print('Unable to find a match for %s, continuing' % value)
         pass
+
+    def _cli_script_helper(self, script, remove=False):
+        '''Script management.'''
+        script_obj = bacula_tools.Script().search(script)
+        if not script_obj[bacula_tools.ID]:
+            print('Unable to find script "%s", skipping' % script)
+            return
+        if remove:
+            self._delete_script(script_obj)
+        else:
+            self._add_script(script_obj)
+        self._save()
+        return
 
     def _cli_special_print(self):
         '''All of the foreign key objects get printed out here for the CLI.'''

@@ -86,7 +86,7 @@ CREATE TABLE `messages`
   `name` varchar(255) NOT NULL,
   `data` varchar(32767) NOT NULL default '',
   `comment` varchar(255) NOT NULL default '',
-  PRIMARY KEY `PRIMARY` (`id`),
+  PRIMARY KEY `PRIMARY` (`id`)
 ) DEFAULT CHARSET=latin1;
 
 -- select 'Creating table pwords';
